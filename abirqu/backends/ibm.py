@@ -77,21 +77,62 @@ class IBMQuantumConnector:
         }
         
     def _simulate_qasm(self, qasm: str, shots: int) -> Dict[str, int]:
-        """Simulate QASM locally (simplified)."""
-        # Parse QASM to get number of qubits
+        """Simulate QASM locally using actual quantum simulation."""
+        # Parse QASM to get number of qubits and build circuit
         num_qubits = 2  # Default
+        gates = []
         for line in qasm.split('\n'):
             if 'qreg q[' in line:
                 num_qubits = int(line.split('[')[1].split(']')[0])
-                break
+            elif 'h q[' in line:
+                q = int(line.split('[')[1].split(']')[0])
+                gates.append(('h', q))
+            elif 'cx q[' in line or 'cnot q[' in line:
+                parts = line.replace('cx ', '').replace('cnot ', '').split(',')
+                q1 = int(parts[0].split('[')[1].split(']')[0])
+                q2 = int(parts[1].split('[')[1].split(']')[0])
+                gates.append(('cnot', q1, q2))
+            elif 'x q[' in line:
+                q = int(line.split('[')[1].split(']')[0])
+                gates.append(('x', q))
+            elif 'rz(' in line:
+                # Extract angle and qubit
+                angle = float(line.split('(')[1].split(')')[0])
+                q = int(line.split('q[')[1].split(']')[0])
+                gates.append(('rz', q, angle))
                 
-        # For now, return mock results
-        import random
+        # Run actual simulation using QVM
+        from ..core.qvm import QuantumVirtualMachine
+        from ..core.gates import H, X, CNOT, RZ
+        
+        qvm = QuantumVirtualMachine(num_qubits)
+        gate_map = {'h': H, 'x': X, 'cnot': CNOT, 'rz': lambda q, a: RZ(q, a)}
+        
+        for gate in gates:
+            if gate[0] == 'h':
+                qvm.apply_gate(H(), gate[1])
+            elif gate[0] == 'x':
+                qvm.apply_gate(X(), gate[1])
+            elif gate[0] == 'cnot':
+                qvm.apply_gate(CNOT(), (gate[1], gate[2]))
+            elif gate[0] == 'rz':
+                qvm.apply_gate(RZ(gate[2]), gate[1])
+                
+        # Sample from actual probability distribution
+        probs = qvm.get_probabilities()
+        basis_states = list(probs.keys())
+        probabilities = list(probs.values())
+        
+        # Normalize
+        total = sum(probabilities)
+        if total > 0:
+            probabilities = [p/total for p in probabilities]
+            
+        # Sample shots
         results = {}
         for _ in range(shots):
-            # Generate random bitstring
-            bitstring = ''.join(random.choice('01') for _ in range(num_qubits))
-            results[bitstring] = results.get(bitstring, 0) + 1
+            outcome = np.random.choice(basis_states, p=probabilities) if probabilities else basis_states[0]
+            results[outcome] = results.get(outcome, 0) + 1
             
         return results
         

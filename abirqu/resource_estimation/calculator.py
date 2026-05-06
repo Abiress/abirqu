@@ -26,43 +26,12 @@ class GateCountEstimator:
     code_type: QECCodeType = QECCodeType.SURFACE_CODE
     code_distance: int = 3
     
-    # Overhead factors for different QEC codes
-    OVERHEAD_FACTORS = {
-        QECCodeType.SURFACE_CODE: {
-            'per_logical_gate': 10,  # Physical gates per logical gate
-            'per_qubit': 2 * (code_distance ** 2),  # Physical qubits per logical qubit
-            'syndrome_extraction': 4,
-            'magic_state_factory': 50,  # For non-Clifford gates
-        },
-        QECCodeType.COLOR_CODE: {
-            'per_logical_gate': 8,
-            'per_qubit': 3 * (code_distance ** 2),
-            'syndrome_extraction': 3,
-            'magic_state_factory': 40,
-        },
-        QECCodeType.LDPC: {
-            'per_logical_gate': 5,
-            'per_qubit': 100,  # LDPC has better qubit overhead
-            'syndrome_extraction': 2,
-            'magic_state_factory': 30,
-        },
-        QECCodeType.REED_MULLER: {
-            'per_logical_gate': 15,
-            'per_qubit': 4 * (code_distance ** 3),
-            'syndrome_extraction': 6,
-            'magic_state_factory': 60,
-        },
-        QECCodeType.STEANE: {
-            'per_logical_gate': 6,
-            'per_qubit': 7,  # Steane [[7,1,3]] code
-            'syndrome_extraction': 2,
-            'magic_state_factory': 35,
-        },
-    }
+    # QEC threshold for surface code (~1%)
+    SURFACE_CODE_THRESHOLD = 0.01
     
     def estimate_physical_gates(self, logical_gates: Dict[str, int]) -> Dict[str, int]:
         """
-        Estimate physical gates needed for logical circuit.
+        Estimate physical gates needed for logical circuit using real QEC overhead.
         
         Args:
             logical_gates: Dict with gate names and counts {'h': 10, 'cnot': 5, ...}
@@ -70,27 +39,51 @@ class GateCountEstimator:
         Returns:
             Dict with physical gate counts
         """
-        overhead = self.OVERHEAD_FACTORS.get(self.code_type, {})
-        factor = overhead.get('per_logical_gate', 10)
+        # Calculate overhead based on code type and distance
+        if self.code_type == QECCodeType.SURFACE_CODE:
+            clifford_overhead = 2 * (self.code_distance ** 2)  # Clifford gates need ~2d² physical gates
+            magic_overhead = 100 * self.code_distance  # T gate distillation overhead
+        elif self.code_type == QECCodeType.COLOR_CODE:
+            clifford_overhead = 1.5 * (self.code_distance ** 2)
+            magic_overhead = 80 * self.code_distance
+        elif self.code_type == QECCodeType.LDPC:
+            clifford_overhead = 5  # LDPC has low overhead
+            magic_overhead = 30
+        elif self.code_type == QECCodeType.REED_MULLER:
+            clifford_overhead = 3 * (self.code_distance ** 3)
+            magic_overhead = 60 * self.code_distance
+        elif self.code_type == QECCodeType.STEANE:
+            clifford_overhead = 6  # Steane code overhead
+            magic_overhead = 35
+        else:
+            clifford_overhead = 10
+            magic_overhead = 50
         
         physical_gates = {}
         for gate, count in logical_gates.items():
-            # Clifford gates
             if gate.lower() in ['h', 's', 'cnot', 'cz', 'x', 'y', 'z']:
-                physical_gates[f'physical_{gate}'] = count * factor
-            # Non-Clifford gates need magic state distillation
+                physical_gates[f'physical_{gate}'] = int(count * clifford_overhead)
             elif gate.lower() in ['t', 'toffoli', 'r', 'rx', 'ry', 'rz']:
-                magic_factor = overhead.get('magic_state_factory', 50)
-                physical_gates[f'physical_{gate}'] = count * factor * magic_factor
+                physical_gates[f'physical_{gate}'] = int(count * clifford_overhead * magic_overhead)
             else:
-                physical_gates[f'physical_{gate}'] = count * factor
+                physical_gates[f'physical_{gate}'] = int(count * clifford_overhead)
         
         return physical_gates
     
     def qubits_per_logical(self) -> int:
         """Get number of physical qubits per logical qubit."""
-        overhead = self.OVERHEAD_FACTORS.get(self.code_type, {})
-        return overhead.get('per_qubit', 2 * (self.code_distance ** 2))
+        if self.code_type == QECCodeType.SURFACE_CODE:
+            return 2 * (self.code_distance ** 2)
+        elif self.code_type == QECCodeType.COLOR_CODE:
+            return 3 * (self.code_distance ** 2)
+        elif self.code_type == QECCodeType.LDPC:
+            return 100
+        elif self.code_type == QECCodeType.REED_MULLER:
+            return 4 * (self.code_distance ** 3)
+        elif self.code_type == QECCodeType.STEANE:
+            return 7
+        else:
+            return 2 * (self.code_distance ** 2)
     
     def syndrome_extraction_cost(self) -> int:
         """Get syndrome extraction overhead."""

@@ -111,11 +111,70 @@ class ZeroNoiseExtrapolation:
     
     def _simulate_noisy(self, circuit: List[Tuple],
                          noise_level: float, num_qubits: int) -> Dict[str, Any]:
-        """Simulate noisy circuit execution."""
-        # Simplified: add noise to ideal result.
-        ideal = 0.5  # Simulated ideal expectation value.
-        noise = np.random.normal(0, noise_level)
-        return {'expectation': ideal + noise}
+        """Simulate noisy circuit execution with real noise models."""
+        n = 2 ** num_qubits
+
+        # Initialize state to |00...0>.
+        state = np.zeros(n, dtype=complex)
+        state[0] = 1.0
+
+        # Apply gates from circuit.
+        for gate in circuit:
+            gate_name = gate[0] if isinstance(gate, tuple) else gate.get('gate', 'h')
+            target = gate[1] if isinstance(gate, tuple) else gate.get('target', 0)
+
+            if gate_name == 'h' or gate_name == 'H':
+                # Hadamard gate.
+                H = np.array([[1, 1], [1, -1]], dtype=complex) / np.sqrt(2)
+                new_state = np.zeros(n, dtype=complex)
+                for i in range(n):
+                    bit = (i >> (num_qubits - 1 - target)) & 1
+                    for new_bit in range(2):
+                        j = i & ~(1 << (num_qubits - 1 - target))
+                        j |= (new_bit << (num_qubits - 1 - target))
+                        new_state[j] += H[new_bit, bit] * state[i]
+                state = new_state
+
+            elif gate_name == 'x' or gate_name == 'X':
+                # X gate.
+                new_state = state.copy()
+                for i in range(n):
+                    bit = (i >> (num_qubits - 1 - target)) & 1
+                    if bit == 0:
+                        j = i | (1 << (num_qubits - 1 - target))
+                    else:
+                        j = i & ~(1 << (num_qubits - 1 - target))
+                    new_state[j] = state[i]
+                state = new_state
+
+        # Apply noise: depolarizing channel.
+        if noise_level > 0:
+            p = min(noise_level, 1.0)
+            for i in range(n):
+                if np.random.random() < p:
+                    # Apply random Pauli.
+                    pauli = np.random.choice(['X', 'Y', 'Z'])
+                    if pauli == 'X':
+                        bit = (i >> (num_qubits - 1 - 0)) & 1
+                        j = i & ~(1 << (num_qubits - 1 - 0))
+                        j |= ((1 - bit) << (num_qubits - 1 - 0))
+                        state[j] = state[i]
+                    elif pauli == 'Z':
+                        state[i] *= -1
+
+            # Renormalize.
+            norm = np.linalg.norm(state)
+            if norm > 0:
+                state = state / norm
+
+        # Compute expectation value of Z on first qubit.
+        expectation = 0.0
+        for i in range(n):
+            bit = (i >> (num_qubits - 1)) & 1
+            sign = 1 if bit == 0 else -1
+            expectation += sign * np.abs(state[i]) ** 2
+
+        return {'expectation': expectation, 'state': state}
     
     def set_scale_factors(self, factors: List[float]):
         """Set custom scale factors."""
@@ -175,10 +234,10 @@ class ProbabilisticErrorCancellation:
     def _simulate(self, circuit: List[Tuple],
                    noise_level: float) -> Dict[str, Any]:
         """Simulate circuit with given noise level."""
-        # Simplified simulation.
-        ideal = 0.5
-        noise = np.random.normal(0, noise_level)
-        return {'expectation': ideal + noise}
+        num_qubits = max(2, min(len(circuit) if isinstance(circuit, list) else 2, 8))
+
+        # Use the noisy simulation method.
+        return self._simulate_noisy(circuit, noise_level, num_qubits)
     
     def learn_mitigation_matrix(self, calibration_circuits: List[List[Tuple]]):
         """Learn PEC mitigation matrix from calibration."""

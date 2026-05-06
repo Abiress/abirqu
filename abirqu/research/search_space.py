@@ -153,25 +153,138 @@ class AlgorithmSearchSpace:
         return results[:num]
     
     def _generate_circuit(self, depth: int) -> List[Tuple]:
-        """Generate a random circuit."""
+        """Generate a circuit with real quantum gates."""
         circuit = []
         for _ in range(depth):
             gate = random.choice(self.gate_set)
             if gate in ['cnot']:
                 q1 = random.randint(0, self.num_qubits - 1)
                 q2 = random.randint(0, self.num_qubits - 1)
-                circuit.append((gate, q1, q2))
+                # Ensure different qubits.
+                if q1 == q2:
+                    q2 = (q1 + 1) % self.num_qubits
+                circuit.append(('cnot', q1, q2))
+            elif gate in ['rx', 'ry', 'rz']:
+                q = random.randint(0, self.num_qubits - 1)
+                angle = random.random() * 2 * np.pi
+                circuit.append((gate, q, angle))
             else:
                 q = random.randint(0, self.num_qubits - 1)
                 circuit.append((gate, q))
         return circuit
     
     def _evaluate_fitness(self, circuit: List) -> float:
-        """Evaluate fitness of a circuit."""
-        # Simplified: fitness based on gate diversity and depth.
-        unique_gates = len(set(g[0] for g in circuit))
+        """Evaluate fitness using real quantum circuit simulation."""
+        # Simulate circuit and compute real quantum properties.
+        num_qubits = self.num_qubits
+        n = 2 ** num_qubits
+        
+        # Build quantum state by applying circuit.
+        state = np.zeros(n, dtype=complex)
+        state[0] = 1.0  # Start with |00...0>
+        
+        for gate_info in circuit:
+            gate = gate_info[0]
+            if gate == 'h':
+                q = gate_info[1]
+                psi = np.zeros(n, dtype=complex)
+                for i in range(n):
+                    bit = (i >> q) & 1
+                    j = i ^ (1 << q)
+                    cos_a = 1.0 / np.sqrt(2.0)
+                    sin_a = 1.0 / np.sqrt(2.0)
+                    if bit == 0:
+                        psi[i] += cos_a * state[i]
+                        psi[j] += sin_a * state[i]
+                    else:
+                        psi[i] += sin_a * state[i]
+                        psi[j] += cos_a * state[i]
+                state = psi / np.linalg.norm(psi)
+            elif gate == 'x' or gate == 'y' or gate == 'z':
+                q = gate_info[1]
+                psi = np.zeros(n, dtype=complex)
+                for i in range(n):
+                    bit = (i >> q) & 1
+                    j = i ^ (1 << q)
+                    if gate == 'x':
+                        psi[i] = state[j]
+                        psi[j] = state[i]
+                    elif gate == 'y':
+                        psi[i] = -1j * state[j]
+                        psi[j] = 1j * state[i]
+                    else:  # z
+                        psi[i] = state[i]
+                        psi[j] = -state[j]
+                state = psi / np.linalg.norm(psi)
+            elif gate == 'cnot':
+                q1, q2 = gate_info[1], gate_info[2]
+                psi = np.zeros(n, dtype=complex)
+                for i in range(n):
+                    bit1 = (i >> q1) & 1
+                    bit2 = (i >> q2) & 1
+                    if bit1 == 1:
+                        j = i ^ (1 << q2)
+                        psi[j] = state[i]
+                    else:
+                        psi[i] = state[i]
+                state = psi / np.linalg.norm(psi)
+            elif gate in ['rx', 'ry', 'rz']:
+                q = gate_info[1]
+                angle = gate_info[2] if len(gate_info) > 2 else 0.1
+                psi = np.zeros(n, dtype=complex)
+                for i in range(n):
+                    bit = (i >> q) & 1
+                    j = i ^ (1 << q)
+                    cos_a = np.cos(angle / 2)
+                    sin_a = np.sin(angle / 2)
+                    if gate == 'rx':
+                        if bit == 0:
+                            psi[i] += cos_a * state[i] - 1j * sin_a * state[j]
+                            psi[j] += -1j * sin_a * state[i] + cos_a * state[j]
+                        else:
+                            psi[i] += cos_a * state[i] + 1j * sin_a * state[j]
+                            psi[j] += 1j * sin_a * state[i] + cos_a * state[j]
+                    elif gate == 'ry':
+                        if bit == 0:
+                            psi[i] += cos_a * state[i] - sin_a * state[j]
+                            psi[j] += sin_a * state[i] + cos_a * state[j]
+                        else:
+                            psi[i] += sin_a * state[i] + cos_a * state[j]
+                            psi[j] += -cos_a * state[i] + sin_a * state[j]
+                    else:  # rz
+                        if bit == 0:
+                            psi[i] += np.exp(-1j * angle / 2) * state[i]
+                        else:
+                            psi[i] += np.exp(1j * angle / 2) * state[i]
+                        psi[j] = state[j]
+                state = psi / np.linalg.norm(psi)
+        
+        # Compute real quantum properties for fitness.
+        # 1. Entanglement (Schmidt rank).
+        # Reshape state as matrix for bipartite entanglement.
+        half = num_qubits // 2
+        if half > 0:
+            shape = (2 ** half, 2 ** (num_qubits - half))
+            mat = state.reshape(shape)
+            S = np.linalg.svd(mat, compute_uv=False)
+            schmidt_rank = np.sum(S > 1e-6)
+            entanglement_score = min(1.0, schmidt_rank / float(2 ** half))
+        else:
+            entanglement_score = 0.0
+        
+        # 2. Uniformity of output distribution (closer to uniform = higher).
+        probs = np.abs(state) ** 2
+        uniform_dist = np.ones(n) / n
+        kl_div = np.sum(probs * np.log((probs + 1e-10) / (uniform_dist + 1e-10)))
+        uniformity_score = 1.0 / (1.0 + kl_div)
+        
+        # 3. Gate count efficiency (fewer gates = better, up to a point).
         depth = len(circuit)
-        return unique_gates / max(depth, 1) * (1.0 - 0.01 * depth)
+        gate_efficiency = min(1.0, 10.0 / max(depth, 1))
+        
+        # Combined fitness.
+        fitness = 0.4 * entanglement_score + 0.4 * uniformity_score + 0.2 * gate_efficiency
+        return fitness
     
     def _compute_novelty(self, circuit: List) -> float:
         """Compute novelty score (how different from visited circuits)."""

@@ -10,10 +10,11 @@ A quantum SDK that surpasses Qiskit, Cirq, and CUDA-Q by addressing critical gap
 - GPU-native QEC decoder with CUDA and Metal backends
 """
 
-__version__ = "1.0.0"
+__version__ = "0.1.0"
 __author__ = "Abir Maheshwari"
 __email__ = "abhirsxn@gmail.com"
 __url__ = "https://github.com/abirqu/abirqu"
 
-print(f"AbirQu v{__version__} loaded successfully!")
-print("All 30 phases (1-30) are implemented and ready for use.")
+print(f"AbirQu v{__version__} loaded.")
+print("Phases 1-10: Fully implemented")
+print("Phases 11-30: Framework/Simulated implementations")

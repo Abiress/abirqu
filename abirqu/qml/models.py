@@ -52,25 +52,72 @@ class QuantumNeuralNetwork:
         ]
     
     def forward(self, x: np.ndarray) -> np.ndarray:
-        """Forward pass through QNN (simulated)."""
-        # Simplified: encode x into rotation angles.
+        """Forward pass through QNN using real quantum circuit simulation."""
+        # Encode x into rotation angles.
         if len(x) < self.num_qubits:
             x = np.pad(x, (0, self.num_qubits - len(x)))
         
-        # Simulate measurement outcomes.
-        results = []
-        for i in range(self.num_qubits):
-            # Probability depends on parameter and input.
-            param_idx = i % len(self.parameters)
-            prob = 0.5 * (1 + np.sin(self.parameters[param_idx] * x[i % len(x)]))
-            import random
-            results.append(1 if random.random() < prob else 0)
+        # Build quantum state
+        n = 2 ** self.num_qubits
+        psi = np.zeros(n, dtype=complex)
+        psi[0] = 1.0  # Start with |00...0>
         
-        return np.array(results)
+        # Apply encoding circuit: RY(x[i]) on each qubit
+        for q in range(self.num_qubits):
+            angle = x[q % len(x)]  # Use input as rotation angle
+            # Apply RY rotation
+            new_psi = np.zeros_like(psi)
+            for i in range(n):
+                bit = (i >> q) & 1
+                j = i ^ (1 << q)  # Flip qubit q
+                cos_a = np.cos(angle / 2)
+                sin_a = np.sin(angle / 2)
+                if bit == 0:
+                    new_psi[i] += cos_a * psi[i]
+                    new_psi[j] += -sin_a * psi[i]
+                else:
+                    new_psi[i] += sin_a * psi[i]
+                    new_psi[j] += cos_a * psi[i]
+            psi = new_psi / np.linalg.norm(new_psi)
+        
+        # Apply variational layers
+        param_idx = 0
+        for layer in range(self.num_layers):
+            for q in range(self.num_qubits):
+                if param_idx < len(self.parameters):
+                    angle = self.parameters[param_idx]
+                    # Apply RY rotation
+                    new_psi = np.zeros_like(psi)
+                    for i in range(n):
+                        bit = (i >> q) & 1
+                        j = i ^ (1 << q)
+                        cos_a = np.cos(angle / 2)
+                        sin_a = np.sin(angle / 2)
+                        if bit == 0:
+                            new_psi[i] += cos_a * psi[i]
+                            new_psi[j] += -sin_a * psi[i]
+                        else:
+                            new_psi[i] += sin_a * psi[i]
+                            new_psi[j] += cos_a * psi[i]
+                    psi = new_psi / np.linalg.norm(new_psi)
+                    param_idx += 1
+        
+        # Measure: return expectation values of Z on each qubit
+        expectations = []
+        for q in range(self.num_qubits):
+            z_exp = 0.0
+            for i in range(n):
+                bit = (i >> q) & 1
+                sign = 1 if bit == 0 else -1
+                prob = np.abs(psi[i]) ** 2
+                z_exp += sign * prob
+            expectations.append(z_exp)
+        
+        return np.array(expectations)
     
     def train(self, X_train: np.ndarray, y_train: np.ndarray,
-               epochs: int = 10, learning_rate: float = 0.1) -> QMLResult:
-        """Train the QNN."""
+                epochs: int = 10, learning_rate: float = 0.1) -> QMLResult:
+        """Train the QNN using parameter-shift rule."""
         start = time.time()
         loss_history = []
         
@@ -85,9 +132,28 @@ class QuantumNeuralNetwork:
                 loss = np.mean((prediction - y_train[i]) ** 2)
                 total_loss += loss
                 
-                # Simplified gradient update.
+                # Parameter-shift rule gradient
+                shift = np.pi / 2
+                dL_doutput = 2 * (prediction - y_train[i]) / max(len(prediction), 1)
+                
                 for j in range(len(self.parameters)):
-                    grad = np.random.randn() * 0.01  # Simulated gradient.
+                    # Forward shift
+                    params_plus = self.parameters.copy()
+                    params_plus[j] += shift
+                    orig_params = self.parameters.copy()
+                    self.parameters = params_plus
+                    pred_plus = self.forward(X_train[i])
+                    self.parameters = orig_params
+                    
+                    # Backward shift
+                    params_minus = self.parameters.copy()
+                    params_minus[j] -= shift
+                    self.parameters = params_minus
+                    pred_minus = self.forward(X_train[i])
+                    self.parameters = orig_params
+                    
+                    # Gradient = (f(x+π/2) - f(x-π/2)) / 2 * dL/doutput
+                    grad = np.mean((pred_plus - pred_minus) * dL_doutput) / 2.0
                     self.parameters[j] -= learning_rate * grad
             
             avg_loss = total_loss / max(len(X_train), 1)
@@ -95,7 +161,7 @@ class QuantumNeuralNetwork:
         
         execution_time = time.time() - start
         
-        # Calculate accuracy (simplified).
+        # Calculate accuracy
         predictions = np.array([self.forward(x) for x in X_train])
         accuracy = 1.0 - np.mean(np.abs(predictions - y_train))
         
@@ -130,15 +196,58 @@ class QuantumKernel:
     
     def compute_kernel(self, x1: np.ndarray, x2: np.ndarray) -> float:
         """
-        Compute quantum kernel value K(x1, x2).
-        Simplified: return cosine similarity.
-        """
-        # Normalize.
-        x1_norm = x1 / (np.linalg.norm(x1) + 1e-10)
-        x2_norm = x2 / (np.linalg.norm(x2) + 1e-10)
+        Compute quantum kernel value K(x1, x2) using real quantum feature map.
         
-        # Cosine similarity as simplified kernel.
-        return float(np.dot(x1_norm, x2_norm))
+        Kernel = |<φ(x1)|φ(x2)>|^2 where φ is the quantum feature map.
+        """
+        # Build quantum states for x1 and x2 using the circuit template
+        n = 2 ** self.num_qubits
+        
+        # State for x1
+        psi1 = np.zeros(n, dtype=complex)
+        psi1[0] = 1.0
+        # Apply H gates (encoding)
+        for i in range(min(len(x1), self.num_qubits)):
+            angle = x1[i]
+            # RY rotation
+            new_psi = np.zeros_like(psi1)
+            for state_idx in range(n):
+                bit = (state_idx >> i) & 1
+                j = state_idx ^ (1 << i)
+                cos_a = np.cos(angle / 2)
+                sin_a = np.sin(angle / 2)
+                if bit == 0:
+                    new_psi[state_idx] += cos_a * psi1[state_idx]
+                    new_psi[j] += -sin_a * psi1[state_idx]
+                else:
+                    new_psi[state_idx] += sin_a * psi1[state_idx]
+                    new_psi[j] += cos_a * psi1[state_idx]
+            psi1 = new_psi / np.linalg.norm(new_psi)
+        
+        # State for x2
+        psi2 = np.zeros(n, dtype=complex)
+        psi2[0] = 1.0
+        for i in range(min(len(x2), self.num_qubits)):
+            angle = x2[i]
+            new_psi = np.zeros_like(psi2)
+            for state_idx in range(n):
+                bit = (state_idx >> i) & 1
+                j = state_idx ^ (1 << i)
+                cos_a = np.cos(angle / 2)
+                sin_a = np.sin(angle / 2)
+                if bit == 0:
+                    new_psi[state_idx] += cos_a * psi2[state_idx]
+                    new_psi[j] += -sin_a * psi2[state_idx]
+                else:
+                    new_psi[state_idx] += sin_a * psi2[state_idx]
+                    new_psi[j] += cos_a * psi2[state_idx]
+            psi2 = new_psi / np.linalg.norm(new_psi)
+        
+        # Kernel = |<psi1|psi2>|^2
+        inner_product = np.dot(np.conj(psi1), psi2)
+        kernel_value = np.abs(inner_product) ** 2
+        
+        return float(kernel_value)
     
     def compute_kernel_matrix(self, X: np.ndarray) -> np.ndarray:
         """Compute kernel matrix for dataset."""
@@ -175,12 +284,46 @@ class VQEModel:
     def __init__(self, num_qubits: int = 4, depth: int = 3):
         self.num_qubits = num_qubits
         self.depth = depth
-        self.parameters: np.ndarray = np.random.randn(depth * num_qubits)
+        # Initialize with deterministic values for reproducibility
+        self.parameters: np.ndarray = np.linspace(0, 2*np.pi, depth * num_qubits)
+    
+    def _build_ansatz(self, params: np.ndarray) -> np.ndarray:
+        """Build quantum state from parameters."""
+        n = 2 ** self.num_qubits
+        psi = np.zeros(n, dtype=complex)
+        psi[0] = 1.0
+        
+        param_idx = 0
+        for layer in range(self.depth):
+            for q in range(self.num_qubits):
+                if param_idx < len(params):
+                    angle = params[param_idx]
+                    # Apply RY rotation
+                    new_psi = np.zeros_like(psi)
+                    for i in range(n):
+                        bit = (i >> q) & 1
+                        j = i ^ (1 << q)
+                        cos_a = np.cos(angle / 2)
+                        sin_a = np.sin(angle / 2)
+                        if bit == 0:
+                            new_psi[i] += cos_a * psi[i]
+                            new_psi[j] += -sin_a * psi[i]
+                        else:
+                            new_psi[i] += sin_a * psi[i]
+                            new_psi[j] += cos_a * psi[i]
+                    psi = new_psi / np.linalg.norm(new_psi)
+                    param_idx += 1
+        return psi
+    
+    def _compute_energy_with_params(self, params: np.ndarray, hamiltonian: np.ndarray) -> float:
+        """Compute energy with given parameters."""
+        psi = self._build_ansatz(params)
+        # Energy = <psi|H|psi>
+        return np.real(np.dot(np.conj(psi), np.dot(hamiltonian, psi)))
     
     def energy(self, hamiltonian: np.ndarray) -> float:
-        """Compute energy expectation (simplified)."""
-        # Simulate VQE energy evaluation.
-        return float(np.sum(self.parameters * 0.1))
+        """Compute energy with current parameters."""
+        return self._compute_energy_with_params(self.parameters, hamiltonian)
     
     def optimize(self, hamiltonian: np.ndarray,
                 max_iter: int = 100) -> QMLResult:
@@ -192,8 +335,27 @@ class VQEModel:
             energy = self.energy(hamiltonian)
             loss_history.append(energy)
             
-            # Simplified parameter update.
-            self.parameters -= 0.01 * np.random.randn(*self.parameters.shape)
+            # Real gradient using parameter-shift rule.
+            shift = np.pi / 2
+            grad = np.zeros_like(self.parameters)
+            
+            for j in range(len(self.parameters)):
+                # Forward shift.
+                params_plus = self.parameters.copy()
+                params_plus[j] += shift
+                energy_plus = self._compute_energy_with_params(params_plus, hamiltonian)
+                
+                # Backward shift.
+                params_minus = self.parameters.copy()
+                params_minus[j] -= shift
+                energy_minus = self._compute_energy_with_params(params_minus, hamiltonian)
+                
+                # Parameter-shift gradient.
+                grad[j] = (energy_plus - energy_minus) / 2.0
+            
+            # Update parameters.
+            learning_rate = 0.01
+            self.parameters -= learning_rate * grad
         
         execution_time = time.time() - start
         

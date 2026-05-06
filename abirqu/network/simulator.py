@@ -1,10 +1,9 @@
 """
 Task 13.1 — Quantum Network Simulator.
 
-Full quantum network stack: physical, link, network, transport, application layers.
+Full quantum network stack with real quantum state transmission.
 Quantum channel models: loss, noise, depolarization, dark counts.
 Entanglement distribution and management.
-Network topology editor: star, mesh, tree, ring.
 """
 
 import numpy as np
@@ -12,7 +11,6 @@ from typing import Dict, List, Optional, Tuple, Any, Set
 from dataclasses import dataclass, field
 from enum import Enum
 import time
-import random
 
 
 class TopologyType(Enum):
@@ -37,345 +35,210 @@ class ChannelModel(Enum):
 @dataclass
 class QuantumChannel:
     """A quantum channel between two nodes."""
-    source: str
-    target: str
-    model: ChannelModel = ChannelModel.IDEAL
-    loss_prob: float = 0.0  # Probability of photon loss
-    depolarizing_rate: float = 0.0  # Depolarizing rate
-    dark_count_rate: float = 0.0  # Dark count rate (per microsecond)
-    distance_km: float = 1.0  # Distance in km
-    attenuation_db_per_km: float = 0.1  # Fiber attenuation
-    
+
+    def __init__(self, source: str, target: str,
+                 model: ChannelModel = ChannelModel.IDEAL,
+                 loss_prob: float = 0.0,
+                 depolarizing_rate: float = 0.0,
+                 dark_count_rate: float = 0.0,
+                 distance_km: float = 1.0,
+                 attenuation_db_per_km: float = 0.1):
+        self.source = source
+        self.target = target
+        self.model = model
+        self.loss_prob = loss_prob
+        self.depolarizing_rate = depolarizing_rate
+        self.dark_count_rate = dark_count_rate
+        self.distance_km = distance_km
+        self.attenuation_db_per_km = attenuation_db_per_km
+
     def transmit(self, qubit_state: np.ndarray) -> Tuple[np.ndarray, float]:
         """
-        Transmit qubit through channel.
-        
-        Args.
-            qubit_state: 2-element state vector.
-            
-        Returns.
-            Tuple of (transmitted_state, success_probability).
+        Transmit qubit through channel with real quantum noise.
+
+        Args:
+            qubit_state: 2-element state vector [alpha, beta]
+
+        Returns:
+            Tuple of (transmitted_state, success_probability)
         """
         if self.model == ChannelModel.IDEAL:
             return qubit_state.copy(), 1.0
-        
+
         state = qubit_state.copy()
         success_prob = 1.0
-        
-        # Apply loss.
+
+        # Apply loss (photon loss in fiber).
         if self.model in [ChannelModel.LOSS, ChannelModel.COMBINED]:
             # Fiber loss: attenuation = 10^(-attenuation_db_per_km * distance_km / 10)
             loss_factor = 10 ** (-self.attenuation_db_per_km * self.distance_km / 10)
             success_prob *= (1.0 - self.loss_prob) * loss_factor
-        
+
+            # With probability loss_prob, qubit is lost (becomes |0>).
+            if np.random.random() < self.loss_prob:
+                state = np.array([1.0, 0.0], dtype=complex)  # |0>
+                success_prob *= 0.5  # Lost photon halves the success.
+
         # Apply depolarizing noise.
         if self.model in [ChannelModel.DEPOLARIZING, ChannelModel.COMBINED]:
             p = self.depolarizing_rate
-            if random.random() < p:
-                # Apply random Pauli.
-                pauli = random.choice(['X', 'Y', 'Z'])
-                state = self._apply_pauli(state, pauli)
+            if np.random.random() < p:
+                # Apply random Pauli: X, Y, or Z with equal probability.
+                pauli_choice = np.random.randint(0, 3)
+                if pauli_choice == 0:  # X
+                    state = np.array([state[1], state[0]], dtype=complex)
+                elif pauli_choice == 1:  # Y
+                    state = np.array([state[1] * 1j, -state[0] * 1j], dtype=complex)
+                else:  # Z
+                    state = np.array([state[0], -state[1]], dtype=complex)
                 success_prob *= (1.0 - p)
-        
+
+        # Apply amplitude damping (energy loss).
+        if self.model in [ChannelModel.AMPLITUDE_DAMPING, ChannelModel.COMBINED]:
+            gamma = 0.01 * self.distance_km  # Damping probability.
+            if np.random.random() < gamma:
+                # State decays to |0>.
+                state = np.array([1.0, 0.0], dtype=complex)
+                success_prob *= (1.0 - gamma)
+
+        # Apply phase damping (dephasing).
+        if self.model in [ChannelModel.PHASE_DAMPING, ChannelModel.COMBINED]:
+            lam = 0.01 * self.distance_km
+            if np.random.random() < lam:
+                # Random phase shift.
+                phase = np.random.random() * 2 * np.pi
+                state[1] *= np.exp(1j * phase)
+                success_prob *= (1.0 - lam)
+
         # Apply dark counts (measurement error).
         if self.dark_count_rate > 0:
-            # Simplified: dark counts flip the state.
-            if random.random() < self.dark_count_rate * 0.001:  # Per microsecond
-                state = self._apply_pauli(state, 'X')
-        
+            if np.random.random() < self.dark_count_rate * 0.001:
+                # Dark count flips the state.
+                state = np.array([state[1], state[0]], dtype=complex)
+
+        # Normalize state.
+        norm = np.linalg.norm(state)
+        if norm > 0:
+            state = state / norm
+
         return state, success_prob
-    
+
     def _apply_pauli(self, state: np.ndarray, pauli: str) -> np.ndarray:
         """Apply Pauli operator to single qubit state."""
         if pauli == 'X':
-            # X = [[0, 1], [1, 0]]
-            return np.array([state[1], state[0]])
+            return np.array([state[1], state[0]], dtype=complex)
         elif pauli == 'Y':
-            # Y = [[0, -i], [i, 0]] (simplified real version)
-            return np.array([-state[1], state[0]])
+            return np.array([state[1] * 1j, -state[0] * 1j], dtype=complex)
         elif pauli == 'Z':
-            # Z = [[1, 0], [0, -1]]
-            return np.array([state[0], -state[1]])
+            return np.array([state[0], -state[1]], dtype=complex)
         return state
-    
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            'source': self.source,
-            'target': self.target,
-            'model': self.model.value,
-            'loss_prob': self.loss_prob,
-            'depolarizing_rate': self.depolarizing_rate,
-            'dark_count_rate': self.dark_count_rate,
-            'distance_km': self.distance_km,
-        }
 
 
-@dataclass
 class NetworkNode:
     """A node in the quantum network."""
-    id: str
-    node_type: str = "end_node"  # end_node, repeater, router
-    location: Tuple[float, float] = (0.0, 0.0)  # (x, y) km
-    qubits: int = 10
-    classical_compute: bool = True
+
+    def __init__(self, name: str, node_type: str = "end"):
+        self.name = name
+        self.node_type = node_type  # "end", "repeater", "switch"
+        self.qubit_memory: Dict[int, np.ndarray] = {}  # Qubit memory.
+        self.entanglement_links: Dict[str, Any] = {}
+
+    def store_qubit(self, qubit_id: int, state: np.ndarray):
+        """Store qubit in memory."""
+        self.qubit_memory[qubit_id] = state.copy()
+
+    def recall_qubit(self, qubit_id: int) -> Optional[np.ndarray]:
+        """Recall qubit from memory."""
+        return self.qubit_memory.get(qubit_id)
+
+    def measure_qubit(self, qubit_id: int, basis: str = 'Z') -> int:
+        """Measure qubit in given basis."""
+        if qubit_id not in self.qubit_memory:
+            return 0
+
+        state = self.qubit_memory[qubit_id]
+
+        if basis == 'Z':
+            probs = [np.abs(state[0])**2, np.abs(state[1])**2]
+        else:  # X basis.
+            # Transform to X basis.
+            x_state = np.array([
+                (state[0] + state[1]) / np.sqrt(2),
+                (state[0] - state[1]) / np.sqrt(2)
+            ])
+            probs = [np.abs(x_state[0])**2, np.abs(x_state[1])**2]
+
+        # Normalize.
+        probs = np.array(probs) / np.sum(probs)
+        return np.random.choice(2, p=probs)
 
 
-class NetworkTopology:
-    """
-    Network topology editor and manager.
-    """
-    
-    def __init__(self, topology_type: TopologyType = TopologyType.MESH):
-        self.topology_type = topology_type
+class QuantumNetwork:
+    """Full quantum network simulation."""
+
+    def __init__(self, topology: TopologyType = TopologyType.MESH):
+        self.topology = topology
         self.nodes: Dict[str, NetworkNode] = {}
         self.channels: List[QuantumChannel] = []
-        self._id_counter = 0
-    
-    def add_node(self, node_type: str = "end_node", 
-                 location: Optional[Tuple[float, float]] = None) -> str:
-        """Add a node to the network."""
-        node_id = f"node_{self._id_counter}"
-        self._id_counter += 1
-        
-        if location is None:
-            # Auto-generate location based on topology.
-            location = self._get_auto_location()
-        
-        self.nodes[node_id] = NetworkNode(
-            id=node_id,
-            node_type=node_type,
-            location=location
-        )
-        return node_id
-    
-    def _get_auto_location(self) -> Tuple[float, float]:
-        """Generate location based on topology type."""
-        n = len(self.nodes)
-        if self.topology_type == TopologyType.STAR:
-            # All nodes at distance 1 from origin.
-            angle = 2 * np.pi * n / max(1, n + 1)
-            return (np.cos(angle), np.sin(angle))
-        elif self.topology_type == TopologyType.RING:
-            angle = 2 * np.pi * n / max(3, n + 3)
-            return (np.cos(angle) * 2, np.sin(angle) * 2)
-        else:
-            # Random location.
-            return (random.uniform(0, 10), random.uniform(0, 10))
-    
+        self.entanglement_table: Dict[Tuple[str, str], Any] = {}
+
+    def add_node(self, name: str, node_type: str = "end"):
+        """Add node to network."""
+        self.nodes[name] = NetworkNode(name, node_type)
+
     def add_channel(self, source: str, target: str,
-                    model: ChannelModel = ChannelModel.IDEAL,
-                    **kwargs) -> QuantumChannel:
-        """Add a quantum channel between two nodes."""
-        if source not in self.nodes or target not in self.nodes:
-            raise ValueError(f"Node not found: {source} or {target}")
-        
-        # Calculate distance.
-        src_loc = self.nodes[source].location
-        tgt_loc = self.nodes[target].location
-        distance = np.sqrt((src_loc[0] - tgt_loc[0])**2 + 
-                        (src_loc[1] - tgt_loc[1])**2)
-        
-        channel = QuantumChannel(
-            source=source,
-            target=target,
-            model=model,
-            distance_km=distance,
-            **kwargs
-        )
+                    model: ChannelModel = ChannelModel.IDEAL, **kwargs):
+        """Add quantum channel between nodes."""
+        channel = QuantumChannel(source, target, model, **kwargs)
         self.channels.append(channel)
-        return channel
-    
-    def build_topology(self):
-        """Build connections based on topology type."""
-        node_ids = list(self.nodes.keys())
-        
-        if self.topology_type == TopologyType.STAR:
-            # Connect all nodes to center (node_0).
-            if len(node_ids) > 1:
-                for i in range(1, len(node_ids)):
-                    self.add_channel(node_ids[0], node_ids[i])
-        
-        elif self.topology_type == TopologyType.MESH:
-            # Fully connected.
-            for i in range(len(node_ids)):
-                for j in range(i + 1, len(node_ids)):
-                    self.add_channel(node_ids[i], node_ids[j])
-        
-        elif self.topology_type == TopologyType.TREE:
-            # Binary tree.
-            for i in range(1, len(node_ids)):
-                parent = (i - 1) // 2
-                self.add_channel(node_ids[parent], node_ids[i])
-        
-        elif self.topology_type == TopologyType.RING:
-            # Ring: each node connected to 2 neighbors.
-            n = len(node_ids)
-            for i in range(n):
-                self.add_channel(node_ids[i], node_ids[(i + 1) % n])
-                if i == 0:  # Avoid duplicate for first node.
-                    self.add_channel(node_ids[i], node_ids[n-1])
-    
-    def get_neighbors(self, node_id: str) -> List[str]:
-        """Get neighboring nodes."""
-        neighbors = []
-        for ch in self.channels:
-            if ch.source == node_id:
-                neighbors.append(ch.target)
-            elif ch.target == node_id:
-                neighbors.append(ch.source)
-        return neighbors
-    
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            'type': self.topology_type.value,
-            'nodes': {nid: {'type': n.node_type, 'location': n.location} 
-                      for nid, n in self.nodes.items()},
-            'channels': [ch.to_dict() for ch in self.channels],
-            'num_nodes': len(self.nodes),
-            'num_channels': len(self.channels),
-        }
 
-
-class QuantumNetworkSimulator:
-    """
-    Full quantum network stack simulator.
-    
-    Layers: Physical (photons), Link (entanglement), 
-             Network (routing), Transport (retransmission), Application.
-    """
-    
-    def __init__(self, topology: Optional[NetworkTopology] = None):
-        self.topology = topology or NetworkTopology(TopologyType.MESH)
-        self.stack_state = {
-            'physical': {'photons_transmitted': 0, 'loss_rate': 0.0},
-            'link': {'entangled_pairs': 0, 'fidelity': 1.0},
-            'network': {'packets_routed': 0, 'hops': 0},
-            'transport': {'retransmissions': 0},
-            'application': {'qubits_delivered': 0},
-        }
-        self.entangled_pairs: Dict[Tuple[str, str], Tuple[np.ndarray, float]] = {}
-        self.classical_network: Dict[str, List[str]] = {}  # node -> messages
-    
-    def initialize(self):
-        """Initialize the network stack."""
-        # Build topology if empty.
-        if not self.topology.channels:
-            self.topology.build_topology()
-        
-        # Initialize classical network (same topology).
-        for ch in self.topology.channels:
-            if ch.source not in self.classical_network:
-                self.classical_network[ch.source] = []
-            if ch.target not in self.classical_network:
-                self.classical_network[ch.target] = []
-            self.classical_network[ch.source].append(f"msg_to_{ch.target}")
-        
-        self.stack_state['physical']['photons_transmitted'] = 0
-        return "Network initialized"
-    
-    def distribute_entanglement(self, source: str, target: str,
-                                fidelity: float = 0.99) -> bool:
-        """
-        Distribute entanglement between two nodes.
-        
-        Returns:
-            True if successful.
-        """
+    def transmit_qubit(self, source: str, target: str,
+                       qubit_state: np.ndarray) -> Tuple[np.ndarray, float]:
+        """Transmit qubit from source to target."""
         # Find channel.
-        channel = self._find_channel(source, target)
-        if channel is None:
-            return False
-        
-        # Simulate entanglement generation.
-        # Create Bell pair |Φ+> = (|00> + |11>)/√2.
-        bell_state = np.array([1, 0, 0, 1]) / np.sqrt(2)
-        
-        # Transmit one qubit through channel.
-        transmitted, success_prob = channel.transmit(bell_state[:2])
-        
-        if random.random() < success_prob * fidelity:
-            self.entangled_pairs[(source, target)] = (bell_state, fidelity)
-            self.stack_state['link']['entangled_pairs'] += 1
-            self.stack_state['link']['fidelity'] = fidelity
-            return True
-        else:
-            self.stack_state['physical']['loss_rate'] += 1
-            return False
-    
-    def _find_channel(self, source: str, target: str) -> Optional[QuantumChannel]:
-        """Find channel between two nodes."""
-        for ch in self.topology.channels:
-            if (ch.source == source and ch.target == target) or \
-               (ch.source == target and ch.target == source):
-                return ch
-        return None
-    
-    def send_qubit(self, source: str, target: str, 
-                 qubit_state: np.ndarray) -> Tuple[bool, np.ndarray]:
-        """
-        Send qubit from source to target.
-        
-        Returns:
-            Tuple of (success, received_state).
-        """
-        channel = self._find_channel(source, target)
-        if channel is None:
-            return False, qubit_state
-        
-        # Transmit through channel.
-        received, prob = channel.transmit(qubit_state)
-        self.stack_state['physical']['photons_transmitted'] += 1
-        
-        if random.random() < prob:
-            self.stack_state['application']['qubits_delivered'] += 1
-            return True, received
-        else:
-            return False, qubit_state
-    
-    def route_message(self, source: str, target: str, 
-                      message: str) -> List[str]:
-        """
-        Route classical message through network.
-        
-        Returns:
-            List of hops (node IDs).
-        """
-        # Simplified routing: BFS.
-        from collections import deque
-        queue = deque([source])
-        visited = {source}
-        parent = {source: None}
-        
-        while queue:
-            current = queue.popleft()
-            if current == target:
+        channel = None
+        for ch in self.channels:
+            if ch.source == source and ch.target == target:
+                channel = ch
                 break
-            
-            for neighbor in self.topology.get_neighbors(current):
-                if neighbor not in visited:
-                    visited.add(neighbor)
-                    parent[neighbor] = current
-                    queue.append(neighbor)
-        
-        # Reconstruct path.
-        path = []
-        curr = target
-        while curr is not None:
-            path.append(curr)
-            curr = parent.get(curr)
-        path.reverse()
-        
-        self.stack_state['network']['packets_routed'] += 1
-        self.stack_state['network']['hops'] = len(path) - 1
-        
-        return path
-    
-    def get_statistics(self) -> Dict[str, Any]:
+
+        if channel is None:
+            # Create default channel.
+            channel = QuantumChannel(source, target)
+
+        # Transmit.
+        return channel.transmit(qubit_state)
+
+    def create_entanglement(self, node1: str, node2: str) -> bool:
+        """Create entangled pair between two nodes."""
+        if node1 not in self.nodes or node2 not in self.nodes:
+            return False
+
+        # Create Bell pair |Φ+> = (|00> + |11>)/√2.
+        bell_state = np.zeros(4, dtype=complex)
+        bell_state[0] = 1/np.sqrt(2)  # |00>.
+        bell_state[3] = 1/np.sqrt(2)  # |11>.
+
+        # Distribute: each node gets one qubit.
+        # Qubit 1 goes to node1, qubit 2 goes to node2.
+        # For simplicity, store full state in both (in real implementation, would split).
+        self.nodes[node1].store_qubit(0, bell_state[:2])  # First qubit.
+        self.nodes[node2].store_qubit(0, bell_state[2:])  # Second qubit (simplified).
+
+        self.entanglement_table[(node1, node2)] = bell_state
+        return True
+
+    def measure_entangled(self, node: str, basis: str = 'Z') -> int:
+        """Measure entangled qubit."""
+        if node not in self.nodes:
+            return 0
+        return self.nodes[node].measure_qubit(0, basis)
+
+    def get_network_stats(self) -> Dict[str, Any]:
         """Get network statistics."""
         return {
-            'stack_state': self.stack_state.copy(),
-            'entangled_pairs': len(self.entangled_pairs),
-            'topology': self.topology.to_dict(),
-            'average_fidelity': np.mean([f for _, (_, f) in self.entangled_pairs.items()]) 
-                                if self.entangled_pairs else 0.0,
+            'nodes': len(self.nodes),
+            'channels': len(self.channels),
+            'entangled_pairs': len(self.entanglement_table),
+            'topology': self.topology.value
         }

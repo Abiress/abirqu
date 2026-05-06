@@ -116,27 +116,36 @@ class QRAMSimulator:
             raise ValueError(f"Unknown architecture: {self.architecture}")
     
     def _bucket_brigade_circuit(self, query: QRAMQuery) -> Dict[str, Any]:
-        """Generate bucket-brigade QRAM circuit."""
+        """Generate real bucket-brigade QRAM circuit with quantum gates."""
         # Bucket-brigade uses O(log N) depth, O(N) qubits
-        num_qubits = self.num_address_qubits + self.num_data_qubits + 2  # + bus and flag qubits
+        num_bus_qubits = (2 ** self.num_address_qubits) - 1  # Binary tree of bus qubits
+        num_qubits = self.num_address_qubits + self.num_data_qubits + num_bus_qubits
         
         gates = []
-        # Simplified: just create gates for address decoding
-        for i in range(self.num_address_qubits):
-            gates.append(('h', [i]))  # Hadamard on address qubits
+        bus_start = self.num_address_qubits + self.num_data_qubits
         
-        # Control gates based on address
-        for addr in range(min(2 ** self.num_address_qubits, 16)):  # Limit for simulation
-            # Control pattern for this address
-            ctrl_pattern = []
-            for i in range(self.num_address_qubits):
-                if not (addr & (1 << i)):
-                    ctrl_pattern.append(('x', [i]))
-            
-            # Apply data write/read based on address
-            data_start = self.num_address_qubits
-            for j in range(self.num_data_qubits):
-                gates.append(('cnot', [data_start + j] + [i for i in range(self.num_address_qubits)]))
+        # 1. Put address qubits in superposition (query all addresses)
+        for i in range(self.num_address_qubits):
+            gates.append(('h', [i]))
+        
+        # 2. Build bus qubit tree (control bus qubits based on address)
+        # Root bus qubit (index 0) controlled by first address qubit
+        gates.append(('cnot', [0, bus_start]))
+        for i in range(1, self.num_address_qubits):
+            parent_bus = bus_start + (2 ** i - 1)  # Parent bus index
+            child_bus = bus_start + (2 ** (i + 1) - 1) + i
+            if child_bus < bus_start + num_bus_qubits:
+                gates.append(('cnot', [i, child_bus]))
+                gates.append(('cnot', [parent_bus, child_bus]))
+        
+        # 3. Control data qubits based on leaf bus qubits
+        data_start = self.num_address_qubits
+        leaf_start = bus_start + (2 ** (self.num_address_qubits - 1) - 1)
+        for j in range(self.num_data_qubits):
+            for k in range(2 ** self.num_address_qubits):
+                leaf_bus = leaf_start + k
+                if leaf_bus < bus_start + num_bus_qubits:
+                    gates.append(('cnot', [data_start + j, leaf_bus]))
         
         depth = len(gates)
         
@@ -149,59 +158,102 @@ class QRAMSimulator:
         }
     
     def _lookup_table_circuit(self, query: QRAMQuery) -> Dict[str, Any]:
-        """Generate lookup table QRAM circuit."""
+        """Generate lookup table QRAM circuit with real controlled gates."""
         # Lookup table uses O(1) depth but O(N) qubits
-        num_qubits = self.num_address_qubits + self.num_data_qubits
+        num_qubits = self.num_address_qubits + self.num_data_qubits * self.memory_size
         
         gates = []
         # Direct mapping: each address has dedicated data qubits
         for addr in range(self.memory_size):
-            # Simplified: just mark that we'd have control gates here
-            gates.append(('marker', f'address_{addr}'))
+            data_start = self.num_address_qubits + addr * self.num_data_qubits
+            # Apply X to address qubits to match this address
+            for i in range(self.num_address_qubits):
+                if not (addr & (1 << i)):
+                    gates.append(('x', [i]))
+            # Control data qubits with address qubits
+            for j in range(self.num_data_qubits):
+                ctrl_qubits = [i for i in range(self.num_address_qubits)]
+                gates.append(('cnot', [data_start + j] + ctrl_qubits))
+            # Reset address qubits
+            for i in range(self.num_address_qubits):
+                if not (addr & (1 << i)):
+                    gates.append(('x', [i]))
         
         return {
             'num_qubits': num_qubits,
             'gates': gates,
-            'depth': 1,  # O(1) depth
+            'depth': self.num_address_qubits + 1,
             'query': query,
             'architecture': self.architecture.value,
         }
     
     def _fanout_circuit(self, query: QRAMQuery) -> Dict[str, Any]:
-        """Generate fanout QRAM circuit."""
-        # Fanout-based: uses fanout gates to distribute address
-        num_qubits = self.num_address_qubits + self.num_data_qubits + self.num_address_qubits  # Extra for fanout
+        """Generate fanout QRAM circuit with real CNOT gates."""
+        # Fanout-based: copy each address qubit to fanout qubits via CNOT
+        num_fanout_qubits = self.num_address_qubits
+        num_qubits = self.num_address_qubits + self.num_data_qubits + num_fanout_qubits
         
         gates = []
-        # Fanout each address qubit
+        # Fanout each address qubit to its corresponding fanout qubit
         for i in range(self.num_address_qubits):
-            gates.append(('fanout', [i, self.num_address_qubits + i]))
+            addr_qubit = i
+            fanout_qubit = self.num_address_qubits + self.num_data_qubits + i
+            gates.append(('cnot', [addr_qubit, fanout_qubit]))
+        
+        # Control data qubits with fanout qubits
+        data_start = self.num_address_qubits
+        for j in range(self.num_data_qubits):
+            ctrl_qubits = [self.num_address_qubits + self.num_data_qubits + i for i in range(self.num_address_qubits)]
+            gates.append(('cnot', [data_start + j] + ctrl_qubits))
         
         return {
             'num_qubits': num_qubits,
             'gates': gates,
-            'depth': self.num_address_qubits,  # O(log N) depth
+            'depth': self.num_address_qubits + 1,
             'query': query,
             'architecture': self.architecture.value,
         }
     
     def _tree_circuit(self, query: QRAMQuery) -> Dict[str, Any]:
-        """Generate tree-based QRAM circuit."""
-        # Tree architecture: balanced binary tree
+        """Generate tree-based QRAM circuit with real controlled gates."""
+        # Tree architecture: balanced binary tree of bus qubits
         num_levels = self.num_address_qubits
-        num_qubits = self.num_address_qubits + self.num_data_qubits + (2 ** num_levels - 1)  # Tree nodes
+        num_tree_nodes = (2 ** (num_levels + 1)) - 1  # Full binary tree
+        num_qubits = self.num_address_qubits + self.num_data_qubits + num_tree_nodes
         
         gates = []
-        # Tree traversal (simplified)
+        tree_start = self.num_address_qubits + self.num_data_qubits
+        
+        # Build tree: each parent node controls its children
         for level in range(num_levels):
             nodes_at_level = 2 ** level
-            for node in range(nodes_at_level):
-                gates.append(('tree_node', [f'node_{level}_{node}']))
+            for node_idx in range(nodes_at_level):
+                parent_idx = node_idx  # Index within this level
+                parent_qubit = tree_start + (2 ** level - 1) + parent_idx
+                
+                if level < num_levels - 1:
+                    # Connect parent to left and right children
+                    left_child = tree_start + (2 ** (level + 1) - 1) + (2 * node_idx)
+                    right_child = left_child + 1
+                    
+                    if left_child < tree_start + num_tree_nodes:
+                        gates.append(('cnot', [parent_qubit, left_child]))
+                    if right_child < tree_start + num_tree_nodes:
+                        gates.append(('cnot', [parent_qubit, right_child]))
+        
+        # Control data qubits with leaf nodes (last level of tree)
+        leaf_start = tree_start + (2 ** num_levels - 1)
+        data_start = self.num_address_qubits
+        for j in range(self.num_data_qubits):
+            for k in range(2 ** num_levels):
+                leaf_qubit = leaf_start + k
+                if leaf_qubit < tree_start + num_tree_nodes:
+                    gates.append(('cnot', [data_start + j, leaf_qubit]))
         
         return {
             'num_qubits': num_qubits,
             'gates': gates,
-            'depth': num_levels,
+            'depth': num_levels * 2,
             'query': query,
             'architecture': self.architecture.value,
         }

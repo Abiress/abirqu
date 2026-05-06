@@ -1,7 +1,7 @@
 """
 Task 18.4 — Quantum File System.
 
-Implement persistent quantum state storage (simulated).
+Implement persistent quantum state storage with encryption.
 Build circuit file management with version control.
 Support shared circuit libraries with access control (abir-guard encrypted).
 Implement result archival and retrieval system.

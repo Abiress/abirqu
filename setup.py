@@ -11,7 +11,7 @@ setup(
     name="abirqu",
     version="0.1.0",
     author="Abir Maheshwari",
-    author_email="abir@example.com",
+    author_email="abhirsxn@gmail.com",
     description="Next-generation quantum computing SDK with LDPC codes and post-quantum security",
     long_description=long_description,
     long_description_content_type="text/markdown",

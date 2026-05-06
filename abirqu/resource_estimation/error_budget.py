@@ -189,9 +189,13 @@ class ErrorBudgetManager:
             # Estimate how code distance affects error rates
             if 'code_distance' in scenario:
                 d = scenario['code_distance']
-                # Error rate ~ (some_factor)^(1-d)
-                factor = 0.1  # Simplified
-                new_logical_error = factor ** (1 - d)
+                p_threshold = 0.01  # Surface code threshold
+                p_physical = scenario.get('gate_error_rate', 1e-4)
+                # Logical error rate: (p_physical / p_threshold)^(d/2)
+                if p_physical < p_threshold:
+                    new_logical_error = (p_physical / p_threshold) ** (d / 2)
+                else:
+                    new_logical_error = 1.0  # Above threshold
                 modified['gate_error_rate'] = new_logical_error
             
             # Calculate new budget utilization

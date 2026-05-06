@@ -55,13 +55,37 @@ class NeutralAtomConnector:
         }
         
     def _simulate(self, circuit: Circuit, shots: int) -> Dict[str, int]:
-        """Simulate Neutral Atom circuit."""
-        import random
+        """Simulate Neutral Atom circuit using actual quantum simulation."""
+        from ..core.qvm import QuantumVirtualMachine
+        from ..core.gates import H, X, Y, Z, CNOT, RY, RZ
+        
+        # Create QVM with circuit's qubits
         num_qubits = circuit.num_qubits
+        qvm = QuantumVirtualMachine(num_qubits)
+        
+        # Apply gates from circuit
+        for gate, qubits in circuit.gates:
+            if len(qubits) == 1:
+                qvm.apply_gate(gate.matrix, qubits[0])
+            else:
+                qvm.apply_gate(gate.matrix, qubits)
+                
+        # Get probabilities and sample from actual distribution
+        probs = qvm.get_probabilities()
+        
+        import numpy as np
+        basis_states = list(probs.keys())
+        probabilities = list(probs.values())
+        total = sum(probabilities)
+        if total > 0:
+            probabilities = [p/total for p in probabilities]
+            
+        # Sample shots
         results = {}
         for _ in range(shots):
-            bitstring = ''.join(random.choice('01') for _ in range(num_qubits))
-            results[bitstring] = results.get(bitstring, 0) + 1
+            outcome = np.random.choice(basis_states, p=probabilities) if probabilities else '0'*num_qubits
+            results[outcome] = results.get(outcome, 0) + 1
+            
         return results
         
     def get_fidelity(self, gate_name: str) -> float:
