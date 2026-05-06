@@ -10,9 +10,9 @@ with open("README.md", "r") as f:
 setup(
     name="abirqu",
     version="0.1.0",
-    author="AbirQu Team",
-    author_email="team@abirqu.ai",
-    description="Next-generation quantum computing SDK with agentic AI, LDPC codes, and post-quantum security",
+    author="Abir Maheshwari",
+    author_email="abir@example.com",
+    description="Next-generation quantum computing SDK with LDPC codes and post-quantum security",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/abirqu/abirqu",
