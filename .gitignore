@@ -7,11 +7,7 @@ __pycache__/
 *.egg
 build/
 dist/
-*.egg-info/
 .eggs/
-*.egg-info/
-.eggs/
-*.egg-info/
 # Testing
 .pytest_cache/
 .coverage
@@ -35,5 +31,6 @@ Thumbs.db
 # Temporary
 *.tmp
 *.bak
-# Jupyter
-.ipynb_checkpoints/
+# Quantum-specific
+*.qasm
+*.qobj
