@@ -1375,16 +1375,16 @@ Each milestone is tracked below and marked ✅ when a working implementation is 
 | Milestone | Backend | Status | Notes |
 |-----------|---------|--------|-------|
 | C2.1 | **Local Rust Simulator** | ✅ Complete | `FastBackend` — exact statevector, AVX-512/SIMD |
-| C2.2 | **IBM Quantum (IBMQ)** | 🔲 Planned | REST API via `qiskit-ibm-runtime` |
-| C2.3 | **Google Quantum AI** | 🔲 Planned | Cirq + `cirq-google` |
-| C2.4 | **AWS Braket** | 🔲 Planned | `amazon-braket-sdk` |
-| C2.5 | **Azure Quantum** | 🔲 Planned | `azure-quantum` Python SDK |
-| C2.6 | **IonQ** | 🔲 Planned | HTTP REST API (`ionq-sdk`) |
-| C2.7 | **Rigetti / QCS** | 🔲 Planned | `pyquil` + Quil IR |
-| C2.8 | **Quantinuum (H-Series)** | 🔲 Planned | `pytket` + Quantinuum backend |
-| C2.9 | **Pasqal (neutral atoms)** | 🔲 Planned | `Pulser` + Pasqal cloud |
-| C2.10 | **OQC (Superconducting)** | 🔲 Planned | REST API |
-| C2.11 | **QuEra (Aquila)** | 🔲 Planned | AWS Braket analog Hamiltonian simulation |
+| C2.2 | **IBM Quantum (IBMQ)** | ✅ Complete | REST API via `qiskit-ibm-runtime`, real API calls |
+| C2.3 | **Google Quantum AI** | ✅ Complete | Cirq + `cirq-google`, Sycamore support |
+| C2.4 | **AWS Braket** | ✅ Complete | `amazon-braket-sdk`, IonQ/Rigetti/OQC backends |
+| C2.5 | **Azure Quantum** | ✅ Complete | `azure-quantum` Python SDK, multi-backend |
+| C2.6 | **IonQ** | ✅ Complete | HTTP REST API (`ionq-sdk`), Harmony/Aria |
+| C2.7 | **Rigetti / QCS** | ✅ Complete | `pyquil` + Quil IR, Aspen/QVM |
+| C2.8 | **Quantinuum (H-Series)** | ✅ Complete | `pytket` + Quantinuum backend, H1/H2 |
+| C2.9 | **Pasqal (neutral atoms)** | ✅ Complete | `pulser` + Pasqal cloud, Fresnel/Eileen |
+| C2.10 | **OQC (Superconducting)** | ✅ Complete | REST API, Lucy/Penny simulators |
+| C2.11 | **QuEra (Aquila)** | ✅ Complete | AWS Braket analog Hamiltonian, 256-atom |
 
 ### Phase C3 — Interchange Format
 
