@@ -34,3 +34,12 @@ Thumbs.db
 # Quantum-specific
 *.qasm
 *.qobj
+
+# Build artifacts
+target/
+benchmark_results/raw_data/
+
+# JavaScript/Node.js
+node_modules/
+js/node_modules/
+js/build/

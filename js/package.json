@@ -1,0 +1,38 @@
+{
+  "name": "abirqu",
+  "version": "1.0.0",
+  "description": "Pure Quantum SDK - JavaScript/Node.js Implementation with WebAssembly",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-wasm.js",
+    "test": "node tests/run-tests.js",
+    "examples": "node examples/basic-circuit.js",
+    "docs": "jsdoc src/ -d docs/"
+  },
+  "keywords": [
+    "quantum",
+    "quantum-computing",
+    "simulation",
+    "wasm",
+    "webassembly",
+    "qiskit-alternative",
+    "qubit",
+    "gate-simulation"
+  ],
+  "author": "Abir Datta <abir.datta.pro@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "complex.js": "^2.1.1",
+    "mathjs": "^13.0.0",
+    "ndarray": "^1.0.19",
+    "gl-matrix": "^3.4.3"
+  },
+  "devDependencies": {
+    "jsdoc": "^4.0.2",
+    "eslint": "^8.56.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
