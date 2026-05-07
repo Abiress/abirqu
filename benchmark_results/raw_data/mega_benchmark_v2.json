@@ -1,0 +1,232 @@
+{
+  "simulation_speed": [
+    {
+      "qubits": 8,
+      "abirqu_s": 7.372800610028207e-05,
+      "qiskit_s": 0.08991501602577046,
+      "cirq_s": 0.003339268994750455,
+      "winner": "AbirQu",
+      "tvd_aq": 1.1102230246251565e-16,
+      "tvd_ac": 1.6391277313232422e-07,
+      "correct": true
+    },
+    {
+      "qubits": 12,
+      "abirqu_s": 0.001939148991368711,
+      "qiskit_s": 0.09130880801239982,
+      "cirq_s": 0.004406455991556868,
+      "winner": "AbirQu",
+      "tvd_aq": 2.7755575615628914e-16,
+      "tvd_ac": 1.6391277332661325e-07,
+      "correct": true
+    },
+    {
+      "qubits": 16,
+      "abirqu_s": 0.003912757994839922,
+      "qiskit_s": 0.0946127460047137,
+      "cirq_s": 0.007972832972882316,
+      "winner": "AbirQu",
+      "tvd_aq": 1.6653345369377348e-16,
+      "tvd_ac": 2.0861625688040064e-07,
+      "correct": true
+    },
+    {
+      "qubits": 20,
+      "abirqu_s": 0.056005283986451104,
+      "qiskit_s": 0.12823990700417198,
+      "cirq_s": 0.050300733011681587,
+      "winner": "Cirq",
+      "tvd_aq": 4.440892098500626e-16,
+      "tvd_ac": 3.2782554626464844e-07,
+      "correct": true
+    }
+  ],
+  "dense_simulation": [
+    {
+      "qubits": 8,
+      "abirqu_s": 0.0003724469861481339,
+      "qiskit_s": 0.09250685301958583,
+      "cirq_s": 0.0161461659881752,
+      "winner": "AbirQu"
+    },
+    {
+      "qubits": 12,
+      "abirqu_s": 0.01439145501353778,
+      "qiskit_s": 0.09453694001422264,
+      "cirq_s": 0.01916334399720654,
+      "winner": "AbirQu"
+    },
+    {
+      "qubits": 16,
+      "abirqu_s": 0.015124822006328031,
+      "qiskit_s": 0.11072873597731814,
+      "cirq_s": 0.04416994101484306,
+      "winner": "AbirQu"
+    }
+  ],
+  "construction_speed": [
+    {
+      "qubits": 8,
+      "gates": 160,
+      "abirqu_ms": 0.7616805087309331,
+      "qiskit_ms": 1.1810225114459172,
+      "cirq_ms": 1.8557445000624284,
+      "winner": "AbirQu"
+    },
+    {
+      "qubits": 12,
+      "gates": 240,
+      "abirqu_ms": 1.0877160093514249,
+      "qiskit_ms": 1.6196400101762265,
+      "cirq_ms": 2.5422270118724555,
+      "winner": "AbirQu"
+    },
+    {
+      "qubits": 16,
+      "gates": 320,
+      "abirqu_ms": 1.4629085053456947,
+      "qiskit_ms": 2.189297985751182,
+      "cirq_ms": 3.2958515075733885,
+      "winner": "AbirQu"
+    },
+    {
+      "qubits": 20,
+      "gates": 400,
+      "abirqu_ms": 1.8019239796558395,
+      "qiskit_ms": 2.7827130106743425,
+      "cirq_ms": 4.106053005671129,
+      "winner": "AbirQu"
+    }
+  ],
+  "optimizer": [
+    {
+      "circuit": "5q_QFT",
+      "original_gates": 35,
+      "optimized_gates": 35,
+      "reduction_pct": 0.0,
+      "time_ms": 2.172869979403913,
+      "tvd": 0.0,
+      "correct": true
+    },
+    {
+      "circuit": "8q_random_100g",
+      "original_gates": 100,
+      "optimized_gates": 95,
+      "reduction_pct": 5.000000000000004,
+      "time_ms": 10.133597999811172,
+      "tvd": 4.52334228558636e-16,
+      "correct": true
+    },
+    {
+      "circuit": "6q_random_50g",
+      "original_gates": 50,
+      "optimized_gates": 50,
+      "reduction_pct": 0.0,
+      "time_ms": 4.060708015458658,
+      "tvd": 2.678978864916956e-16,
+      "correct": true
+    }
+  ],
+  "density_matrix": [
+    {
+      "qubits": 2,
+      "abirqu_s": 0.00019089700072072446,
+      "qiskit_s": 0.09115571400616318,
+      "abirqu_purity": 0.9999999999999996,
+      "qiskit_purity": 1.0
+    },
+    {
+      "qubits": 4,
+      "abirqu_s": 0.000339988007908687,
+      "qiskit_s": 0.05340731798787601,
+      "abirqu_purity": 0.9999999999999996,
+      "qiskit_purity": 1.0
+    },
+    {
+      "qubits": 6,
+      "abirqu_s": 0.0014059180102776736,
+      "qiskit_s": 0.06130948098143563,
+      "abirqu_purity": 0.9999999999999996,
+      "qiskit_purity": 1.0
+    },
+    {
+      "qubits": 8,
+      "abirqu_s": 0.05826422700192779,
+      "qiskit_s": 0.13739910599542782,
+      "abirqu_purity": 0.9999999999999996,
+      "qiskit_purity": 1.0
+    }
+  ],
+  "qec_capabilities": {
+    "surface_d3": {
+      "physical_qubits": 17,
+      "status": "exists"
+    },
+    "surface_d5": {
+      "physical_qubits": 49,
+      "status": "exists"
+    },
+    "ldpc_n20_k10": {
+      "n": 20,
+      "k": 10,
+      "rate": 0.5,
+      "status": "exists"
+    },
+    "ldpc_n50_k25": {
+      "n": 50,
+      "k": 25,
+      "rate": 0.5,
+      "status": "exists"
+    }
+  },
+  "measurement_speed": [
+    {
+      "qubits": 8,
+      "shots": 1024,
+      "abirqu_s": 0.0005077189998701215,
+      "qiskit_s": 0.10199162497883663,
+      "cirq_s": 0.009570960013661534,
+      "winner": "AbirQu"
+    },
+    {
+      "qubits": 8,
+      "shots": 8192,
+      "abirqu_s": 0.0008029940072447062,
+      "qiskit_s": 0.1039151870063506,
+      "cirq_s": 0.0758046179835219,
+      "winner": "AbirQu"
+    },
+    {
+      "qubits": 12,
+      "shots": 1024,
+      "abirqu_s": 0.0018510510271880776,
+      "qiskit_s": 0.10598464999930002,
+      "cirq_s": 0.012927289993967861,
+      "winner": "AbirQu"
+    },
+    {
+      "qubits": 12,
+      "shots": 8192,
+      "abirqu_s": 0.0034362509904894978,
+      "qiskit_s": 0.10531664898735471,
+      "cirq_s": 0.09447316901059821,
+      "winner": "AbirQu"
+    },
+    {
+      "qubits": 16,
+      "shots": 1024,
+      "abirqu_s": 0.004332317010266706,
+      "qiskit_s": 0.10202300202217884,
+      "cirq_s": 0.01866746600717306,
+      "winner": "AbirQu"
+    },
+    {
+      "qubits": 16,
+      "shots": 8192,
+      "abirqu_s": 0.005768547998741269,
+      "qiskit_s": 0.10615478298859671,
+      "cirq_s": 0.11587385801249184,
+      "winner": "AbirQu"
+    }
+  ]
+}

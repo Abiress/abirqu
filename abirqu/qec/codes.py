@@ -79,16 +79,31 @@ class LDPCCode:
         self.G = self._generate_generator_matrix()
         
     def _generate_parity_matrix(self) -> np.ndarray:
-        """Generate sparse parity-check matrix."""
-        m = self.n - self.k  # Number of parity checks
+        """Generate sparse parity-check matrix (Gallager's construction)."""
+        m = self.n - self.k
         H = np.zeros((m, self.n), dtype=int)
         
-        # Create a sparse parity-check matrix (simplified Tanner code)
-        for i in range(m):
-            # Each check connects to ~3-6 variable nodes
-            for j in range(3):
-                col = (i * 3 + j) % self.n
-                H[i, col] = 1
+        # Gallager construction: dv columns of weight 3
+        # Ensure m/3 rows in each sub-matrix
+        sub_m = m // 3
+        if sub_m == 0: sub_m = m
+        
+        for i in range(3):
+            # Identity-like blocks
+            block = np.zeros((sub_m, self.n), dtype=int)
+            for row in range(sub_m):
+                for col_idx in range(3): # dc = 3 for small codes
+                    col = (row * 3 + col_idx) % self.n
+                    block[row, col] = 1
+            
+            # Randomly permute columns of the block
+            idx = np.random.permutation(self.n)
+            block = block[:, idx]
+            
+            # Add to H
+            start_row = i * sub_m
+            if start_row + sub_m <= m:
+                H[start_row:start_row + sub_m] = block
                 
         return H
         

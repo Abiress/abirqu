@@ -5,7 +5,7 @@ Copyright 2026 Abir Maheshwari
 Pipeline for optimizing multiple objectives (depth, gates, error).
 """
 from typing import List, Dict, Callable, Tuple, Any
-from ..core.circuit import Circuit
+from abirqu.circuit import Circuit
 
 class MultiObjectivePipeline:
     """Pipeline for optimizing multiple objectives (depth, gates, error)."""

@@ -1,0 +1,15 @@
+{
+  "cpu": "13th Gen Intel(R) Core(TM) i9-13900H",
+  "cores": 20,
+  "ram_gb": 30.6,
+  "gpu": "None (CPU-only)",
+  "os": "Linux-7.0.0-15-generic-x86_64-with-glibc2.43",
+  "python": "3.14.4",
+  "abirqu_version": "0.1.0",
+  "qiskit_version": "2.4.1",
+  "qiskit_aer_version": "0.17.2",
+  "cirq_version": "1.6.1",
+  "numpy_version": "2.4.4",
+  "scipy_version": "1.17.1",
+  "timestamp": "2026-05-06 21:04:03 UTC"
+}

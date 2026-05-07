@@ -1,0 +1,29 @@
+[
+  {
+    "circuit": "5q_QFT",
+    "original_gates": 35,
+    "optimized_gates": 35,
+    "reduction_pct": 0.0,
+    "time_ms": 2.172869979403913,
+    "tvd": 0.0,
+    "correct": true
+  },
+  {
+    "circuit": "8q_random_100g",
+    "original_gates": 100,
+    "optimized_gates": 95,
+    "reduction_pct": 5.000000000000004,
+    "time_ms": 10.133597999811172,
+    "tvd": 4.52334228558636e-16,
+    "correct": true
+  },
+  {
+    "circuit": "6q_random_50g",
+    "original_gates": 50,
+    "optimized_gates": 50,
+    "reduction_pct": 0.0,
+    "time_ms": 4.060708015458658,
+    "tvd": 2.678978864916956e-16,
+    "correct": true
+  }
+]

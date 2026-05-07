@@ -5,7 +5,7 @@ Copyright 2026 Abir Maheshwari
 Adapts compilation strategy based on circuit characteristics.
 """
 from typing import Dict, Any, Optional, List
-from ..core.circuit import Circuit
+from abirqu.circuit import Circuit
 from .phase_poly import PhasePolynomialOptimizer
 from .transpiler import HardwareAwareTranspiler
 from .depth import CircuitDepthMinimizer

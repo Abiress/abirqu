@@ -23,63 +23,54 @@ class LDPCDecoder:
         self.m = ldpc_code.n - ldpc_code.k
         
     def decode(self, received: List[float]) -> List[int]:
-        """Decode using belief propagation (sum-product algorithm)."""
+        """Decode using vectorized belief propagation (sum-product)."""
         if self.parity_matrix is None:
-            raise ValueError("No code loaded. Call load_code() first.")
+            raise ValueError("No code loaded.")
             
         # Convert to numpy array
+        # llr: L_i = log(P(x_i=0|y_i)/P(x_i=1|y_i))
+        # For BSC with error prob p: L_i = log((1-p)/p)
         rx = np.array(received, dtype=float)
+        p = np.clip(rx, 1e-6, 1.0 - 1e-6)
+        llr = np.log((1 - p) / p)
         
-        # Initialize messages
-        # Variable-to-check messages
-        v2c = np.zeros((self.m, self.n))
-        # Check-to-variable messages  
-        c2v = np.zeros((self.m, self.n))
+        m, n = self.parity_matrix.shape
+        # Variable-to-check messages (M_v->c)
+        v2c = np.tile(llr, (m, 1)) * self.parity_matrix
+        # Check-to-variable messages (E_c->v)
+        c2v = np.zeros((m, n))
         
-        # Initial LLRs (log-likelihood ratios)
-        # Assume BPSK: 0->+1, 1->-1
-        llr = -2 * rx / 1.0  # Simplified: noise variance = 1
-        
-        # Belief propagation iterations
-        for iteration in range(self.max_iterations):
-            # Variable to check updates
-            for i in range(self.m):
-                for j in range(self.n):
-                    if self.parity_matrix[i, j] == 1:
-                        # Sum of incoming c2v messages + prior
-                        v2c[i, j] = llr[j] + sum(c2v[i, k] for k in range(self.n) if k != j and self.parity_matrix[i, k] == 1)
-                        
-            # Check to variable updates (tanh rule)
-            for i in range(self.m):
-                for j in range(self.n):
-                    if self.parity_matrix[i, j] == 1:
-                        # Product of tanh(v2c/2) for all neighbors except j
-                        product = 1.0
-                        for k in range(self.n):
-                            if k != j and self.parity_matrix[i, k] == 1:
-                                product *= np.tanh(v2c[i, k] / 2)
-                        if abs(product) < 1e-10:
-                            c2v[i, j] = 0.0
-                        else:
-                            c2v[i, j] = 2 * np.arctanh(product)
-                            
-            # Check convergence
-            # Compute posterior LLRs
-            posterior = llr.copy()
-            for j in range(self.n):
-                for i in range(self.m):
-                    if self.parity_matrix[i, j] == 1:
-                        posterior[j] += c2v[i, j]
-                        
-            # Make hard decision
+        for _ in range(self.max_iterations):
+            # Check to Variable updates: E_c->v = 2 * atanh(prod(tanh(M_v'->c / 2)))
+            for i in range(m):
+                # indices of variables connected to check i
+                idxs = np.where(self.parity_matrix[i] == 1)[0]
+                vals = v2c[i, idxs]
+                tan_vals = np.tanh(vals / 2.0)
+                
+                prod_all = np.prod(tan_vals)
+                for j in idxs:
+                    # prod excluding current variable
+                    t = tan_vals[np.where(idxs == j)[0][0]]
+                    prod_ex = prod_all / (t if abs(t) > 1e-12 else 1e-12)
+                    c2v[i, j] = 2.0 * np.arctanh(np.clip(prod_ex, -1.0 + 1e-12, 1.0 - 1e-12))
+            
+            # Variable to Check updates: M_v->c = L_v + sum(E_c'->v)
+            for j in range(n):
+                idxs = np.where(self.parity_matrix[:, j] == 1)[0]
+                vals = c2v[idxs, j]
+                sum_all = llr[j] + np.sum(vals)
+                for i in idxs:
+                    v2c[i, j] = sum_all - c2v[i, j]
+            
+            # Posterior and hard decision
+            posterior = llr + np.sum(c2v, axis=0)
             decoded = (posterior < 0).astype(int)
             
-            # Check if syndrome is zero
-            syndrome = (self.parity_matrix @ decoded) % 2
-            if np.sum(syndrome) == 0:
+            # Check syndrome
+            if np.sum((self.parity_matrix @ decoded) % 2) == 0:
                 return decoded.tolist()
                 
-        # Max iterations reached, return best estimate
         return (posterior < 0).astype(int).tolist()
         
     def get_decoding_time(self) -> float:

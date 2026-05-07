@@ -1,0 +1,22 @@
+{
+  "surface_d3": {
+    "physical_qubits": 17,
+    "status": "exists"
+  },
+  "surface_d5": {
+    "physical_qubits": 49,
+    "status": "exists"
+  },
+  "ldpc_n20_k10": {
+    "n": 20,
+    "k": 10,
+    "rate": 0.5,
+    "status": "exists"
+  },
+  "ldpc_n50_k25": {
+    "n": 50,
+    "k": 25,
+    "rate": 0.5,
+    "status": "exists"
+  }
+}

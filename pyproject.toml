@@ -1,0 +1,19 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "abirqu"
+version = "0.1.0"
+description = "Next-generation quantum computing SDK with LDPC codes and post-quantum security"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.21.0",
+    "scipy>=1.7.0",
+    "networkx>=2.6"
+]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+module-name = "abirqu.abirqu_core"

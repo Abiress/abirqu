@@ -1,0 +1,30 @@
+[
+  {
+    "qubits": 2,
+    "abirqu_s": 0.00019089700072072446,
+    "qiskit_s": 0.09115571400616318,
+    "abirqu_purity": 0.9999999999999996,
+    "qiskit_purity": 1.0
+  },
+  {
+    "qubits": 4,
+    "abirqu_s": 0.000339988007908687,
+    "qiskit_s": 0.05340731798787601,
+    "abirqu_purity": 0.9999999999999996,
+    "qiskit_purity": 1.0
+  },
+  {
+    "qubits": 6,
+    "abirqu_s": 0.0014059180102776736,
+    "qiskit_s": 0.06130948098143563,
+    "abirqu_purity": 0.9999999999999996,
+    "qiskit_purity": 1.0
+  },
+  {
+    "qubits": 8,
+    "abirqu_s": 0.05826422700192779,
+    "qiskit_s": 0.13739910599542782,
+    "abirqu_purity": 0.9999999999999996,
+    "qiskit_purity": 1.0
+  }
+]

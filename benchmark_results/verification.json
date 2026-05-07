@@ -1,0 +1,107 @@
+{
+  "tests": [
+    {
+      "name": "GHZ distribution",
+      "status": "PASS",
+      "detail": "GHZ(4): A-Q=0.0081, A-C=0.0129, Q-C=0.0049"
+    },
+    {
+      "name": "GHZ states only 0000/1111",
+      "status": "PASS",
+      "detail": "AbirQu states: {'0000', '1111'}"
+    },
+    {
+      "name": "QFT Rust-NumPy agreement",
+      "status": "PASS",
+      "detail": "L1(Rust,NumPy)=1.11e-15"
+    },
+    {
+      "name": "Random circuit Rust-NumPy",
+      "status": "PASS",
+      "detail": "max|diff|=4.34e-16"
+    },
+    {
+      "name": "Random circuit Rust-Cirq (bit-reversed)",
+      "status": "PASS",
+      "detail": "max|diff|=3.44e-08 (cross-framework, 1e-6 tolerance)"
+    },
+    {
+      "name": "Batch vs Sequential 4q/50g",
+      "status": "PASS",
+      "detail": "max|diff|=0.00e+00"
+    },
+    {
+      "name": "Batch vs Sequential 8q/50g",
+      "status": "PASS",
+      "detail": "max|diff|=0.00e+00"
+    },
+    {
+      "name": "Batch vs Sequential 12q/50g",
+      "status": "PASS",
+      "detail": "max|diff|=0.00e+00"
+    },
+    {
+      "name": "Empty circuit = |000\u27e9",
+      "status": "PASS",
+      "detail": "P(000)=1.0"
+    },
+    {
+      "name": "X|0\u27e9 = |1\u27e9",
+      "status": "PASS",
+      "detail": "P(1)=1.0"
+    },
+    {
+      "name": "Measure-only = all |000\u27e9",
+      "status": "PASS",
+      "detail": "counts={'000': 100}"
+    },
+    {
+      "name": "Parameterized gates Rz/Ry",
+      "status": "PASS",
+      "detail": "max|diff|=0.00e+00"
+    },
+    {
+      "name": "Deep circuit 4q/1000g",
+      "status": "PASS",
+      "detail": "norm=1.0000000000, time=0.0004s"
+    },
+    {
+      "name": "Bell state amplitudes",
+      "status": "PASS",
+      "detail": "|00\u27e9=0.707107+0.000000j |01\u27e9=0.000000+0.000000j |10\u27e9=0.000000+0.000000j |11\u27e9=0.707107+0.000000j"
+    },
+    {
+      "name": "GHZ 24q",
+      "status": "PASS",
+      "detail": "time=0.37s, mem_delta=256MB, theory=256MB, P(0)=0.5000 P(1)=0.5000"
+    },
+    {
+      "name": "GHZ 26q",
+      "status": "PASS",
+      "detail": "time=1.42s, mem_delta=1024MB, theory=1024MB, P(0)=0.5000 P(1)=0.5000"
+    },
+    {
+      "name": "GHZ 28q",
+      "status": "PASS",
+      "detail": "time=5.37s, mem_delta=4096MB, theory=4096MB, P(0)=0.5000 P(1)=0.5000"
+    },
+    {
+      "name": "Clean Bell = only 00/11",
+      "status": "PASS",
+      "detail": "states={'00', '11'}"
+    },
+    {
+      "name": "Heavy noise spreads distribution",
+      "status": "PASS",
+      "detail": "counts={'00': 1103, '01': 966, '10': 1030, '11': 997}"
+    },
+    {
+      "name": "Shot count preserved under noise",
+      "status": "PASS",
+      "detail": "total=4096, expected=4096"
+    }
+  ],
+  "pass": 20,
+  "fail": 0,
+  "skip": 0
+}

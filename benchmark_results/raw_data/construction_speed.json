@@ -1,0 +1,34 @@
+[
+  {
+    "qubits": 8,
+    "gates": 160,
+    "abirqu_ms": 0.7616805087309331,
+    "qiskit_ms": 1.1810225114459172,
+    "cirq_ms": 1.8557445000624284,
+    "winner": "AbirQu"
+  },
+  {
+    "qubits": 12,
+    "gates": 240,
+    "abirqu_ms": 1.0877160093514249,
+    "qiskit_ms": 1.6196400101762265,
+    "cirq_ms": 2.5422270118724555,
+    "winner": "AbirQu"
+  },
+  {
+    "qubits": 16,
+    "gates": 320,
+    "abirqu_ms": 1.4629085053456947,
+    "qiskit_ms": 2.189297985751182,
+    "cirq_ms": 3.2958515075733885,
+    "winner": "AbirQu"
+  },
+  {
+    "qubits": 20,
+    "gates": 400,
+    "abirqu_ms": 1.8019239796558395,
+    "qiskit_ms": 2.7827130106743425,
+    "cirq_ms": 4.106053005671129,
+    "winner": "AbirQu"
+  }
+]

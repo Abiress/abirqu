@@ -5,7 +5,7 @@ Copyright 2026 Abir Maheshwari
 Minimizes circuit depth through gate reordering and parallelization.
 """
 from typing import List, Dict, Tuple, Set
-from ..core.circuit import Circuit
+from abirqu.circuit import Circuit
 from ..core.gates import Gate
 
 class CircuitDepthMinimizer:

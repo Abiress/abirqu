@@ -1,0 +1,19 @@
+[package]
+name = "abirqu_core"
+version = "0.1.0"
+edition = "2021"
+authors = ["Abir Maheshwari <abhirsxn@gmail.com>"]
+description = "High-performance Rust core for AbirQu SDK"
+
+[lib]
+name = "abirqu_core"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pyo3 = { version = "0.22.0", features = ["extension-module"] }
+ndarray = "0.15.6"
+num-complex = "0.4.3"
+rayon = "1.7.0"
+
+[features]
+default = []

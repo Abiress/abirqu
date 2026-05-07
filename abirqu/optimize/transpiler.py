@@ -6,7 +6,7 @@ Transpiles circuits for specific quantum hardware.
 """
 import numpy as np
 from typing import List, Dict, Optional, Set, Tuple
-from ..core.circuit import Circuit
+from abirqu.circuit import Circuit
 from ..core.gates import Gate, X, Y, Z, H, S, T, rx, ry, rz, CNOT, CZ, SWAP
 
 class HardwareAwareTranspiler:
