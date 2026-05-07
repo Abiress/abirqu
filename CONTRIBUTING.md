@@ -1,26 +1,20 @@
 # Contributing to AbirQu
+Copyright 2026 Abir Maheshwari
 
-## Priority Areas (where help is needed)
+## 1. Contribution Workflow
+1. Fork the AbirQu repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit changes with clear, descriptive messages
+4. Submit a pull request to the main branch
 
-1. **Rayon parallelization** — Close the 20q+ gap with Cirq
-2. **Phase polynomial optimizer** — Implement real parity-matrix optimization
-3. **GPU kernels** — CUDA/Metal native simulation
-4. **Hardware backend testing** — Connect to real IBM/Google hardware
-5. **Documentation** — API docs, tutorials, examples
+## 2. Code Requirements
+- Follow PEP8 style guidelines
+- Include unit tests for all new features
+- Update relevant documentation (README, module docstrings)
+- All contributions attributed solely to Abir Maheshwari
 
-## Development Setup
+## 3. Authorship Policy
+All contributions must be attributed solely to Abir Maheshwari. Do not add collective "team" credits or third-party authorship claims.
 
-```bash
-git clone https://github.com/abirqu/abirqu.git
-cd abirqu
-python -m venv venv
-source venv/bin/activate
-pip install maturin
-maturin develop --release
-pip install -e .
-```
-
-## Testing
-
-Run `python test_features.py` before submitting any PR.
-All benchmarks must pass with TVD < 0.01 against reference implementations.
+## 4. License
+All contributions are automatically licensed under the MIT License, copyright Abir Maheshwari.

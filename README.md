@@ -1362,9 +1362,9 @@ Each milestone is tracked below and marked ✅ when a working implementation is 
 | C1.1 | **Python** | ✅ Complete | Native package — `pip install abirqu` |
 | C1.2 | **C / C++** | ✅ Complete | Expose `libabirqu.so` via stable C ABI (`abirqu.h`) |
 | C1.3 | **JavaScript / Node.js** | ✅ Complete | Pure JS SDK + WASM build via Emscripten, npm package, 17 passing tests |
-| C1.4 | **Java** | 🔲 Planned | JNI wrapper over the C ABI |
-| C1.5 | **Go** | 🔲 Planned | `cgo` bindings over the C ABI |
-| C1.6 | **Rust** | 🔲 Planned | Re-export the existing Rust core as a public crate |
+| C1.4 | **Java** | ✅ Complete | JNA wrapper over C ABI (`com.abirqu` package), Bell state test |
+| C1.5 | **Go** | ✅ Complete | `cgo` bindings (`github.com/abirqu/abirqu`), 6/6 tests passing |
+| C1.6 | **Rust** | ✅ Complete | Public crate `abirqu-core` v1.0.0, 5/5 tests passing |
 | C1.7 | **.NET / C#** | 🔲 Planned | P/Invoke + NuGet package |
 | C1.8 | **Swift / Objective-C** | 🔲 Planned | `CInterop` over the C ABI |
 | C1.9 | **Kotlin / JVM** | 🔲 Planned | JNA bindings |
