@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <OutputType>Library</OutputType>
+    <AssemblyName>AbirQu</AssemblyName>
+    <RootNamespace>AbirQu</RootNamespace>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>AbirQu</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
+    <Authors>Abir Datta</Authors>
+    <Description>AbirQu Quantum SDK - .NET Bindings</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+</Project>

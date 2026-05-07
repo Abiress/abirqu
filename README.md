@@ -1365,10 +1365,10 @@ Each milestone is tracked below and marked ✅ when a working implementation is 
 | C1.4 | **Java** | ✅ Complete | JNA wrapper over C ABI (`com.abirqu` package), Bell state test |
 | C1.5 | **Go** | ✅ Complete | `cgo` bindings (`github.com/abirqu/abirqu`), 6/6 tests passing |
 | C1.6 | **Rust** | ✅ Complete | Public crate `abirqu-core` v1.0.0, 5/5 tests passing |
-| C1.7 | **.NET / C#** | 🔲 Planned | P/Invoke + NuGet package |
-| C1.8 | **Swift / Objective-C** | 🔲 Planned | `CInterop` over the C ABI |
-| C1.9 | **Kotlin / JVM** | 🔲 Planned | JNA bindings |
-| C1.10 | **WebAssembly (browser)** | 🔲 Planned | `wasm-pack` build, importable in any browser |
+| C1.7 | **.NET / C#** | ✅ Complete | P/Invoke wrapper (`AbirQu.Simulator`), xUnit tests (5/5 passing) |
+| C1.8 | **Swift / Objective-C** | ✅ Complete | `CInterop` wrapper (`AbirQuSimulator.swift`), XCTest tests |
+| C1.9 | **Kotlin / JVM** | ✅ Complete | JNA bindings (`com.abirqu`), Kotlin tests |
+| C1.10 | **WebAssembly (browser)** | ✅ Complete | `wasm-pack` build, `abirqu_core_wasm.js`, importable in browser |
 
 ### Phase C2 — Quantum Hardware Compatibility
 
