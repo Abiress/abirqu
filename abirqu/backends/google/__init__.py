@@ -1,5 +1,5 @@
 """
-Google Quantum AI Backend - Real Implementation
+Google Quantum Backend - Real Implementation
 Uses Cirq with google-specific gates and hardware topology
 """
 
@@ -26,7 +26,7 @@ class GoogleQuantumCredentials:
 
 
 class GoogleQuantumBackend:
-    """Google Quantum AI backend with real Cirq integration"""
+    """Google Quantum backend with real Cirq integration"""
     
     def __init__(self, credentials: Optional[GoogleQuantumCredentials] = None):
         self.creds = credentials or GoogleQuantumCredentials.from_env()
@@ -145,7 +145,7 @@ class GoogleQuantumBackend:
 if __name__ == "__main__":
     backend = GoogleQuantumBackend()
     
-    print("Testing Google Quantum AI Backend...")
+    print("Testing Google Quantum Backend...")
     print(f"Cirq available: {backend.cirq_available}")
     
     if backend.cirq_available:

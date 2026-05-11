@@ -266,6 +266,31 @@ class Circuit:
         for q in range(self.num_qubits):
             self.measure(q, q)
         return self
+
+    def depth(self) -> int:
+        """Estimate circuit depth by scheduling gates on qubit availability."""
+        if not self.gates:
+            return 0
+
+        qubit_depth = [0] * self.num_qubits
+        max_depth = 0
+
+        for gate in self.gates:
+            gate_depth = 1 + max(qubit_depth[q] for q in gate.qubits)
+            for q in gate.qubits:
+                qubit_depth[q] = gate_depth
+            if gate_depth > max_depth:
+                max_depth = gate_depth
+
+        return max_depth
+
+    def count_gates(self) -> Dict[str, int]:
+        """Return a gate-name histogram for the circuit."""
+        counts: Dict[str, int] = {}
+        for gate in self.gates:
+            name = gate.name.split('(')[0].upper()
+            counts[name] = counts.get(name, 0) + 1
+        return counts
     
     def __add__(self, other: 'Circuit') -> 'Circuit':
         """

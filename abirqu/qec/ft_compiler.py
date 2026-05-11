@@ -1,15 +1,10 @@
-"""
-Fault-Tolerant Compiler for AbirQu
-Copyright 2026 Abir Maheshwari
+"""Fault-tolerant compiler utilities for AbirQu circuits."""
 
-Compiles circuits to fault-tolerant gate sequences with magic state distillation.
-"""
-from typing import List, Dict, Tuple, Optional
-from ..core.circuit import Circuit
-from ..core.gates import Gate, CNOT, T, H, S, X, Z
-# Create Tdg gate (T dagger)
+from typing import Dict
+
 import numpy as np
-Tdg = Gate("Tdg", np.array([[1,0],[0,np.exp(-1j*np.pi/4)]], dtype=complex), [0])
+
+from ..circuit import Circuit
 
 class FaultTolerantCompiler:
     """Compiles circuits to fault-tolerant gate sequences."""
@@ -23,47 +18,47 @@ class FaultTolerantCompiler:
         """Compile circuit to fault-tolerant implementation."""
         ft_circuit = Circuit(circuit.num_qubits, f"{circuit.name}_ft")
         
-        for gate, qubits in circuit.gates:
+        for gate in circuit.gates:
+            qubits = gate.qubits
             name = gate.name.split('(')[0]
             
             if name in ['X', 'Y', 'Z', 'H', 'S']:
                 # These are Clifford gates - can be done fault-tolerantly
-                ft_circuit.add_gate(gate, qubits)
+                ft_circuit.add_gate(gate.name, qubits, gate.params or None)
                 
             elif name == 'T':
                 # T gate requires magic state distillation
                 self.t_gate_count += 1
                 self.magic_states_needed += 1
                 # Use magic state |T> = T|+> for T gate injection
-                ft_circuit.add_gate(gate, qubits)
+                ft_circuit.add_gate(gate.name, qubits, gate.params or None)
                 
             elif name == 'RZ':
                 # Arbitrary RZ requires multiple T gates (phase approximation)
                 try:
-                    angle = float(gate.name.split('(')[1].split(')')[0])
+                    angle = float(gate.params[0]) if gate.params else 0.0
                     # Use Solovay-Kitaev or phase gradient for arbitrary rotation
                     t_count = int(abs(angle) / (np.pi / 4))  # Simplified
                     self.t_gate_count += t_count
                     self.magic_states_needed += t_count
-                    ft_circuit.add_gate(gate, qubits)
-                except:
-                    ft_circuit.add_gate(gate, qubits)
+                    ft_circuit.add_gate(gate.name, qubits, gate.params or None)
+                except Exception:
+                    ft_circuit.add_gate(gate.name, qubits, gate.params or None)
                     
             elif name in ['CNOT', 'CZ']:
                 # Two-qubit gates - need lattice surgery or gate teleportation
-                ft_circuit.add_gate(gate, qubits)
+                ft_circuit.add_gate(gate.name, qubits, gate.params or None)
                 
             else:
                 # Unknown gate - pass through
-                ft_circuit.add_gate(gate, qubits)
+                ft_circuit.add_gate(gate.name, qubits, gate.params or None)
                 
         return FTCircuit(circuit, ft_circuit, self.t_gate_count)
         
     def estimate_overhead(self, circuit: Circuit) -> Dict[str, int]:
         """Estimate fault-tolerant overhead."""
         # Count T-gates
-        t_count = sum(1 for g, _ in circuit.gates 
-                     if g.name.split('(')[0] in ['T', 'RZ', 'RX', 'RY'])
+        t_count = sum(1 for g in circuit.gates if g.name.split('(')[0] in ['T', 'RZ', 'RX', 'RY'])
         
         # Each T-gate needs ~10-100 physical qubits for distillation
         distillation_qubits = t_count * 50  # Simplified
@@ -99,13 +94,15 @@ class FaultTolerantCompiler:
         optimized = Circuit(circuit.num_qubits, circuit.name)
         gate_stack = []
         
-        for gate, qubits in circuit.gates:
+        for gate in circuit.gates:
+            qubits = gate.qubits
             name = gate.name.split('(')[0]
             
             # Check if this gate cancels with previous
             cancelled = False
             if gate_stack:
-                prev_gate, prev_qubits = gate_stack[-1]
+                prev_gate = gate_stack[-1]
+                prev_qubits = prev_gate.qubits
                 prev_name = prev_gate.name.split('(')[0]
                 
                 # Check if inverse
@@ -120,10 +117,10 @@ class FaultTolerantCompiler:
                     cancelled = True
                     
             if not cancelled:
-                gate_stack.append((gate, qubits))
+                gate_stack.append(gate)
                 
-        for gate, qubits in gate_stack:
-            optimized.add_gate(gate, qubits)
+        for gate in gate_stack:
+            optimized.add_gate(gate.name, gate.qubits, gate.params or None)
             
         return optimized
         

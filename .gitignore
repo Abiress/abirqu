@@ -72,3 +72,7 @@ yarn-error.log
 dist/
 build/
 *.egg-info/
+
+# Local compiled example binaries
+example_c
+example_cpp

@@ -1,8 +1,7 @@
 """Visualization Module for AbirQu. Copyright 2026 Abir Maheshwari"""
 import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
-from ..core.circuit import Circuit
-from ..core.gates import Gate
+from ..circuit import Circuit
 
 class CircuitVisualizer:
     """Visualizes quantum circuits in various formats."""
@@ -35,8 +34,8 @@ class CircuitVisualizer:
         lines.append("-" * 40)
         
         # Gate list
-        for i, (gate, qubits) in enumerate(circuit.gates):
-            qubits_str = ', '.join(str(q) for q in qubits)
+        for i, gate in enumerate(circuit.gates):
+            qubits_str = ', '.join(str(q) for q in gate.qubits)
             lines.append(f"{gate.name.ljust(10)} {qubits_str.ljust(15)} (gate {i+1})")
             
         lines.append("=" * 40)
@@ -54,9 +53,10 @@ class CircuitVisualizer:
         grid = [['─' for _ in range(max_gates * 2)] for _ in range(n)]
         
         # Place gates
-        for i, (gate, qubits) in enumerate(circuit.gates):
+        for i, gate in enumerate(circuit.gates):
             col = i * 2
             name = gate.name.split('(')[0][:3]  # First 3 chars
+            qubits = gate.qubits
             
             for q in range(n):
                 if q in qubits:
@@ -86,9 +86,9 @@ class CircuitVisualizer:
         lines.append(f"║ Circuit: {circuit.name}")
         lines.append("╠" + "═" * 40 + "╣")
         
-        for i, (gate, qubits) in enumerate(circuit.gates):
+        for i, gate in enumerate(circuit.gates):
             gate_str = f"[{gate.name}]"
-            qubit_str = f" → qubits {qubits}"
+            qubit_str = f" → qubits {gate.qubits}"
             lines.append(f"║ {i+1:2d}. {gate_str:<20}{qubit_str}")
             
         lines.append("╚" + "═" * 40 + "╝")
@@ -108,8 +108,8 @@ class CircuitVisualizer:
 <h2>Gate Sequence</h2>
 <ol>
 """
-        for i, (gate, qubits) in enumerate(circuit.gates):
-            html += f"<li>{gate.name} on qubits {qubits}</li>\n"
+        for i, gate in enumerate(circuit.gates):
+            html += f"<li>{gate.name} on qubits {gate.qubits}</li>\n"
             
         html += "</ol></body></html>"
         

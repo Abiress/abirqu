@@ -58,7 +58,7 @@ class CompatibilityManager:
         rows = [
             CompatibilityItem("C2.1", "Local Rust Simulator", "✅ Complete", "FastBackend statevector simulator"),
             CompatibilityItem("C2.2", "IBM Quantum (IBMQ)", "✅ SDK-wired", "Credential-gated provider execution"),
-            CompatibilityItem("C2.3", "Google Quantum AI", "✅ SDK-wired", "Cirq-backed provider adapter"),
+            CompatibilityItem("C2.3", "Google Quantum", "✅ SDK-wired", "Cirq-backed provider adapter"),
             CompatibilityItem("C2.4", "AWS Braket", "✅ SDK-wired", "boto3/AWS Braket adapter"),
             CompatibilityItem("C2.5", "Azure Quantum", "✅ SDK-wired", "Azure backend adapter"),
             CompatibilityItem("C2.6", "IonQ", "✅ SDK-wired", "REST adapter and SDK routing"),

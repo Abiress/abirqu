@@ -1,6 +1,6 @@
 """Results Visualization for AbirQu. Copyright 2026 Abir Maheshwari"""
 import numpy as np
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from collections import Counter
 
 class ResultsVisualizer:

@@ -615,11 +615,11 @@ class IonQBackend(QuantumBackend):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Cirq / Google Quantum AI backend
+# Cirq / Google Quantum backend
 # ──────────────────────────────────────────────────────────────────────────────
 
 class CirqBackend(QuantumBackend):
-    """Google Cirq simulator / Google Quantum AI backend.
+    """Google Cirq simulator / Google Quantum backend.
 
     Requires: ``pip install cirq``
 

@@ -6,7 +6,7 @@ Adapts compilation strategy based on circuit characteristics.
 """
 from typing import Dict, Any, Optional, List
 from abirqu.circuit import Circuit
-from .phase_poly import PhasePolynomialOptimizer
+from .circuit_simplifier import CircuitSimplifier
 from .transpiler import HardwareAwareTranspiler
 from .depth import CircuitDepthMinimizer
 
@@ -48,7 +48,7 @@ class AdaptiveCompiler:
         
     def _analyze_circuit(self, circuit: Circuit) -> Dict[str, Any]:
         """Analyze circuit characteristics."""
-        gate_counts = circuit.count_gates()
+        gate_counts = self._gate_counts(circuit)
         
         analysis = {
             'num_qubits': circuit.num_qubits,
@@ -64,7 +64,7 @@ class AdaptiveCompiler:
         
     def _estimate_error(self, circuit: Circuit) -> float:
         """Estimate circuit error (simplified)."""
-        gate_counts = circuit.count_gates()
+        gate_counts = self._gate_counts(circuit)
         # Simplified: assume single-qubit error 0.001, two-qubit 0.01
         error = 0.0
         for gate, count in gate_counts.items():
@@ -92,15 +92,14 @@ class AdaptiveCompiler:
         
         if strategy == 'aggressive':
             # Apply all optimizations
-            optimizer = PhasePolynomialOptimizer()
-            result = optimizer.optimize(circuit)
-            compiled_circuit = result.optimized
+            optimizer = CircuitSimplifier()
+            compiled_circuit = optimizer.optimize(circuit)
             
         elif strategy == 'conservative':
             # Minimal optimizations
             compiled_circuit = Circuit(circuit.num_qubits, circuit.name)
-            for gate, qubits in circuit.gates:
-                compiled_circuit.add_gate(gate, qubits)
+            for gate in circuit.gates:
+                compiled_circuit.add_gate(gate.name, gate.qubits, gate.params or None)
                 
         elif strategy == 'balanced':
             # Apply some optimizations
@@ -125,6 +124,14 @@ class AdaptiveCompiler:
         
     def get_history(self) -> List[Dict]:
         return self.compilation_history.copy()
+
+    @staticmethod
+    def _gate_counts(circuit: Circuit) -> Dict[str, int]:
+        counts: Dict[str, int] = {}
+        for gate in circuit.gates:
+            name = gate.name.split('(')[0].upper()
+            counts[name] = counts.get(name, 0) + 1
+        return counts
 
 class CompiledCircuit:
     def __init__(self, original: Circuit, compiled: Circuit, strategy: str):

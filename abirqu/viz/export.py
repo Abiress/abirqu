@@ -1,7 +1,7 @@
 """Export Module for AbirQu. Copyright 2026 Abir Maheshwari"""
 import json
 from typing import List, Dict, Any, Optional
-from ..core.circuit import Circuit
+from ..circuit import Circuit
 from ..qec.codes import SurfaceCode, LDPCCode
 
 class Exporter:
@@ -37,10 +37,10 @@ class Exporter:
             'gates': []
         }
         
-        for gate, qubits in circuit.gates:
+        for gate in circuit.gates:
             data['gates'].append({
                 'name': gate.name,
-                'qubits': qubits
+                'qubits': gate.qubits
             })
             
         with open(filepath, 'w') as f:
@@ -71,8 +71,8 @@ class Exporter:
     <table>
         <tr><th>#</th><th>Gate</th><th>Qubits</th></tr>
 """
-        for i, (gate, qubits) in enumerate(circuit.gates):
-            html += f"        <tr><td>{i+1}</td><td>{gate.name}</td><td>{qubits}</td></tr>\n"
+        for i, gate in enumerate(circuit.gates):
+            html += f"        <tr><td>{i+1}</td><td>{gate.name}</td><td>{gate.qubits}</td></tr>\n"
             
         html += """    </table>
 </body>
@@ -93,7 +93,8 @@ class Exporter:
 \\begin{{equation}}
 \\Qcircuit @C=1em @R=.7em {{
 """
-        for gate, qubits in circuit.gates:
+        for gate in circuit.gates:
+            qubits = gate.qubits
             if len(qubits) == 1:
                 latex += f"    & \\gate{{{gate.name}}} & \\qw{{{qubits[0]}}} \\\\\n"
             elif len(qubits) == 2:

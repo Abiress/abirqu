@@ -2,8 +2,8 @@
 import numpy as np
 import time
 from typing import List, Dict, Any, Optional
-from ..core.circuit import Circuit
-from ..backends.simulator import SimulatorBackend
+from ..circuit import Circuit
+from ..backend import FastBackend as SimulatorBackend
 
 class PerformanceAnalyzer:
     """Analyzes quantum circuit performance."""
@@ -92,7 +92,10 @@ class PerformanceAnalyzer:
         
     def analyze_gate_overhead(self, circuit: Circuit) -> Dict[str, Any]:
         """Analyze gate type distribution and overhead."""
-        gate_counts = circuit.count_gates()
+        gate_counts: Dict[str, int] = {}
+        for gate in circuit.gates:
+            name = gate.name.split('(')[0].upper()
+            gate_counts[name] = gate_counts.get(name, 0) + 1
         
         analysis = {
             'total_gates': sum(gate_counts.values()),

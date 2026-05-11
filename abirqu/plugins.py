@@ -136,16 +136,20 @@ class CredentialManager:
     def from_env(provider: str) -> Optional[str]:
         """Load token from environment variable."""
         env_vars = {
-            "ibm": "IBM_TOKEN",
-            "aws": "AWS_ACCESS_KEY_ID",
-            "azure": "AZURE_QUANTUM_TOKEN",
-            "ionq": "IONQ_API_KEY",
-            "rigetti": "RIGETTI_API_KEY",
-            "google": "GOOGLE_QUANTUM_API_KEY",
-            "quantinuum": "QUANTINUUM_API_KEY",
+            "ibm": ["IBM_QUANTUM_TOKEN", "IBM_TOKEN"],
+            "aws": ["AWS_ACCESS_KEY_ID"],
+            "azure": ["AZURE_QUANTUM_TOKEN", "AZURE_QUANTUM_RESOURCE_ID", "AZURE_RESOURCE_ID"],
+            "ionq": ["IONQ_API_KEY"],
+            "rigetti": ["RIGETTI_API_KEY"],
+            "google": ["GOOGLE_CLOUD_PROJECT", "GOOGLE_PROJECT_ID", "GOOGLE_QUANTUM_API_KEY"],
+            "quantinuum": ["QUANTINUUM_API_KEY"],
         }
-        env_key = env_vars.get(provider.lower())
-        return os.environ.get(env_key)
+        candidates = env_vars.get(provider.lower(), [])
+        for key in candidates:
+            value = os.environ.get(key)
+            if value:
+                return value
+        return None
 
 
 class CredentialManagerWithMFA(CredentialManager):

@@ -37,7 +37,7 @@ class GoogleSycamoreNoiseModel:
     """
     Noise model calibrated to Google Sycamore 53-qubit processor.
 
-    Parameters based on publicly available data from the Google Quantum AI team.
+    Parameters based on publicly available data from the Google Quantum team.
     Includes T1/T2 decoherence, gate errors, and readout errors.
     """
 

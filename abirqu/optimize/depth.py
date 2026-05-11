@@ -4,9 +4,9 @@ Copyright 2026 Abir Maheshwari
 
 Minimizes circuit depth through gate reordering and parallelization.
 """
-from typing import List, Dict, Tuple, Set
+from typing import List, Dict, Set, Any
 from abirqu.circuit import Circuit
-from ..core.gates import Gate
+from abirqu.circuit import Gate
 
 class CircuitDepthMinimizer:
     """Minimizes circuit depth through gate reordering and parallelization."""
@@ -28,8 +28,8 @@ class CircuitDepthMinimizer:
         
         # Build minimized circuit
         minimized = Circuit(circuit.num_qubits, f"{circuit.name}_minimized")
-        for gate, qubits in scheduled:
-            minimized.add_gate(gate, qubits)
+        for gate in scheduled:
+            minimized.add_gate(gate.name, gate.qubits, gate.params or None)
             
         self.minimized_depth = minimized.depth()
         self.depth_reduction = self.original_depth - self.minimized_depth
@@ -42,7 +42,8 @@ class CircuitDepthMinimizer:
         dependencies = {i: set() for i in range(n)}
         qubit_last_used = {}  # Last gate that used each qubit
         
-        for i, (gate, qubits) in enumerate(circuit.gates):
+        for i, gate in enumerate(circuit.gates):
+            qubits = gate.qubits
             # This gate depends on all previous gates that used the same qubits
             for q in qubits:
                 if q in qubit_last_used:
@@ -53,7 +54,7 @@ class CircuitDepthMinimizer:
                 
         return dependencies
         
-    def _parallel_schedule(self, circuit: Circuit, dependencies: Dict[int, Set[int]]) -> List[Tuple[Gate, List[int]]]:
+    def _parallel_schedule(self, circuit: Circuit, dependencies: Dict[int, Set[int]]) -> List[Gate]:
         """Schedule gates in parallel where possible."""
         n = len(circuit.gates)
         scheduled = []
@@ -71,15 +72,16 @@ class CircuitDepthMinimizer:
                 # Check if all dependencies are scheduled
                 if dependencies[i].issubset(scheduled_indices):
                     # Check if qubits are free
-                    qubits = circuit.gates[i][1]
+                    qubits = circuit.gates[i].qubits
                     if all(qubit_busy_until.get(q, -1) < current_time for q in qubits):
                         ready.append(i)
                         
             if ready:
                 # Schedule all ready gates
                 for i in sorted(ready):  # Sort to maintain some order
-                    gate, qubits = circuit.gates[i]
-                    scheduled.append((gate, qubits))
+                    gate = circuit.gates[i]
+                    qubits = gate.qubits
+                    scheduled.append(gate)
                     scheduled_indices.add(i)
                     remaining.remove(i)
                     # Mark qubits busy
