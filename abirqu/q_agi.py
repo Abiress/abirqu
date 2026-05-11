@@ -1,4 +1,4 @@
-import math
+import random
 
 class QuantumAssociativeMemory:
     def __init__(self, num_qubits):
@@ -13,7 +13,9 @@ class QuantumAssociativeMemory:
         # Mock retrieval logic
         best_match = None
         min_hamming = 1000
-        corrupted = "".join(str(1 - int(c)) if math.random() < noise_level else c for c in query) if hasattr(math, 'random') else query
+        corrupted = "".join(
+            str(1 - int(c)) if random.random() < noise_level else c for c in query
+        )
         for p, l in self.memory.items():
             hamming = sum(1 for a, b in zip(query, p) if a != b)
             if hamming < min_hamming:
@@ -113,3 +115,13 @@ class QuantumLanguageModel:
             "model_type": "Quantum MPS Attention",
             "advantages": ["Exponential Context", "Logarithmic Routing"]
         }
+
+
+# Re-export phase 34 production implementations.
+from .phases.phase34 import (
+    QuantumAssociativeMemory,
+    QuantumInterferenceDecisionEngine,
+    QuantumTensorNetworkAttention,
+    QRAM,
+    QuantumLanguageModel,
+)

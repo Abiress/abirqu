@@ -23,3 +23,16 @@ class VQEParameterPrefetcher:
     def __init__(self, *args, **kwargs): pass
     def run_vqe_loop(self, energy_fn, num_iterations):
         return {"total_iterations": num_iterations, "best_energy": 17.2, "final_energy": 17.1, "prefetch_rate": 0.94, "convergence": [20.0, 19.0, 18.0, 17.0], "best_params": [0.1, 0.2, 0.3, 0.4]}
+
+
+# Re-export phase 38 production implementations.
+from .phases.phase38 import (
+    DynamicCircuitSimulator,
+    GateOp,
+    MidCircuitMeasure,
+    ConditionalBlock,
+    ForLoop,
+    WhileLoop,
+    StreamingCircuitEngine,
+    VQEParameterPrefetcher,
+)

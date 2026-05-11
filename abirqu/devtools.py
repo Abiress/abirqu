@@ -213,3 +213,14 @@ class QuantumDebugger:
                 "P(|1⟩)": 0.5 if snap.step >= 1 else 0.0
             })
         return {"evolution": evolution}
+
+
+# Re-export phase 39 production implementations.
+from .phases.phase39 import (
+    QuantumDebugger,
+    Breakpoint,
+    StateSnapshot,
+    QuantumLinter,
+    QuantumCICD,
+    CIQualityGate,
+)

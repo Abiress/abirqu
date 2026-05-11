@@ -210,3 +210,13 @@ class OrchestrationPipeline:
 class QuantumCloudProvider:
     def __init__(self, *args, **kwargs):
         pass
+
+
+# Re-export phase 37 production implementations.
+from .phases.phase37 import (
+    MultiObjectiveRouter,
+    CircuitKnitter,
+    BackendGlobalMap,
+    CostTracker,
+    OrchestrationPipeline,
+)

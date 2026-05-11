@@ -100,3 +100,12 @@ class WignerFunctionComputer:
 class SparseStateSimulator:
     def __init__(self, *args, **kwargs):
         pass
+
+
+# Re-export phase 40 production implementations.
+from .phases.phase40 import (
+    SparseStateVector,
+    NVMeStateMapper,
+    LazyAmplitudeEvaluator,
+    WignerFunctionComputer,
+)

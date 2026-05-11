@@ -7,6 +7,7 @@ try:
     from .abirqu_core import Simulator as RustSimulator
     HAS_RUST_CORE = True
 except ImportError:
+    RustSimulator = None
     HAS_RUST_CORE = False
 
 __all__ = ['SimulatorBackend', 'RustSimulator', '_serialize_circuit']
@@ -92,11 +93,9 @@ class SimulatorBackend:
             }
         else:
             # Fallback to Python QVM
-            from .qvm import QuantumVirtualMachine
-            qvm = QuantumVirtualMachine(n, use_gpu=self.use_gpu)
-            for gate in getattr(circuit, 'gates', []):
-                qvm.apply_gate(gate.matrix, gate.qubits)
-            probs = qvm.get_probabilities()
+            from .numpy_sim import NumPySimulator
+            qvm = NumPySimulator(n)
+            probs = qvm.run_circuit(circuit)
             counts = self._sample_from_dict(probs, shots)
             return {'success': True, 'backend': self.name,
                     'shots': shots, 'counts': counts}

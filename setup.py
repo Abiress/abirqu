@@ -34,10 +34,11 @@ setup(
         "numpy>=1.21.0",
         "scipy>=1.7.0",
         "networkx>=2.6",
+        "requests>=2.31.0",
     ],
     extras_require={
         "gpu": ["cupy>=12.0.0"],
-        "visualization": ["matplotlib>=3.5.0", "d3js>=3.0.0"],
+        "visualization": ["matplotlib>=3.5.0"],
         "crypto": ["cryptography>=3.4.0"],
         "dev": [
             "pytest>=7.0.0",

@@ -1,6 +1,8 @@
 use num_complex::Complex64;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
+#[cfg(feature = "python")]
+use pyo3::types::PyBytes;
 use rayon::prelude::*;
 
 // Gate constants
@@ -18,8 +20,6 @@ const GATE_RZ: u8 = 10;
 const GATE_SWAP: u8 = 11;
 
 const PAR_THRESHOLD: usize = 1 << 14;
-const MIN_PAR_CHUNK: usize = 1 << 16;
-
 #[cfg_attr(feature = "python", pyclass)]
 pub struct Simulator {
     pub num_qubits: usize,

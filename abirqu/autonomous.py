@@ -89,3 +89,13 @@ class AdaptiveCompilerPass:
 
     def update_topology(self, new_topology):
         return {"old_edges": self.topology["num_edges"], "new_edges": new_topology["num_edges"]}
+
+
+# Re-export phase 33 production implementations.
+from .phases.phase33 import (
+    GateFidelityTracker,
+    DynamicErrorSuppressor,
+    RecalibrationAgent,
+    NeutralAtomTweezerArray,
+    AdaptiveCompilerPass,
+)

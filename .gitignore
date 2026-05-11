@@ -8,38 +8,67 @@ __pycache__/
 build/
 dist/
 .eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+
 # Testing
 .pytest_cache/
 .coverage
 htmlcov/
 *.cover
+.tox/
+
 # IDEs
 .vscode/settings.json
 .idea/
 *.swp
 *.swo
 *~
-# Virtual environment
+
+# Virtual environments
 venv/
 env/
 ENV/
+.venv/
+.env
+
+# Build systems
+.cargo/
+Cargo.lock
+target/
+
 # OS
 .DS_Store
 Thumbs.db
-# Logs
+
+# Logs & temporary files
 *.log
-# Temporary
 *.tmp
 *.bak
+*.swp
+
 # Quantum-specific
 *.qasm
 *.qobj
 
 # Build artifacts
-target/
 benchmark_results/raw_data/
+js/node_modules/
+js/build/
+wasm/target/
 
 # JavaScript/Node.js
 node_modules/
-js/node_modules/
-js/build/
+npm-debug.log
+yarn-error.log
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Project artifacts
+.pytest_cache
+.coverage
+dist/
+build/
+*.egg-info/

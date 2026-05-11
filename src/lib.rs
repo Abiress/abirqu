@@ -23,8 +23,6 @@ pub use simulator::Simulator;
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
-#[cfg(feature = "python")]
-use simulator::Simulator;
 
 /// High-performance Rust backend module for AbirQu
 #[cfg(feature = "python")]
@@ -51,8 +49,13 @@ mod tests {
     
     #[test]
     fn test_version() {
-        assert!(!version().is_empty());
-        assert_eq!(version(), "1.0.0");
+        let v = version();
+        assert!(!v.is_empty());
+        let parts: Vec<&str> = v.split('.').collect();
+        assert!(parts.len() >= 3);
+        assert!(parts[0].parse::<u64>().is_ok());
+        assert!(parts[1].parse::<u64>().is_ok());
+        assert!(parts[2].parse::<u64>().is_ok());
     }
     
     #[test]

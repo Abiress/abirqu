@@ -15,7 +15,7 @@ package abirqu
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/../../jni/include
-#cgo LDFLAGS: -L${SRCDIR}/../../target/release -labirqu_core
+#cgo LDFLAGS: -L${SRCDIR}/../../target/release -Wl,-rpath,${SRCDIR}/../../target/release -labirqu_core
 
 #include <stdlib.h>
 #include "abirqu.h"

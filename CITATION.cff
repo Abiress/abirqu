@@ -1,9 +1,0 @@
-cff-version: 1.2.0
-message: "If you use AbirQu in your research, please cite it as follows."
-authors:
-  - family-names: "Maheshwari"
-    given-names: "Abir"
-title: "AbirQu: Next-Generation Quantum Computing Library"
-version: 0.1.0
-date-released: 2026-05-05
-url: "https://github.com/abirmaheshwari/abirqu"

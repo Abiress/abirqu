@@ -1,11 +1,9 @@
 """
-NumPy-accelerated quantum simulator fallback for AbirQu.
-Uses tensor-reshape gate application for O(2^n) performance
-with NumPy's BLAS-backed array operations instead of Python loops.
+NumPy-accelerated quantum simulator for AbirQu.
+Simple but correct implementation.
 """
 import numpy as np
-from typing import Dict, List, Optional, Tuple
-
+from typing import Dict
 
 # Gate matrices
 _H = np.array([[1, 1], [1, -1]], dtype=np.complex128) / np.sqrt(2)
@@ -14,123 +12,156 @@ _Y = np.array([[0, -1j], [1j, 0]], dtype=np.complex128)
 _Z = np.array([[1, 0], [0, -1]], dtype=np.complex128)
 _S = np.array([[1, 0], [0, 1j]], dtype=np.complex128)
 _T = np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=np.complex128)
-_CNOT = np.array([[1,0,0,0],[0,1,0,0],[0,0,0,1],[0,0,1,0]], dtype=np.complex128).reshape(2,2,2,2)
-_CZ = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,-1]], dtype=np.complex128).reshape(2,2,2,2)
-_SWAP = np.array([[1,0,0,0],[0,0,1,0],[0,1,0,0],[0,0,0,1]], dtype=np.complex128).reshape(2,2,2,2)
 
 
 class NumPySimulator:
     """
-    Pure-NumPy state-vector simulator.
-    Uses tensor reshaping for efficient gate application:
-      - State stored as shape (2,)*n tensor
-      - Single-qubit gates via np.tensordot on one axis
-      - Two-qubit gates via np.tensordot on two axes
+    Pure-Python/NumPy state-vector simulator.
+    Uses explicit loops for correctness. Performance is O(n * 2^n).
     """
-
+    
     def __init__(self, num_qubits: int):
         self.n = num_qubits
         self.state = np.zeros(2**num_qubits, dtype=np.complex128)
         self.state[0] = 1.0
-
-    def _axis(self, qubit: int) -> int:
-        """Map qubit index to tensor axis. Rust uses LSB convention:
-        qubit k = bit k, so qubit 0 is the LAST axis in the (2,)*n tensor."""
-        return self.n - 1 - qubit
-
-    def _apply_single(self, gate: np.ndarray, qubit: int):
-        """Apply a 2x2 gate to a single qubit using tensor contraction."""
-        ax = self._axis(qubit)
-        state = self.state.reshape([2] * self.n)
-        state = np.moveaxis(state, ax, 0)
-        state = np.tensordot(gate, state, axes=([1], [0]))
-        state = np.moveaxis(state, 0, ax)
-        self.state = state.reshape(-1)
-
-    def _apply_two(self, gate: np.ndarray, q0: int, q1: int):
-        """Apply a 4x4 (reshaped to 2,2,2,2) gate to two qubits."""
-        ax0, ax1 = self._axis(q0), self._axis(q1)
-        state = self.state.reshape([2] * self.n)
-        perm = [ax0, ax1] + [i for i in range(self.n) if i != ax0 and i != ax1]
-        state = state.transpose(perm)
-        state = np.tensordot(gate, state, axes=([2, 3], [0, 1]))
-        inv_perm = [0] * self.n
-        for i, p in enumerate(perm):
-            inv_perm[p] = i
-        state = state.transpose(inv_perm)
-        self.state = state.reshape(-1)
-
-    # ── Standard gates ───────────────────────────────────────────────
-    def h(self, qubit: int): self._apply_single(_H, qubit)
-    def x(self, qubit: int): self._apply_single(_X, qubit)
-    def y(self, qubit: int): self._apply_single(_Y, qubit)
-    def z(self, qubit: int): self._apply_single(_Z, qubit)
-    def s(self, qubit: int): self._apply_single(_S, qubit)
-    def t(self, qubit: int): self._apply_single(_T, qubit)
-
+    
+    def _apply_1q(self, gate: np.ndarray, qubit: int):
+        """Apply 2x2 gate to single qubit."""
+        new_state = np.zeros_like(self.state)
+        mask = 1 << qubit
+        
+        for i in range(2**self.n):
+            bit = (i >> qubit) & 1
+            other = i ^ mask
+            
+            if bit == 0:
+                # This is a |0⟩ component on this qubit
+                new_state[i] = gate[0, 0] * self.state[i] + gate[0, 1] * self.state[other]
+                new_state[other] = gate[1, 0] * self.state[i] + gate[1, 1] * self.state[other]
+        
+        self.state = new_state
+    
+    def h(self, qubit: int):
+        self._apply_1q(_H, qubit)
+    
+    def x(self, qubit: int):
+        self._apply_1q(_X, qubit)
+    
+    def y(self, qubit: int):
+        self._apply_1q(_Y, qubit)
+    
+    def z(self, qubit: int):
+        self._apply_1q(_Z, qubit)
+    
+    def s(self, qubit: int):
+        self._apply_1q(_S, qubit)
+    
+    def t(self, qubit: int):
+        self._apply_1q(_T, qubit)
+    
     def rx(self, qubit: int, theta: float):
         c, s = np.cos(theta/2), np.sin(theta/2)
         gate = np.array([[c, -1j*s], [-1j*s, c]], dtype=np.complex128)
-        self._apply_single(gate, qubit)
-
+        self._apply_1q(gate, qubit)
+    
     def ry(self, qubit: int, theta: float):
         c, s = np.cos(theta/2), np.sin(theta/2)
         gate = np.array([[c, -s], [s, c]], dtype=np.complex128)
-        self._apply_single(gate, qubit)
-
+        self._apply_1q(gate, qubit)
+    
     def rz(self, qubit: int, theta: float):
         gate = np.array([[np.exp(-1j*theta/2), 0],
                          [0, np.exp(1j*theta/2)]], dtype=np.complex128)
-        self._apply_single(gate, qubit)
-
+        self._apply_1q(gate, qubit)
+    
     def cnot(self, control: int, target: int):
-        self._apply_two(_CNOT, control, target)
-
+        """CNOT: if control=1, flip target."""
+        new_state = np.zeros_like(self.state)
+        control_mask = 1 << control
+        target_mask = 1 << target
+        
+        for i in range(2**self.n):
+            if (i & control_mask):
+                new_state[i ^ target_mask] = self.state[i]
+            else:
+                new_state[i] = self.state[i]
+        
+        self.state = new_state
+    
     def cz(self, control: int, target: int):
-        self._apply_two(_CZ, control, target)
-
+        """CZ: if both control and target are 1, multiply by -1."""
+        for i in range(2**self.n):
+            if ((i >> control) & 1) and ((i >> target) & 1):
+                self.state[i] *= -1
+    
     def swap(self, q0: int, q1: int):
-        self._apply_two(_SWAP, q0, q1)
+        """SWAP: exchange q0 and q1."""
+        if q0 == q1:
+            return
 
-    # ── Circuit execution ────────────────────────────────────────────
+        new_state = np.zeros_like(self.state)
+        m0 = 1 << q0
+        m1 = 1 << q1
 
-    _GATE_DISPATCH = {
-        'H': lambda s, g: s.h(g.qubits[0]),
-        'X': lambda s, g: s.x(g.qubits[0]),
-        'Y': lambda s, g: s.y(g.qubits[0]),
-        'Z': lambda s, g: s.z(g.qubits[0]),
-        'S': lambda s, g: s.s(g.qubits[0]),
-        'T': lambda s, g: s.t(g.qubits[0]),
-        'RX': lambda s, g: s.rx(g.qubits[0], g.params[0]),
-        'RY': lambda s, g: s.ry(g.qubits[0], g.params[0]),
-        'RZ': lambda s, g: s.rz(g.qubits[0], g.params[0]),
-        'CNOT': lambda s, g: s.cnot(g.qubits[0], g.qubits[1]),
-        'CX': lambda s, g: s.cnot(g.qubits[0], g.qubits[1]),
-        'CZ': lambda s, g: s.cz(g.qubits[0], g.qubits[1]),
-        'SWAP': lambda s, g: s.swap(g.qubits[0], g.qubits[1]),
-    }
+        for i in range(2**self.n):
+            b0 = (i >> q0) & 1
+            b1 = (i >> q1) & 1
+            if b0 == b1:
+                j = i
+            else:
+                j = i ^ m0 ^ m1
+            new_state[j] = self.state[i]
 
+        self.state = new_state
+    
     def run_circuit(self, circuit) -> Dict[str, float]:
-        """Execute a full Circuit object. Returns probability dict."""
+        """Execute a full Circuit object."""
         for gate in getattr(circuit, 'gates', []):
-            dispatch = self._GATE_DISPATCH.get(gate.name.upper())
-            if dispatch:
-                dispatch(self, gate)
-
+            name = gate.name.upper()
+            qubits = gate.qubits
+            params = getattr(gate, 'params', []) or []
+            
+            if len(qubits) == 1:
+                q = qubits[0]
+                if name == 'H':
+                    self.h(q)
+                elif name == 'X':
+                    self.x(q)
+                elif name == 'Y':
+                    self.y(q)
+                elif name == 'Z':
+                    self.z(q)
+                elif name == 'S':
+                    self.s(q)
+                elif name == 'T':
+                    self.t(q)
+                elif name == 'RX':
+                    self.rx(q, params[0])
+                elif name == 'RY':
+                    self.ry(q, params[0])
+                elif name == 'RZ':
+                    self.rz(q, params[0])
+            elif len(qubits) == 2:
+                c, t = qubits[0], qubits[1]
+                if name in ['CNOT', 'CX']:
+                    self.cnot(c, t)
+                elif name == 'CZ':
+                    self.cz(c, t)
+                elif name == 'SWAP':
+                    self.swap(c, t)
+        
         probs = np.abs(self.state) ** 2
         return {
             format(i, f'0{self.n}b'): float(p)
             for i, p in enumerate(probs) if p > 1e-15
         }
-
-    # ── State access ─────────────────────────────────────────────────
-
+    
     def get_probabilities(self) -> Dict[str, float]:
         probs = np.abs(self.state) ** 2
         return {
             format(i, f'0{self.n}b'): float(p)
             for i, p in enumerate(probs) if p > 1e-15
         }
-
+    
     def get_state_vector(self) -> np.ndarray:
         return self.state.copy()

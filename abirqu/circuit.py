@@ -46,18 +46,31 @@ class Gate:
     
     def to_dict(self) -> Dict:
         """Serialize gate to dictionary."""
+        matrix_data = None
+        if self.matrix is not None:
+            matrix_data = [
+                [[float(v.real), float(v.imag)] for v in row]
+                for row in self.matrix
+            ]
+
         return {
             'id': self.id,
             'name': self.name,
             'qubits': self.qubits,
             'params': self.params,
-            'matrix': self.matrix.tolist() if self.matrix is not None else None
+            'matrix': matrix_data
         }
     
     @classmethod
     def from_dict(cls, data: Dict) -> 'Gate':
         """Deserialize gate from dictionary."""
-        matrix = np.array(data['matrix']) if data.get('matrix') else None
+        matrix = None
+        raw_matrix = data.get('matrix')
+        if raw_matrix:
+            matrix = np.array(
+                [[complex(cell[0], cell[1]) for cell in row] for row in raw_matrix],
+                dtype=complex,
+            )
         return cls(data['name'], data['qubits'], matrix, data.get('params', []))
 
 class Measurement:
@@ -169,6 +182,10 @@ class Circuit:
     def cnot(self, control: int, target: int) -> 'Circuit':
         return self.add_gate('CNOT', [control, target])
     
+    def cx(self, control: int, target: int) -> 'Circuit':
+        """CNOT gate (alias for cnot)."""
+        return self.cnot(control, target)
+    
     def cz(self, control: int, target: int) -> 'Circuit':
         return self.add_gate('CZ', [control, target])
     
@@ -177,6 +194,55 @@ class Circuit:
     
     def toffoli(self, c1: int, c2: int, target: int) -> 'Circuit':
         return self.add_gate('TOFFOLI', [c1, c2, target])
+    
+    def run(self, shots: int = 1024, backend: Optional[Any] = None) -> Dict[str, Any]:
+        """
+        Execute the circuit and return results.
+        
+        Args:
+            shots: Number of measurement shots (0 for exact statevector)
+            backend: Optional backend (defaults to NumPy simulator)
+            
+        Returns:
+            Dict with keys: success, counts, probabilities, statevector
+        """
+        from .numpy_sim import NumPySimulator
+        if backend is None:
+            backend = NumPySimulator(num_qubits=self.num_qubits)
+        
+        # Run the circuit
+        if hasattr(backend, 'run_circuit'):
+            result = backend.run_circuit(self)
+        else:
+            result = backend.run(self, shots=shots)
+        
+        probabilities = result if isinstance(result, dict) else result
+        
+        # Format output
+        output = {
+            "success": True,
+            "backend": getattr(backend, "name", "NumPySimulator"),
+            "shots": shots,
+            "probabilities": probabilities,
+            "counts": {},
+            "statevector": None
+        }
+        
+        # If shots=0, return statevector
+        if shots == 0 and hasattr(backend, 'get_state_vector'):
+            output["statevector"] = backend.get_state_vector().tolist()
+        else:
+            # Sample from probabilities
+            import random
+            states = list(probabilities.keys())
+            probs = list(probabilities.values())
+            counts = {}
+            for _ in range(shots):
+                state = random.choices(states, weights=probs)[0]
+                counts[state] = counts.get(state, 0) + 1
+            output["counts"] = counts
+        
+        return output
     
     def measure(self, qubit: int, cbit: Optional[int] = None) -> 'Circuit':
         """

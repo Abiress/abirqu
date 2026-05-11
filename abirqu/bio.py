@@ -87,3 +87,13 @@ class FoldingTopologyAnalyzer:
             "contact_density": 0.1,
             "contact_order": 5.5
         }
+
+
+# Re-export phase 32 production implementations.
+from .phases.phase32 import (
+    ProteinLatticeModel,
+    MolecularDockingSimulator,
+    ProtonTunnelingSimulator,
+    QuantumSequenceAligner,
+    FoldingTopologyAnalyzer,
+)

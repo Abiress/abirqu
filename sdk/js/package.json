@@ -1,0 +1,9 @@
+{
+  "name": "@abirqu/sdk-js",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "abirqu.js",
+  "scripts": {
+    "test": "node --test abirqu.test.js"
+  }
+}

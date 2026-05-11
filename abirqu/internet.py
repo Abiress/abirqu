@@ -108,3 +108,13 @@ class EntanglementSensorNetwork:
             "quantum_advantage_factor": sql / hl,
             "entanglement_state": f"GHZ_{self.num_sensors}"
         }
+
+
+# Re-export phase 31 production implementations.
+from .phases.phase31 import (
+    EntanglementSwapper,
+    OrbitalSatelliteNoiseModel,
+    DeepSpaceRelay,
+    QKDTelemetryChannel,
+    EntanglementSensorNetwork,
+)

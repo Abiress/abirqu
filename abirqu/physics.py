@@ -48,3 +48,12 @@ class BlackHoleScrambler:
     def page_curve(self, num_steps):
         curve = [{"t_fraction": i/num_steps, "S_radiation_log10": 77.0 if i < 5 else 77.0 - i, "phase": "increasing" if i < 5 else "decreasing"} for i in range(num_steps)]
         return {"total_entropy_log10": 77.0, "unitarity_preserved": True, "information_paradox": "Resolved (Page Curve)", "curve": curve}
+
+
+# Re-export phase 35 production implementations.
+from .phases.phase35 import (
+    LatticeGaugeTheory,
+    QuarkGluonPlasmaSimulator,
+    SYKModel,
+    BlackHoleScrambler,
+)

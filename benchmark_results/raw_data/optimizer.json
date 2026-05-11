@@ -4,7 +4,7 @@
     "original_gates": 35,
     "optimized_gates": 35,
     "reduction_pct": 0.0,
-    "time_ms": 1.9591499876696616,
+    "time_ms": 1.0320550063624978,
     "tvd": 0.0,
     "correct": true
   },
@@ -13,7 +13,7 @@
     "original_gates": 100,
     "optimized_gates": 95,
     "reduction_pct": 5.000000000000004,
-    "time_ms": 9.769933007191867,
+    "time_ms": 5.662903015036136,
     "tvd": 4.52334228558636e-16,
     "correct": true
   },
@@ -22,7 +22,7 @@
     "original_gates": 50,
     "optimized_gates": 50,
     "reduction_pct": 0.0,
-    "time_ms": 3.8119370001368225,
+    "time_ms": 2.2002700134180486,
     "tvd": 2.678978864916956e-16,
     "correct": true
   }
