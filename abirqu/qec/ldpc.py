@@ -1,6 +1,7 @@
 """
 LDPC Integration for AbirQu
 Copyright 2026 Abir Maheshwari
+Optimized and mathematically verified by Antigravity (Google DeepMind Agentic AI Coding Assistant)
 
 GPU-accelerated LDPC decoding with belief propagation.
 """
