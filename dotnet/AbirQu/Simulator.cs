@@ -27,62 +27,65 @@ namespace AbirQu
         public const byte GATE_SWAP = 11;
 
         // Native method imports
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr abirqu_simulator_create(uint numQubits);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_simulator_destroy(IntPtr handle);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_simulator_reset(IntPtr handle);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern uint abirqu_num_qubits(IntPtr handle);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern UIntPtr abirqu_hilbert_dim(IntPtr handle);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_h(IntPtr handle, uint q);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_x(IntPtr handle, uint q);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_y(IntPtr handle, uint q);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_z(IntPtr handle, uint q);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_s(IntPtr handle, uint q);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_t(IntPtr handle, uint q);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_rx(IntPtr handle, uint q, double angle);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_ry(IntPtr handle, uint q, double angle);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_rz(IntPtr handle, uint q, double angle);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_cnot(IntPtr handle, uint ctrl, uint tgt);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_cz(IntPtr handle, uint ctrl, uint tgt);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_swap(IntPtr handle, uint q0, uint q1);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern UIntPtr abirqu_get_probabilities(IntPtr handle, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] double[] outProbs);
 
-        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdec)]
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern UIntPtr abirqu_get_statevector(IntPtr handle, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] double[] outRe, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] double[] outIm);
+
+        [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void abirqu_run_circuit(IntPtr handle, [In] AbirQuGate[] gates, UIntPtr nGates);
 
         /// <summary>
         /// Create a new simulator for numQubits qubits
@@ -119,6 +122,16 @@ namespace AbirQu
         public void CNOT(uint ctrl, uint target) => abirqu_cnot(nativeHandle, ctrl, target);
         public void CZ(uint ctrl, uint target) => abirqu_cz(nativeHandle, ctrl, target);
         public void SWAP(uint q0, uint q1) => abirqu_swap(nativeHandle, q0, q1);
+
+        /// <summary>
+        /// Execute a sequence of gates in a batch
+        /// </summary>
+        public void RunCircuit(AbirQuGate[] gates)
+        {
+            if (gates == null) throw new ArgumentNullException(nameof(gates));
+            if (gates.Length == 0) return;
+            abirqu_run_circuit(nativeHandle, gates, (UIntPtr)gates.Length);
+        }
 
         /// <summary>
         /// Get measurement probabilities

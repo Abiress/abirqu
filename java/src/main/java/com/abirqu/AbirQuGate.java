@@ -4,11 +4,25 @@ package com.abirqu;
  * Gate descriptor for batch circuit execution
  * Mirrors the C AbirQuGate struct
  */
-public class AbirQuGate {
+import com.sun.jna.Structure;
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * Gate descriptor for batch circuit execution
+ * Mirrors the C AbirQuGate struct
+ */
+@Structure.FieldOrder({"gateType", "pad0", "pad1", "pad2", "ctrl", "target", "param"})
+public class AbirQuGate extends Structure {
     public byte gateType;
+    public byte pad0;
+    public byte pad1;
+    public byte pad2;
     public int ctrl;
     public int target;
     public double param;
+    
+    public AbirQuGate() {}
     
     public AbirQuGate(int gateType, int ctrl, int target, double param) {
         this.gateType = (byte) gateType;
@@ -20,6 +34,9 @@ public class AbirQuGate {
     public AbirQuGate(int gateType, int qubit) {
         this(gateType, qubit, 0, 0.0);
     }
+    
+    public static class ByReference extends AbirQuGate implements Structure.ByReference {}
+    public static class ByValue extends AbirQuGate implements Structure.ByValue {}
     
     public static AbirQuGate h(int q) { return new AbirQuGate(AbirQuSimulator.GATE_H, q); }
     public static AbirQuGate x(int q) { return new AbirQuGate(AbirQuSimulator.GATE_X, q); }
@@ -38,3 +55,4 @@ public class AbirQuGate {
         return new AbirQuGate(AbirQuSimulator.GATE_RZ, q, q, angle); 
     }
 }
+

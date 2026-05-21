@@ -130,6 +130,20 @@ public class AbirQuSimulator {
         sim.cnot(ctrl: 0, tgt: 1)
         return sim
     }
+    
+    /// Execute a sequence of gates in a batch
+    public func runCircuit(_ gates: [AbirQuGate]) {
+        guard let h = handle else { return }
+        if gates.isEmpty { return }
+        abirqu_run_circuit(h, gates, gates.count)
+    }
+    
+    /// Reset simulator to |0...0>
+    public func reset() {
+        if let h = handle {
+            abirqu_simulator_reset(h)
+        }
+    }
 }
 
 // C function declarations
@@ -186,3 +200,9 @@ func abirqu_get_probabilities(_ handle: OpaquePointer, _ out_probs: UnsafeMutabl
 
 @_silgen_name(abirqu_get_statevector)
 func abirqu_get_statevector(_ handle: OpaquePointer, _ out_re: UnsafeMutablePointer<Double>, _ out_im: UnsafeMutablePointer<Double>)
+
+@_silgen_name(abirqu_simulator_reset)
+func abirqu_simulator_reset(_ handle: OpaquePointer)
+
+@_silgen_name(abirqu_run_circuit)
+func abirqu_run_circuit(_ handle: OpaquePointer, _ gates: UnsafePointer<AbirQuGate>, _ n_gates: Int)

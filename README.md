@@ -1,4 +1,4 @@
-# AbirQu Quantum SDK v0.1.0-alpha
+# AbirQu Quantum SDK v0.1.0
 
 **Created by Abir Maheshwari** | abhirsxn@gmail.com | 🇮🇳 Indian Mission Support Enabled
 
@@ -126,7 +126,7 @@ print(result['counts'])
 
 ## How AbirQu Compares (Evidence-Based)
 
-| Feature | **AbirQu v0.1.0-alpha** | [Qiskit](https://www.ibm.com/quantum/qiskit) | [Cirq](https://quantumai.google/cirq) |
+| Feature | **AbirQu v0.1.0** | [Qiskit](https://www.ibm.com/quantum/qiskit) | [Cirq](https://quantumai.google/cirq) |
 |---------|-----------------|---------|-------|
 | **LDPC Error Correction** | ⚠️ LDPC modules implemented; overhead gains not yet independently validated | Varies by workflow | Varies by workflow |
 | **Phase Polynomial Opt** | ⚠️ Optimization interfaces present; headline reductions require reproducible benchmark publication | Available through optimization tooling | Available through optimization tooling |

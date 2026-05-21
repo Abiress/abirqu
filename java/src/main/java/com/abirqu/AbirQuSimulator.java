@@ -118,6 +118,28 @@ public class AbirQuSimulator {
     public void swap(int q0, int q1) { Native.abirqu_swap(nativeHandle, q0, q1); }
     
     /**
+     * Execute a batch of gates
+     */
+    public void runCircuit(AbirQuGate[] gates) {
+        if (gates == null || gates.length == 0) return;
+        AbirQuGate[] contiguousGates = (AbirQuGate[]) new AbirQuGate().toArray(gates.length);
+        for (int i = 0; i < gates.length; i++) {
+            contiguousGates[i].gateType = gates[i].gateType;
+            contiguousGates[i].pad0 = gates[i].pad0;
+            contiguousGates[i].pad1 = gates[i].pad1;
+            contiguousGates[i].pad2 = gates[i].pad2;
+            contiguousGates[i].ctrl = gates[i].ctrl;
+            contiguousGates[i].target = gates[i].target;
+            contiguousGates[i].param = gates[i].param;
+        }
+        for (AbirQuGate g : contiguousGates) {
+            g.write();
+        }
+        Native.abirqu_run_circuit(nativeHandle, contiguousGates, gates.length);
+    }
+
+    
+    /**
      * Get measurement probabilities
      * @return array of probabilities for each basis state
      */
