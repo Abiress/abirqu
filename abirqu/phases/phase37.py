@@ -1,7 +1,6 @@
 """
 Phase 3.7 Integration for AbirQu
 Copyright 2026 Abir Maheshwari
-Optimized and mathematically verified by Antigravity (Google DeepMind Agentic AI Coding Assistant)
 """
 from dataclasses import dataclass
 from typing import Any, Dict, List, Sequence, Tuple

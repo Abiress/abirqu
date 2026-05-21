@@ -1,6 +1,5 @@
 """Peephole optimization passes for quantum circuits.
 Copyright 2026 Abir Maheshwari
-Optimized and mathematically verified by Antigravity (Google DeepMind Agentic AI Coding Assistant)
 """
 import numpy as np
 from abirqu.circuit import Gate
