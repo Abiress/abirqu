@@ -75,12 +75,98 @@ class NeutralAtomTweezerArray:
         }
 
     def optimize_layout_for_circuit(self, required_edges: Sequence[Tuple[int, int]]):
-        sat = max(0, len(required_edges) - 1)
+        import numpy as np
+        from collections import defaultdict
+        
+        w = int(np.ceil(np.sqrt(self.num_atoms)))
+        h = int(np.ceil(self.num_atoms / w))
+        
+        site_coords = {s: (s % w, s // w) for s in range(self.num_sites)}
+        
+        adj = defaultdict(list)
+        for u, v in required_edges:
+            if u < self.num_atoms and v < self.num_atoms:
+                adj[u].append(v)
+                adj[v].append(u)
+                
+        qubits_by_deg = sorted(range(self.num_atoms), key=lambda q: len(adj[q]), reverse=True)
+        placed = {}
+        occupied = set()
+        
+        for q in qubits_by_deg:
+            best_site = -1
+            best_adj_score = -1
+            placed_neighbors = [placed[nb] for nb in adj[q] if nb in placed]
+            
+            candidates = []
+            if placed_neighbors:
+                for pn in placed_neighbors:
+                    px, py = site_coords[pn]
+                    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                        nx, ny = px + dx, py + dy
+                        if 0 <= nx < w and 0 <= ny < h:
+                            ns = ny * w + nx
+                            if ns < self.num_sites and ns not in occupied:
+                                candidates.append(ns)
+                                
+            if not candidates:
+                candidates = [s for s in range(self.num_sites) if s not in occupied]
+                
+            for s in candidates:
+                if s in occupied:
+                    continue
+                sx, sy = site_coords[s]
+                score = 0
+                for pn in placed_neighbors:
+                    pnx, pny = site_coords[pn]
+                    if abs(sx - pnx) + abs(sy - pny) == 1:
+                        score += 1
+                if score > best_adj_score:
+                    best_adj_score = score
+                    best_site = s
+                    
+            if best_site == -1:
+                for s in range(self.num_sites):
+                    if s not in occupied:
+                        best_site = s
+                        break
+                        
+            placed[q] = best_site
+            occupied.add(best_site)
+            
+        natively_satisfied = 0
+        for u, v in required_edges:
+            if u in placed and v in placed:
+                pu, pv = placed[u], placed[v]
+                ux, uy = site_coords[pu]
+                vx, vy = site_coords[pv]
+                if abs(ux - vx) + abs(uy - vy) == 1:
+                    natively_satisfied += 1
+                    
+        satisfaction_rate = natively_satisfied / max(1, len(required_edges))
+        
+        pitch = 5.0
+        total_dist = 0.0
+        max_dist = 0.0
+        for q in range(self.num_atoms):
+            if q in placed:
+                init_x, init_y = site_coords[q]
+                new_x, new_y = site_coords[placed[q]]
+                dist = pitch * np.sqrt((init_x - new_x)**2 + (init_y - new_y)**2)
+                total_dist += dist
+                max_dist = max(max_dist, dist)
+                
+        rearrangement_time = 100.0 + 2.0 * max_dist
+        
         return {
             "required_edges": len(required_edges),
-            "natively_satisfied": sat,
-            "satisfaction_rate": sat / max(1, len(required_edges)),
-            "rearrangement": {"rearrangement_time_us": 150, "total_distance_um": 25.0},
+            "natively_satisfied": natively_satisfied,
+            "satisfaction_rate": satisfaction_rate,
+            "rearrangement": {
+                "rearrangement_time_us": float(rearrangement_time),
+                "total_distance_um": float(total_dist),
+                "mapping": placed
+            }
         }
 
     def rearrange_atoms(self, new_sites: Sequence[int]):
@@ -93,13 +179,73 @@ class AdaptiveCompilerPass:
         self.topology = topology
 
     def route_circuit(self, gates: Sequence[Tuple[int, int]]):
-        swaps = max(0, len(gates) // 4)
+        from collections import deque
+        num_qubits = self.topology.get("num_qubits", 10)
+        edges = self.topology.get("edges", [])
+        
+        adj = {i: [] for i in range(num_qubits)}
+        for x, y in edges:
+            if x < num_qubits and y < num_qubits:
+                adj[x].append(y)
+                adj[y].append(x)
+                
+        physical_to_logical = {i: i for i in range(num_qubits)}
+        logical_to_physical = {i: i for i in range(num_qubits)}
+        
+        def find_path(start, end):
+            if start == end:
+                return [start]
+            queue = deque([[start]])
+            visited = {start}
+            while queue:
+                path = queue.popleft()
+                curr = path[-1]
+                if curr == end:
+                    return path
+                for neighbor in adj.get(curr, []):
+                    if neighbor not in visited:
+                        visited.add(neighbor)
+                        queue.append(path + [neighbor])
+            return []
+            
+        total_swaps = 0
+        routed_gates = []
+        
+        for u, v in gates:
+            if u >= num_qubits or v >= num_qubits:
+                continue
+            pu = logical_to_physical[u]
+            pv = logical_to_physical[v]
+            
+            path = find_path(pu, pv)
+            if not path:
+                continue
+                
+            for step in range(len(path) - 2):
+                w1 = path[step]
+                w2 = path[step + 1]
+                
+                l1 = physical_to_logical[w1]
+                l2 = physical_to_logical[w2]
+                
+                logical_to_physical[l1] = w2
+                logical_to_physical[l2] = w1
+                physical_to_logical[w1] = l2
+                physical_to_logical[w2] = l1
+                
+                routed_gates.append(("SWAP", w1, w2))
+                total_swaps += 1
+                
+            new_pu = logical_to_physical[u]
+            new_pv = logical_to_physical[v]
+            routed_gates.append(("GATE", new_pu, new_pv))
+            
         return {
             "original_gates": len(gates),
-            "routed_gates": len(gates) + swaps,
-            "total_swaps_inserted": swaps,
-            "swap_overhead": f"{int(100 * swaps / max(1, len(gates)))}%",
-            "final_mapping": {i: i for i in range(10)},
+            "routed_gates": len(routed_gates),
+            "total_swaps_inserted": total_swaps,
+            "swap_overhead": f"{int(100 * total_swaps / max(1, len(gates)))}%",
+            "final_mapping": {l: p for l, p in logical_to_physical.items()},
         }
 
     def update_topology(self, new_topology: Dict[str, Any]):

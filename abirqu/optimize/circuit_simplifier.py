@@ -26,10 +26,13 @@ class CircuitSimplifier:
         """
         self.stats['original'] = len(circuit.gates)
         
-        # Pass 1: Basic rule-based simplification (inverse cancellation, etc.)
-        gates = list(circuit.gates)
-        gates = self._cancel_inverses(gates)
-        gates = self._merge_rotations(gates)
+        # Pass 1: ZX Calculus simplification
+        from abirqu.optimize.zx_calculus import simplify_via_zx
+        circ_zx = simplify_via_zx(circuit)
+        
+        # Pass 2: Commutation-Aware Peephole pass
+        from abirqu.optimize.peephole import optimize_paired_gates
+        gates = optimize_paired_gates(circ_zx.gates)
         gates = self._remove_identities(gates)
         
         # Re-build intermediate circuit for phase poly pass
@@ -37,16 +40,25 @@ class CircuitSimplifier:
         for g in gates:
             self._add_gate_to_circuit(temp_circ, g)
             
-        # Pass 2: Algebraic Phase Polynomial Optimization
-        # (This handles CNOT count minimization for {CNOT, RZ} subcircuits)
+        # Pass 3: Algebraic Phase Polynomial Optimization
         optimized_circ = self._algebraic_optimize(temp_circ)
         
-        self.stats['optimized'] = len(optimized_circ.gates)
+        # Pass 4: Final Peephole cleanup
+        final_gates = optimize_paired_gates(optimized_circ.gates)
+        final_gates = self._remove_identities(final_gates)
+        
+        final_circ = Circuit(circuit.num_qubits)
+        for g in final_gates:
+            self._add_gate_to_circuit(final_circ, g)
+        final_circ.measurements = list(circuit.measurements)
+        final_circ.classical_bits = circuit.classical_bits
+        
+        self.stats['optimized'] = len(final_circ.gates)
         self.stats['removed'] = self.stats['original'] - self.stats['optimized']
         if self.stats['original'] > 0:
             self.stats['pct'] = 100.0 * self.stats['removed'] / self.stats['original']
             
-        return optimized_circ
+        return final_circ
 
     def simplify(self, circuit: Circuit) -> Circuit:
         """Alias for optimize() to maintain consistency with other frameworks."""

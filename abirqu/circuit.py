@@ -167,8 +167,14 @@ class Circuit:
     def s(self, qubit: int) -> 'Circuit':
         return self.add_gate('S', qubit)
     
+    def s_dag(self, qubit: int) -> 'Circuit':
+        return self.add_gate('S_dag', qubit)
+    
     def t(self, qubit: int) -> 'Circuit':
         return self.add_gate('T', qubit)
+    
+    def t_dag(self, qubit: int) -> 'Circuit':
+        return self.add_gate('T_dag', qubit)
     
     def rx(self, qubit: int, theta: float) -> 'Circuit':
         return self.add_gate('RX', qubit, [theta])

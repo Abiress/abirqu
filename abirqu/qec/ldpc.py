@@ -15,6 +15,7 @@ class LDPCDecoder:
         self.parity_matrix: Optional[np.ndarray] = None
         self.max_iterations = 50
         self.convergence_threshold = 1e-6
+        self.last_decode_time = 0.0
         
     def load_code(self, ldpc_code: 'LDPCCode'):
         """Load LDPC code parameters."""
@@ -23,87 +24,86 @@ class LDPCDecoder:
         self.m = ldpc_code.n - ldpc_code.k
         
     def decode(self, received: List[float]) -> List[int]:
-        """Decode using vectorized belief propagation (sum-product)."""
+        """Decode using vectorized belief propagation (sum-product/log-domain)."""
         if self.parity_matrix is None:
             raise ValueError("No code loaded.")
             
-        # Convert to numpy array
-        # llr: L_i = log(P(x_i=0|y_i)/P(x_i=1|y_i))
-        # For BSC with error prob p: L_i = log((1-p)/p)
-        rx = np.array(received, dtype=float)
-        p = np.clip(rx, 1e-6, 1.0 - 1e-6)
-        llr = np.log((1 - p) / p)
+        import time
+        start_time = time.perf_counter()
+            
+        use_cp = False
+        if self.use_gpu:
+            try:
+                import cupy as cp
+                use_cp = True
+            except ImportError:
+                use_cp = False
+                
+        xp = cp if use_cp else np
+        
+        # Convert received codeword/probabilities to LLRs
+        rx = xp.array(received, dtype=float)
+        p = xp.clip(rx, 1e-6, 1.0 - 1e-6)
+        llr = xp.log((1 - p) / p)
         
         m, n = self.parity_matrix.shape
-        # Variable-to-check messages (M_v->c)
-        v2c = np.tile(llr, (m, 1)) * self.parity_matrix
-        # Check-to-variable messages (E_c->v)
-        c2v = np.zeros((m, n))
+        H = xp.array(self.parity_matrix, dtype=int)
+        
+        # Variable-to-check messages
+        v2c = xp.tile(llr, (m, 1)) * H
+        c2v = xp.zeros((m, n), dtype=float)
         
         for _ in range(self.max_iterations):
-            # Check to Variable updates: E_c->v = 2 * atanh(prod(tanh(M_v'->c / 2)))
-            for i in range(m):
-                # indices of variables connected to check i
-                idxs = np.where(self.parity_matrix[i] == 1)[0]
-                vals = v2c[i, idxs]
-                tan_vals = np.tanh(vals / 2.0)
-                
-                prod_all = np.prod(tan_vals)
-                for j in idxs:
-                    # prod excluding current variable
-                    t = tan_vals[np.where(idxs == j)[0][0]]
-                    prod_ex = prod_all / (t if abs(t) > 1e-12 else 1e-12)
-                    c2v[i, j] = 2.0 * np.arctanh(np.clip(prod_ex, -1.0 + 1e-12, 1.0 - 1e-12))
+            # Check-to-Variable updates
+            v2c_abs = xp.abs(v2c)
+            v2c_abs = xp.clip(v2c_abs, 1e-12, 50.0)
             
-            # Variable to Check updates: M_v->c = L_v + sum(E_c'->v)
-            for j in range(n):
-                idxs = np.where(self.parity_matrix[:, j] == 1)[0]
-                vals = c2v[idxs, j]
-                sum_all = llr[j] + np.sum(vals)
-                for i in idxs:
-                    v2c[i, j] = sum_all - c2v[i, j]
+            A = -xp.log(xp.tanh(v2c_abs / 2.0))
+            A[H == 0] = 0.0
+            
+            row_sums = xp.sum(A, axis=1, keepdims=True)
+            A_ex = row_sums - A
+            
+            sgn = xp.where(v2c >= 0, 1.0, -1.0)
+            sgn[H == 0] = 1.0
+            row_sgn_prod = xp.prod(sgn, axis=1, keepdims=True)
+            sgn_ex = row_sgn_prod * sgn
+            
+            A_ex = xp.clip(A_ex, 1e-12, 50.0)
+            c2v = sgn_ex * 2.0 * xp.arctanh(xp.exp(-A_ex))
+            c2v[H == 0] = 0.0
+            
+            # Variable-to-Check updates
+            col_sums = xp.sum(c2v, axis=0, keepdims=True)
+            v2c = (llr + col_sums) - c2v
+            v2c[H == 0] = 0.0
             
             # Posterior and hard decision
-            posterior = llr + np.sum(c2v, axis=0)
+            posterior = llr + xp.sum(c2v, axis=0)
             decoded = (posterior < 0).astype(int)
             
             # Check syndrome
-            if np.sum((self.parity_matrix @ decoded) % 2) == 0:
+            syndrome = (H @ decoded) % 2
+            if xp.sum(syndrome) == 0:
+                self.last_decode_time = time.perf_counter() - start_time
+                if use_cp:
+                    return decoded.get().tolist()
                 return decoded.tolist()
                 
-        return (posterior < 0).astype(int).tolist()
+        posterior = llr + xp.sum(c2v, axis=0)
+        decoded = (posterior < 0).astype(int)
+        self.last_decode_time = time.perf_counter() - start_time
+        if use_cp:
+            return decoded.get().tolist()
+        return decoded.tolist()
         
     def get_decoding_time(self) -> float:
-        """Benchmark decoding performance (simplified)."""
-        # Would use time.perf_counter() in real implementation
-        return 0.001 * self.n  # Simplified: 1ms per 1000 bits
+        """Return actual last decoding time."""
+        return self.last_decode_time
         
     def decode_hard(self, received: List[int]) -> List[int]:
-        """Simplified hard-decision decoding."""
-        if self.parity_matrix is None:
-            raise ValueError("No code loaded.")
-            
-        rx = np.array(received, dtype=int)
-        
-        # Syndrome
-        syndrome = (self.parity_matrix @ rx) % 2
-        
-        if np.sum(syndrome) == 0:
-            return received  # No errors detected
-            
-        # Simplified: flip bits to correct syndrome
-        # Real implementation would use minimum weight syndrome decoding
-        corrected = rx.copy()
-        
-        # Try single bit flips
-        for j in range(self.n):
-            corrected[j] = 1 - corrected[j]
-            new_syndrome = (self.parity_matrix @ corrected) % 2
-            if np.sum(new_syndrome) == 0:
-                return corrected.tolist()
-            corrected[j] = 1 - corrected[j]  # Flip back
-            
-        return corrected.tolist()
+        """Hard-decision decoding using the BP decoder."""
+        return self.decode([float(x) for x in received])
 
 class LDPCEncoder:
     """LDPC encoder with optimized parity-check matrix."""

@@ -19,6 +19,28 @@ class MultiObjectiveRouter:
         pareto = sorted(cands, key=lambda x: x["score"], reverse=True)
         return {"recommended": pareto[0], "pareto_front": pareto}
 
+    def route_circuit(self, circuit: Any, shots: int, weights: Dict[str, float]):
+        """Route a specific Circuit object."""
+        circuit_qubits = circuit.num_qubits
+        counts = circuit.count_gates()
+        num_1q_gates = sum(v for k, v in counts.items() if k not in ("CNOT", "CX", "CZ", "SWAP", "TOFFOLI", "FREDKIN"))
+        num_2q_gates = sum(v for k, v in counts.items() if k in ("CNOT", "CX", "CZ", "SWAP"))
+        return self.route(circuit_qubits, num_1q_gates, num_2q_gates, shots, weights)
+
+    def route_workload(self, workload: List[Dict[str, Any]], weights: Dict[str, float]) -> List[Dict[str, Any]]:
+        """Route a workload of circuits, each with its own shots parameter."""
+        results = []
+        for item in workload:
+            circuit = item["circuit"]
+            shots = item.get("shots", 1024)
+            res = self.route_circuit(circuit, shots, weights)
+            results.append({
+                "circuit_name": getattr(circuit, "name", "unknown"),
+                "recommended": res["recommended"],
+                "pareto_front": res["pareto_front"]
+            })
+        return results
+
 
 class CircuitKnitter:
     def find_optimal_cuts(self, num_qubits: int, two_qubit_gates: Sequence[Tuple[int, int]], max_fragment_qubits: int):

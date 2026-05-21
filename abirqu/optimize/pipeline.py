@@ -63,13 +63,10 @@ class MultiObjectivePipeline:
         return total / max(total_weight, 1.0)
         
     def _optimize_circuit(self, circuit: Circuit) -> Circuit:
-        """Apply optimization passes (simplified)."""
-        # In practice, would use:
-        # 1. Gate cancellation
-        # 2. Gate merging
-        # 3. Circuit rewriting
-        # For now, return copy
-        return Circuit(circuit.num_qubits, f"{circuit.name}_optimized")
+        """Apply optimization passes using CircuitSimplifier."""
+        from abirqu.optimize.circuit_simplifier import CircuitSimplifier
+        simplifier = CircuitSimplifier()
+        return simplifier.optimize(circuit)
         
     def get_score(self, circuit: Circuit) -> float:
         """Calculate weighted objective score."""

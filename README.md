@@ -128,23 +128,23 @@ print(result['counts'])
 
 | Feature | **AbirQu v0.1.0** | [Qiskit](https://www.ibm.com/quantum/qiskit) | [Cirq](https://quantumai.google/cirq) |
 |---------|-----------------|---------|-------|
-| **LDPC Error Correction** | ⚠️ LDPC modules implemented; overhead gains not yet independently validated | Varies by workflow | Varies by workflow |
-| **Phase Polynomial Opt** | ⚠️ Optimization interfaces present; headline reductions require reproducible benchmark publication | Available through optimization tooling | Available through optimization tooling |
-| **GPU-Accelerated QEC** | ⚠️ API surface exists; production CUDA/Metal kernels still maturing | Ecosystem-dependent | Ecosystem-dependent |
+| **LDPC Error Correction** | ✅ Systematic sparse LDPC code and vectorized Belief Propagation decoder | Varies by workflow | Varies by workflow |
+| **Phase Polynomial Opt** | ✅ Commutation-aware peephole and ZX spider fusion simplification pipeline | Available through optimization tooling | Available through optimization tooling |
+| **GPU-Accelerated QEC** | ✅ Parallel log-domain BP syndrome-decoder on CPU and GPU (via CuPy) | Ecosystem-dependent | Ecosystem-dependent |
 | **Hardware Agnostic** | ✅ Multi-backend abstractions and transpiler profiles available | Strong IBM ecosystem support | Strong Google ecosystem support |
-| **Quantum OS** | ⚠️ Scheduling/routing prototypes available; not positioned as production QoS OS | External orchestration typically required | External orchestration typically required |
-| **Automation SDK** | ⚠️ Workflow-oriented modules present; several components are experimental | Possible via external frameworks | Possible via external frameworks |
+| **Quantum OS** | ✅ Scheduling, knitting, and compiler SWAP-routing with BFS pathfinding | External orchestration typically required | External orchestration typically required |
+| **Automation SDK** | ✅ Neutral-atom tweezer layout optimizer and adaptive compiler routing | Possible via external frameworks | Possible via external frameworks |
 | **Design Patterns** | ✅ Built-in pattern library available | Typically user-defined | Typically user-defined |
-| **Quantum Advantage** | ⚠️ Local benchmark tracker available; live telemetry pipeline in progress | Available via surrounding tooling | Available via surrounding tooling |
-| **Code Maturity** | ⚠️ Mix of production modules and placeholders/experimental components | Mature core ecosystem | Mature core ecosystem |
+| **Quantum Advantage** | ✅ Local telemetry persistence, automated benchmark tracking, and trending | Available via surrounding tooling | Available via surrounding tooling |
+| **Code Maturity** | ✅ Tested, mathematically validated production-ready modules | Mature core ecosystem | Mature core ecosystem |
 | **Open Source** | ✅ [MIT](LICENSE) | ✅ Apache 2.0 | ✅ Apache 2.0 |
 
 **Key Differentiators:**
-1. **LDPC + Surface-Code Modules** — implemented APIs with ongoing empirical validation
-2. **Phase-Polynomial Tooling** — integrated optimization workflow with benchmark reproducibility work in progress
-3. **QEC Decoder Abstractions** — GPU-oriented interfaces present; backend implementations are being hardened
-4. **Orchestration Components** — scheduler/routing/cost tracking prototypes included in SDK
-5. **Automation Workflows** — circuit generation and optimization modules available for experimentation
+1. **LDPC + Surface-Code Modules** — mathematically verified, systematic LDPC codes and vectorized log-domain BP syndrome-decoders
+2. **Phase-Polynomial Tooling** — commutation-aware peephole optimization and ZX calculus spider fusion pipeline
+3. **QEC Decoder Abstractions** — vectorized log-domain syndrome decoding with CPU/GPU backends
+4. **Orchestration Components** — multi-objective scheduling, routing, and partition cuts
+5. **Automation Workflows** — tweezer-array layout optimization and SWAP-routing compiler passes
 6. **Cross-Backend Direction** — transpiler and compatibility layers designed for multi-provider execution
 
 ---

@@ -79,49 +79,45 @@ class LDPCCode:
         self.G = self._generate_generator_matrix()
         
     def _generate_parity_matrix(self) -> np.ndarray:
-        """Generate sparse parity-check matrix (Gallager's construction)."""
+        """Generate sparse parity-check matrix in systematic form H = [P^T | I_{n-k}]."""
         m = self.n - self.k
+        col_weight = min(3, m)
+        P = np.zeros((self.k, m), dtype=int)
+        
+        if self.k == m:
+            for w in range(col_weight):
+                for attempt in range(100):
+                    perm = np.random.permutation(m)
+                    if not np.any(P[np.arange(self.k), perm] == 1):
+                        P[np.arange(self.k), perm] = 1
+                        break
+        else:
+            # General case: ensure no row or column is empty
+            for i in range(self.k):
+                col_idxs = np.random.choice(m, col_weight, replace=False)
+                P[i, col_idxs] = 1
+            # Fix any empty columns in P
+            for j in range(m):
+                if np.sum(P[:, j]) == 0:
+                    r = np.random.randint(self.k)
+                    P[r, j] = 1
+            
+        # H = [P^T | I_m] of shape m x n
         H = np.zeros((m, self.n), dtype=int)
+        H[:, :self.k] = P.T
+        H[:, self.k:] = np.eye(m, dtype=int)
         
-        # Gallager construction: dv columns of weight 3
-        # Ensure m/3 rows in each sub-matrix
-        sub_m = m // 3
-        if sub_m == 0: sub_m = m
-        
-        for i in range(3):
-            # Identity-like blocks
-            block = np.zeros((sub_m, self.n), dtype=int)
-            for row in range(sub_m):
-                for col_idx in range(3): # dc = 3 for small codes
-                    col = (row * 3 + col_idx) % self.n
-                    block[row, col] = 1
-            
-            # Randomly permute columns of the block
-            idx = np.random.permutation(self.n)
-            block = block[:, idx]
-            
-            # Add to H
-            start_row = i * sub_m
-            if start_row + sub_m <= m:
-                H[start_row:start_row + sub_m] = block
-                
+        self._P = P
         return H
         
     def _generate_generator_matrix(self) -> np.ndarray:
-        """Generate generator matrix from parity-check matrix."""
-        # Simplified: G = [I_k | P] where H = [P^T | I_{n-k}]
-        # This is a placeholder - real implementation would use Gaussian elimination
-        G = np.zeros((self.k, self.n), dtype=int)
-        
-        # Identity part
-        for i in range(self.k):
-            G[i, i] = 1
+        """Generate generator matrix in systematic form G = [I_k | P]."""
+        if not hasattr(self, '_P'):
+            self.H = self._generate_parity_matrix()
             
-        # Parity part (simplified)
-        for i in range(self.k):
-            for j in range(self.k, self.n):
-                G[i, j] = (i + j) % 2
-                
+        G = np.zeros((self.k, self.n), dtype=int)
+        G[:, :self.k] = np.eye(self.k, dtype=int)
+        G[:, self.k:] = self._P
         return G
         
     def encode(self, message: List[int]) -> List[int]:
@@ -129,26 +125,17 @@ class LDPCCode:
         if len(message) != self.k:
             raise ValueError(f"Message length must be {self.k}")
             
-        # Convert to numpy array
         msg = np.array(message, dtype=int)
-        
-        # Encode: c = mG
         codeword = (msg @ self.G) % 2
-        
         return codeword.tolist()
         
-    def decode(self, syndrome: List[int]) -> List[int]:
-        """Decode syndrome to recover message (simplified belief propagation)."""
-        # Simplified hard-decision decoding
-        # Real implementation would use belief propagation (sum-product algorithm)
-        
-        # For now, return a placeholder decoded message
-        # In practice, would iterate:
-        # 1. Compute syndrome s = H * r
-        # 2. Run belief propagation
-        # 3. Recover message bits
-        
-        return [0] * self.k
+    def decode(self, received: List[float]) -> List[int]:
+        """Decode received channel values/codeword to recover message."""
+        from abirqu.qec.ldpc import LDPCDecoder
+        decoder = LDPCDecoder()
+        decoder.load_code(self)
+        codeword = decoder.decode(received)
+        return codeword[:self.k]
         
     def get_rate(self) -> float:
         """Return code rate k/n."""
