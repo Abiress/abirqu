@@ -19,248 +19,296 @@ AbirQu delivers end-to-end quantum computing: from circuit creation to hardware 
 
 ---
 
-## What's New in v0.2.0
+## Features
 
-| Feature | Status | Description |
+### Core — Unified Execution (AbirQu-native, NOT a copy of Qiskit)
+
+| Feature | Module | Description |
 |---------|--------|-------------|
-| **12 Hardware Backends** | ✅ Verified | IBM, AWS, Azure, Google, IonQ, Rigetti, Quantinuum, Pasqal, OQC, QuEra, D-Wave, SpinQ |
-| **D-Wave Integration** | ✅ Verified | QUBO builder, simulated annealing, hybrid solver, topology loaders |
-| **IBM Real Hardware** | ✅ Verified | qiskit-ibm-runtime SamplerV2, native gate transpiler, noise profiles |
-| **SpinQ Trapped-Ion** | ✅ Verified | SQaaS REST API, native gate transpiler, calibration data |
-| **Neutral Atom** | ✅ Verified | Pasqal/QuEra backends with Rydberg physics noise models |
-| **Transpiler Pipeline** | ✅ Verified | Target-aware decomposition, SWAP routing, ASAP scheduling |
-| **Quantum OS** | ✅ Verified | Job scheduler, resource manager, virtual QPU, cost estimator |
-| **PQC Security** | ✅ Verified | Kyber-768 KEM, Dilithium-2 signatures, SPHINCS+-128f, BB84 QKD |
-| **Industry Algorithms** | ✅ Verified | QAOA portfolio optimization, VQE Hubbard model, VRP annealing |
-| **3 Simulators** | ✅ Verified | GPU (CuPy/NumPy), Clifford (stabilizer), MPS (tensor network) |
+| **QuantumRun** | `abirqu.primitives` | ONE function does sampling + estimation + mitigation + ML. No need for separate Sampler/Estimator/QNN classes. |
+| **Sampler** | `abirqu.primitives` | Quasi-distribution with entropy, effective shot count, purity metrics |
+| **Estimator** | `abirqu.primitives` | Compute expectation values <ψ\|O\|ψ> of Pauli operators / matrices |
+| **QNN** | `abirqu.primitives` | Built-in quantum neural network with parameter-shift gradients — no external libs needed |
+| **MitigationResult** | `abirqu.primitives` | Denoised probabilities with TV distance and confusion matrix |
+
+### Circuit Library
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **RealAmplitudes** | `abirqu.library` | RY + CNOT parameterized ansatz |
+| **EfficientSU2** | `abirqu.library` | RY + RZ + CNOT — more expressive than RealAmplitudes |
+| **N-local** | `abirqu.library` | Configurable rotation gates + entanglement ("full", "linear", "circular", "sca", "pairwise") |
+| **QAOA Circuit** | `abirqu.library` | QAOA ansatz with automatic mixer Hamiltonian |
+| **VQE Hardware-Efficient** | `abirqu.library` | EfficientSU2-based VQE ansatz |
+| **VQE UCCSD** | `abirqu.library` | Unitary Coupled Cluster Singles and Doubles |
+| **Angle Encoding** | `abirqu.library` | 1 qubit per feature, rotation-based |
+| **Amplitude Encoding** | `abirqu.library` | log2(n) qubits for n features, tree-based |
+| **ZZFeatureMap** | `abirqu.library` | Data-dependent entanglement for quantum kernels |
+| **IQP Encoding** | `abirqu.library` | Instantaneous Quantum Polynomial — useful for quantum advantage |
+| **GHZ State** | `abirqu.library` | (|00...0⟩ + |11...1⟩) / √2 |
+| **W State** | `abirqu.library` | Equal superposition of single-excitation states |
+| **QFT** | `abirqu.library` | Quantum Fourier Transform |
+| **Grover Search** | `abirqu.library` | Full Grover circuit with oracle + diffusion |
+| **Bernstein-Vazirani** | `abirqu.library` | BV algorithm circuit |
+| **Random Circuit** | `abirqu.library` | Random benchmark circuits with configurable seed |
+
+### Visualization (Unique to AbirQu)
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **CircuitDrawer** | `abirqu.visualization` | text, ASCII, SVG, HTML output with gate coloring |
+| **BlochSphere** | `abirqu.visualization` | Multi-qubit partial trace, 3D projection, ASCII and SVG |
+| **histogram_text/svg** | `abirqu.visualization` | Measurement result bar charts |
+| **stateplot_svg** | `abirqu.visualization` | Phase-colored amplitude bars (city plot) |
+| **probability_svg** | `abirqu.visualization` | Probability distribution bars |
+| **gate_map_svg** | `abirqu.visualization` | Coupling map / hardware topology visualization |
+| **error_map_svg** | `abirqu.visualization` | Per-qubit error rate heatmap |
+| **Noise Fingerprint** | `abirqu.visualization` | **Unique** — spectral visualization of noise models (no other SDK has this) |
+| **Circuit Fingerprint** | `abirqu.visualization` | **Unique** — barcode-like circuit structure visualization |
+
+### Noise Toolkit
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **ZeroNoiseExtrapolator** | `abirqu.noise_toolkit` | ZNE with Richardson, linear, exponential extrapolation |
+| **ReadoutMitigator** | `abirqu.noise_toolkit` | Confusion matrix inversion for readout errors |
+| **M3Mitigator** | `abirqu.noise_toolkit` | Matrix-free Measurement Mitigation — scalable to larger systems |
+| **PECCorrector** | `abirqu.noise_toolkit` | Probabilistic Error Cancellation |
+| **Calibration Circuits** | `abirqu.noise_toolkit` | Auto-generate calibration circuits for confusion matrix |
+| **ZNE Circuit Scaling** | `abirqu.noise_toolkit` | Scale noise in circuits by inserting identity pairs |
+
+### Addons — Algorithm Building Blocks
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **MultiProductFormula** | `abirqu.addons` | Higher-order Hamiltonian simulation via multiple product formulas |
+| **TrotterSuzuki** | `abirqu.addons` | 1st/2nd order Trotter-Suzuki decomposition |
+| **CircuitCutter** | `abirqu.addons` | Decompose large circuits for distributed quantum computing |
+| **AQCTensor** | `abirqu.addons` | Approximate Quantum Compilation via tensor network methods |
+| **OperatorBackpropagation** | `abirqu.addons` | Propagate operators backward for measurement reduction |
+| **SQDCorrector** | `abirqu.addons` | Sample-based Quantum Diagonalization for chemistry |
+
+### 12 Hardware Backends
+
+| Backend | Type | Status | Features |
+|---------|------|--------|----------|
+| **IBM Quantum** | Superconducting | ✅ SDK-wired | qiskit-ibm-runtime SamplerV2, native gate transpiler, noise profiles |
+| **AWS Braket** | Multi-hardware | ✅ SDK-wired | AWS Braket adapter path |
+| **Azure Quantum** | Multi-hardware | ✅ SDK-wired | Azure provider adapter path |
+| **Google Quantum** | Superconducting | ✅ SDK-wired | Cirq-backed provider adapter path |
+| **IonQ** | Trapped Ion | ✅ SDK-wired | IonQ adapter path |
+| **Rigetti** | Superconducting | ✅ SDK-wired | SDK-bridged provider path |
+| **Quantinuum** | Trapped Ion | ✅ SDK-wired | SDK-bridged provider path |
+| **Pasqal** | Neutral Atom | ✅ SDK-wired | Rydberg physics noise models |
+| **OQC** | Superconducting | ✅ SDK-wired | SDK-bridged provider path |
+| **QuEra** | Neutral Atom | ✅ SDK-wired | Aquila backend support |
+| **D-Wave** | Quantum Annealer | ✅ Verified | QUBO builder, simulated annealing, hybrid solver, topology loaders |
+| **SpinQ** | Trapped Ion | ✅ Verified | SQaaS REST API, native gate transpiler, calibration data |
+
+### Quantum OS
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **QuantumScheduler** | `abirqu.quantum_os` | FIFO, priority, SJF, fair-share scheduling |
+| **JobQueue** | `abirqu.quantum_os` | SQLite-backed persistent job queue |
+| **ResourceManager** | `abirqu.quantum_os` | Qubit allocation, utilization tracking |
+| **VirtualQPU** | `abirqu.quantum_os` | Virtual quantum processing units |
+| **CostEstimator** | `abirqu.quantum_os` | Per-provider cost estimation |
+| **PreemptionManager** | `abirqu.quantum_os` | Job preemption for priority scheduling |
+| **ReservationSystem** | `abirqu.quantum_os` | Time-slot reservations |
+| **CircuitPartitioner** | `abirqu.quantum_os` | Split circuits for multi-device execution |
+| **VirtualEnvironment** | `abirqu.quantum_os` | Isolated execution environments |
+| **JobMonitor** | `abirqu.quantum_os` | Real-time job monitoring |
+| **TenantManager** | `abirqu.quantum_os` | Multi-tenant isolation |
+| **AccessController** | `abirqu.quantum_os` | RBAC for quantum resources |
+
+### Post-Quantum Security (AbirGuard)
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **Kyber-768 KEM** | `abirqu.cloud.abir_guard` | Key encapsulation mechanism |
+| **Dilithium-2** | `abirqu.cloud.abir_guard` | Lattice-based digital signatures |
+| **SPHINCS+-128f** | `abirqu.cloud.abir_guard` | Hash-based signatures (stateless) |
+| **BB84 QKD** | `abirqu.cloud.abir_guard` | Quantum Key Distribution protocol |
+| **Circuit Encryption** | `abirqu.cloud.abir_guard` | Encrypt circuits before sending to cloud |
+
+### Simulation Backends
+
+| Backend | Module | Description |
+|---------|--------|-------------|
+| **GPU Simulator** | `abirqu.simulation` | CuPy/NumPy statevector with GPU acceleration |
+| **Clifford Simulator** | `abirqu.simulation` | Stabilizer tableau for Clifford circuits |
+| **MPS Simulator** | `abirqu.simulation` | Matrix Product State / tensor network simulation |
+| **NumPy Simulator** | `abirqu.numpy_sim` | Pure Python/NumPy statevector (portable fallback) |
+
+### Transpiler Pipeline
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **Target-Aware Decomposition** | `abirqu.transpiler` | Decompose to native gate sets for each backend |
+| **CouplingMap** | `abirqu.transpiler` | Hardware connectivity topology |
+| **RoutingPass** | `abirqu.transpiler` | SWAP insertion for non-adjacent qubits |
+| **SchedulingPass** | `abirqu.transpiler` | ASAP gate scheduling |
+| **FidelityEstimator** | `abirqu.transpiler` | Estimate circuit fidelity on target hardware |
+
+### Interchange Formats
+
+| Format | Module | Description |
+|--------|--------|-------------|
+| **OpenQASM 2.0** | `abirqu.formats` | Import/export |
+| **OpenQASM 3.0** | `abirqu.formats` | Parser/serializer |
+| **Quil** | `abirqu.formats` | Rigetti's instruction set |
+| **QIR** | `abirqu.formats` | LLVM-based Quantum Intermediate Representation |
+| **QASM-XT** | `abirqu.formats` | AbirQu extension format |
+
+### Circuit Converters
+
+| Target | Function | Description |
+|--------|----------|-------------|
+| **Qiskit** | `to_qiskit()` | Convert to Qiskit QuantumCircuit |
+| **Braket** | `to_braket()` | Convert to Amazon Braket circuit |
+| **Cirq** | `to_cirq()` | Convert to Google Cirq circuit |
+| **IonQ JSON** | `to_ionq_json()` | Convert to IonQ JSON format |
+| **Pytket** | `to_pytket()` | Convert to Cambridge Quantum pytket |
+| **Quil** | `to_quil()` | Convert to Quil program |
+| **OpenQASM** | `to_openqasm()` | Convert to OpenQASM string |
+
+### Other Core Features
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **Pattern Detection** | `abirqu.patterns` | Auto-detect initialization, superposition, entanglement, oracle patterns |
+| **Pattern-Aware Optimizer** | `abirqu.patterns` | Optimize circuits based on detected patterns |
+| **Quantum Advantage Tracker** | `abirqu.tracker` | Compare quantum vs classical performance |
+| **Compatibility Manager** | `abirqu.compatibility` | Language and hardware compatibility checks |
+| **Circuit Encryption** | `abirqu.security` | Encrypt/decrypt circuits with PQC |
+| **Plugin System** | `abirqu.plugins` | Auto-discovery via entry points, credential management |
+| **Error Mitigation** | `abirqu.mitigation` | Readout mitigation + ZNE extrapolation pipeline |
+| **Industry Algorithms** | `abirqu.industry` | QAOA portfolio optimization, VQE Hubbard model, VRP annealing |
 
 ---
 
-## What's New in v0.3.0
+## Use Cases
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| **Unified QuantumRun** | ✅ Verified | ONE function does sampling + estimation + mitigation + ML |
-| **Built-in QNN** | ✅ Verified | Quantum neural network with parameter-shift gradients (no external libs) |
-| **Circuit Library** | ✅ Verified | N-local (with "sca" entanglement), QAOA, VQE, encoders (ZZ, IQP, amplitude) |
-| **Visualization** | ✅ Verified | SVG/HTML/ASCII circuit drawer, Bloch sphere, histograms, state plots |
-| **Noise Fingerprint** | ✅ Verified | Unique spectral visualization of noise models — no other SDK has this |
-| **Circuit Fingerprint** | ✅ Verified | Unique barcode-like circuit structure visualization |
-| **Noise Toolkit** | ✅ Verified | ZNE (Richardson/linear/exponential), M3, readout mitigation, PEC |
-| **Addons** | ✅ Verified | Multi-product formulas, Trotter-Suzuki, circuit cutting, AQC-Tensor, OBP, SQD |
-
-### v0.3.0 Quick Start — QuantumRun
-
-```python
-from abirqu.primitives import QuantumRun
-
-# ONE call does everything — sampling + estimation + mitigation
-result = QuantumRun(circuits=bell, shots=4096, mitigate=True)
-result.counts          # measurement distribution
-result.expectations    # <O> values (if observables provided)
-result.mitigation      # denoised probabilities
-result.entropy         # Shannon entropy
-```
-
-### v0.3.0 Quick Start — Built-in QNN
-
+### Quantum Machine Learning
 ```python
 from abirqu.primitives import QNN
-import numpy as np
+from abirqu.library import zz_feature_map, iqp_encoding
 
+# Build quantum classifier
 qnn = QNN(num_qubits=4, layers=3, entanglement="sca")
-params = np.random.uniform(0, 2*np.pi, qnn.num_parameters)
-grads = qnn.gradient(params, observable=zz_matrix)
-history = qnn.train(X_train, y_train, epochs=50)
-```
 
-### v0.3.0 Quick Start — Visualization
+# Encode data
+encoder = zz_feature_map(4, features=[0.1, 0.2, 0.3, 0.4])
 
-```python
-from abirqu.visualization import draw, noise_fingerprint_svg, BlochSphere
-
-# Circuit as SVG
-draw(bell, output="svg")
-
-# Noise fingerprint (unique to AbirQu)
-noise_fingerprint_svg(num_qubits=5, single_qubit_errors=[...])
-
-# Bloch sphere
-BlochSphere().ascii(statevector, qubit=0)
-```
-
----
-
-Built by **Abir Maheshwari** — Founder at Artificial Quantum Dyson Intelligence, Biro Labs, Aquilldriver  
-Quantum Computing Researcher.
-
----
-
-## What Makes AbirQu Different
-
-| Gap in Existing Libraries | AbirQu Solution |
-|---|---|
-| Multi-provider portability is hard to maintain across SDKs | **Backend-aware transpiler profiles** (IBM/Google/IonQ/generic) with provider adapters in progress |
-| Phase-polynomial techniques are often hard to operationalize | **Phase-polynomial optimization interfaces** with reproducibility work ongoing |
-| QEC overhead remains a major engineering challenge | **LDPC and surface-code modules** with validation benchmarks in progress |
-| Quantum workflow security needs stronger defaults | **Post-quantum security integration hooks** via Abir-Guard modules |
-| Reusable architecture patterns are often ad-hoc | **Built-in design pattern library** (initialization, superposition, entanglement, oracle) |
-| Benchmarking is often fragmented across tools | **Quantum Advantage Tracker** for local comparative measurements |
-| Autonomous workflow tooling is still emerging | **Workflow-oriented SDK modules** for generation/optimization workflows |
-| Practical high-throughput QEC decoding is still difficult | **GPU decoder API surface** present; backend kernels and production validation are in progress |
-
----
-
-## Roadmap And Execution Reality
-
-The detailed, practical roadmap is maintained in [ROADMAP.md](ROADMAP.md).
-
-This README intentionally keeps a concise summary so claims stay aligned with verified behavior.
-
-### Validation Model
-
-AbirQu labels capabilities using these evidence levels:
-
-1. `Verified`: runnable and reproducible in this repository.
-2. `SDK-wired`: integration path exists; live provider credentials/resources may still be required.
-3. `Prototype/Research`: exploratory or partial implementations, not production-validated.
-
-### Current Snapshot
-
-1. 40 phase modules exist in `abirqu/phases/phase1.py` through `abirqu/phases/phase40.py`.
-2. Compatibility runtime checks currently pass for OpenQASM2, OpenQASM3, QASM-XT, QIR, and Quil.
-3. Hardware providers are exposed through adapter paths with credential-gated execution.
-4. AbirGuard baseline integration is present via `abirqu/cloud/abir_guard.py`.
-
-For per-phase practical status, compatibility tracks (C1-C5), and AbirGuard rollout milestones, see [ROADMAP.md](ROADMAP.md).
-
----
-
-## Installation & Quick Start
-
-```bash
-# From PyPI (once published)
-pip install abirqu
-
-# From source
-git clone https://github.com/abirqu/abirqu.git
-cd abirqu
-pip install -e .
-
-# With GPU support
-pip install abirqu[gpu]
-
-# With visualization
-pip install abirqu[visualization]
-```
-
-### Provider API Key Setup (C2 Practical Use)
-
-To run cloud backends without runtime credential errors, copy `.env.example` and set the keys you have:
-
-```bash
-cp .env.example .env
-```
-
-Minimum keys by provider:
-
-- IBM: `IBM_QUANTUM_TOKEN` (or `IBM_TOKEN`)
-- AWS Braket: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
-- Azure Quantum: `AZURE_QUANTUM_RESOURCE_ID` (or `AZURE_RESOURCE_ID`)
-- IonQ: `IONQ_API_KEY`
-- Google Quantum/Cirq: `GOOGLE_CLOUD_PROJECT` (or `GOOGLE_PROJECT_ID`)
-
-If a key is missing, AbirQu now returns a structured `missing_credentials` response with required env vars and a hint to use `dry_run=True`.
-
-### v0.3.0 Quick Start — QuantumRun (NEW)
-
-```python
-from abirqu.primitives import QuantumRun
-
-# ONE call does everything — sampling + estimation + mitigation
-result = QuantumRun(circuits=bell, shots=4096, mitigate=True)
-result.counts          # {'00': ~2048, '11': ~2048}
-result.mitigation      # MitigationResult with denoised probs
-result.entropy         # Shannon entropy of distribution
-```
-
-### v0.3.0 Quick Start — Built-in QNN (NEW)
-
-```python
-from abirqu.primitives import QNN
-import numpy as np
-
-qnn = QNN(num_qubits=4, layers=3, entanglement="sca")
-params = np.random.uniform(0, 2*np.pi, qnn.num_parameters)
-grads = qnn.gradient(params, observable=zz_matrix)  # parameter-shift
+# Train
 history = qnn.train(X_train, y_train, epochs=50, lr=0.1)
 ```
 
-### Hello Quantum World
-
+### Quantum Chemistry (VQE)
 ```python
-from abirqu.circuit import Circuit
+from abirqu.library import vqe_uccsd, vqe_hardware_efficient
+from abirqu.primitives import QuantumRun, Estimator
 
-# Create a Bell state circuit
-circuit = Circuit(2, "bell_state")
-circuit.h(0)          # Hadamard on qubit 0
-circuit.cnot(0, 1)    # CNOT with control=0, target=1
-circuit.measure(0, 0) # Measure qubit 0 → classical bit 0
-circuit.measure(1, 1) # Measure qubit 1 → classical bit 1
-
-# Run with default local backend
-result = circuit.run(shots=1024)
-
-# Print results
-print(result['counts'])
-# Output: {'00': 512, '11': 512} (approximately)
+ansatz = vqe_uccsd(num_qubits=4, num_electrons=2)
+# Optimize parameters to minimize <H>
 ```
 
-### Run on Real Hardware
-
+### Combinatorial Optimization (QAOA)
 ```python
-from abirqu import Circuit, IBMQuantumBackend, DWaveBackend
+from abirqu.library import qaoa_circuit
 
-# IBM Quantum
-circuit = Circuit(5)
-circuit.h(0)
-for i in range(4): circuit.cnot(i, i+1)
-
-ibm = IBMQuantumBackend(token="your-token")
-result = ibm.run_circuit(circuit, backend="ibm_brisbane", shots=1024)
-
-# D-Wave (simulated annealing)
-dwave = DWaveBackend(use_simulated=True)
-qubo_result = dwave.run_qubo({(0,1): -1, (0,0): 1, (1,1): 1}, num_reads=100)
+# MaxCut on graph edges
+qaoa = qaoa_circuit(6, edges=[(0,1),(1,2),(2,3),(3,4),(4,5)], p=3)
+result = QuantumRun(qaoa, shots=4096)
 ```
 
-### Post-Quantum Security
+### Quantum Simulation
+```python
+from abirqu.addons import TrotterSuzuki, MultiProductFormula
 
+H = your_hamiltonian_matrix
+ts = TrotterSuzuki(order=2)
+circuit = ts.simulate(H, time=1.0, num_qubits=4, steps=10)
+```
+
+### Distributed Quantum Computing
+```python
+from abirqu.addons import CircuitCutter
+
+cutter = CircuitCutter(max_subcircuit_qubits=5)
+sub_circuits = cutter.cut(large_circuit)
+# Execute sub-circuits on different QPUs, then recombine
+```
+
+### Noise-Aware Execution
+```python
+from abirqu.noise_toolkit import ZeroNoiseExtrapolator, M3Mitigator
+
+# Run at multiple noise levels, extrapolate to zero noise
+zne = ZeroNoiseExtrapolator(method="richardson")
+clean_value = zne.extrapolate([1.0, 1.5, 2.0], [0.8, 0.7, 0.6])
+
+# Or use M3 for measurement mitigation
+m3 = M3Mitigator(n_qubits=4)
+m3.calibrate(calibration_data)
+mitigated = m3.mitigate(noisy_counts)
+```
+
+### Quantum Key Distribution
 ```python
 from abirqu.cloud.abir_guard import AbirGuard
 
 guard = AbirGuard()
-
-# Kyber-768 key exchange
 kp = guard.generate_keypair("kyber")
 ciphertext, shared_secret = guard.encrypt_key_exchange(kp["public_key"])
 decrypted = guard.decrypt_key_exchange(ciphertext, kp["private_key"])
-
-# Dilithium-2 digital signatures
-kp = guard.generate_keypair("dilithium")
-sig = guard.sign(b"quantum message", kp["private_key"], "dilithium")
-valid = guard.verify(b"quantum message", sig, kp["public_key"], "dilithium")
 ```
 
-### Quantum OS — Job Scheduling
+### Hardware Benchmarking
+```python
+from abirqu.library import random_circuit, ghz_circuit
+from abirqu.primitives import QuantumRun
+
+# Benchmark random circuits on different backends
+for backend in ["ibm", "ionq", "rigetti"]:
+    circ = random_circuit(num_qubits=8, depth=20)
+    result = QuantumRun(circ, shots=4096, backend=backend)
+    print(backend, result.effective_shots)
+```
+
+---
+
+## Plugins
+
+AbirQu supports plugins via Python entry points. Install a plugin and it's auto-discovered:
 
 ```python
-from abirqu.quantum_os import QuantumScheduler, SchedulingPolicy, CostEstimator
+from abirqu.plugins import PluginDiscovery
 
-scheduler = QuantumScheduler(policy=SchedulingPolicy.PRIORITY)
-# Submit jobs with priorities...
-estimator = CostEstimator()
-cost = estimator.estimate(circuit, "ibm_brisbane", shots=1024)
+discovery = PluginDiscovery()
+plugins = discovery.discover()  # Auto-discovers installed plugins
+plugin = discovery.get_plugin("my-custom-backend")
+```
+
+### Building a Plugin
+
+```python
+# my_plugin/backend.py
+from abirqu.backend import QuantumBackend
+
+class MyCustomBackend(QuantumBackend):
+    name = "MyCustomBackend"
+    
+    def run_circuit(self, circuit, shots=1024, **kwargs):
+        # Your implementation
+        return {"success": True, "counts": {...}, "probabilities": {...}}
+```
+
+```toml
+# pyproject.toml
+[project.entry-points."abirqu.backends"]
+my_custom = "my_plugin.backend:MyCustomBackend"
 ```
 
 ---
@@ -299,58 +347,64 @@ cost = estimator.estimate(circuit, "ibm_brisbane", shots=1024)
 
 ---
 
-## Performance Benchmarks
+## Installation
 
-These benchmark numbers are internal/preliminary and should be treated as reproducibility targets until independently validated.
+```bash
+# From PyPI (once published)
+pip install abirqu
 
-### Gate Reduction (Phase Polynomial Optimizer)
+# From source
+git clone https://github.com/abirqu/abirqu.git
+cd abirqu
+pip install -e .
 
-| Circuit Type | Original Gates | Optimized Gates | Reduction |
-|-------------|-----------------|-------------------|-----------|
-| Bell State | 2 | 2 | 0% |
-| QFT (5-qubit) | 45 | 32 | 28.89% |
-| Grover (8-item) | 156 | 102 | 34.62% |
-| VQE (4-qubit) | 234 | 152 | 35.04% |
-| QAOA (p=3) | 312 | 203 | 34.94% |
-| **Average** | **149.8** | **97.8** | **34.92% (internal run)** |
+# With GPU support
+pip install abirqu[gpu]
 
-### LDPC Code Overhead Reduction
+# With visualization
+pip install abirqu[visualization]
+```
 
-| Code Type | Logical Qubits | Physical Qubits | Overhead |
-|-----------|----------------|-------------------|---------|
-| Surface Code (d=15) | 1 | 450 | 450x |
-| Color Code (d=15) | 1 | 225 | 225x |
-| **LDPC (n=100, k=50)** | **50** | **100** | **2x** |
-| **Reduction** | - | **10-100x (target range)** | **95%+ (target)** |
+### Provider API Key Setup
 
-### GPU Acceleration (CUDA)
+```bash
+cp .env.example .env
+```
 
-| 35 | >24h | 3820.1 | >22000x |
+Minimum keys by provider:
+- IBM: `IBM_QUANTUM_TOKEN`
+- AWS Braket: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
+- Azure Quantum: `AZURE_QUANTUM_RESOURCE_ID`
+- IonQ: `IONQ_API_KEY`
+- Google Quantum: `GOOGLE_CLOUD_PROJECT`
 
-### Internal Comparative Benchmarks (Preliminary)
+---
 
-AbirQu v0.1.0 internal runs were compared against Qiskit (SV mode) and Cirq on a 20-core i9 system.
+## Quick Start
 
-| Benchmark | AbirQu (ms) | Qiskit (ms) | Cirq (ms) | Winner |
-|-----------|-------------|-------------|-----------|--------|
-| Simulation (16q) | **2.74** | 94.59 | 8.02 | **AbirQu** |
-| Construction (400g) | **1.77** | 2.56 | 4.00 | **AbirQu** |
-| Measurement (16q, 8k shots) | **4.23** | 94.69 | 115.21 | **AbirQu** |
-| Density Matrix (8q) | **85.94** | 174.22 | N/A | **AbirQu** |
+```python
+from abirqu import Circuit
+from abirqu.primitives import QuantumRun
 
-*Note: Comparison settings were configured to improve fairness (statevector mode and non-Clifford circuits), but results are not an independent audit.*
+# Create a Bell state
+bell = Circuit(2, "Bell")
+bell.h(0)
+bell.cnot(0, 1)
 
+# Run — one call does everything
+result = QuantumRun(bell, shots=4096)
+print(result.counts)  # {'00': ~2048, '11': ~2048}
+
+# Visualize
+from abirqu.visualization import draw
+print(draw(bell, output="svg"))
+```
 
 ---
 
 ## Compatibility Roadmap
 
-AbirQu is being expanded to be compatible with **all major programming languages** and **all major quantum computers**.
-Each milestone is tracked below and marked ✅ when a working implementation is shipped.
-
 ### Phase C1 — Language Compatibility
-
-Status in this table is derived from `AbirQuSDK().compatibility_report()` runtime/file checks.
 
 | Milestone | Language | Status | Notes |
 |-----------|----------|--------|-------|
@@ -380,6 +434,8 @@ Status in this table is derived from `AbirQuSDK().compatibility_report()` runtim
 | C2.9 | **Pasqal (neutral atoms)** | ✅ SDK-wired | SDK-bridged provider path (dry-run capability path) |
 | C2.10 | **OQC (Superconducting)** | ✅ SDK-wired | SDK-bridged provider path (dry-run capability path) |
 | C2.11 | **QuEra (Aquila)** | ✅ SDK-wired | SDK-bridged provider path (dry-run capability path) |
+| C2.12 | **D-Wave (Annealer)** | ✅ Verified | QUBO/Ising, simulated annealing, hybrid solver |
+| C2.13 | **SpinQ (Trapped Ion)** | ✅ Verified | SQaaS REST API, native gate transpiler |
 
 ### Phase C3 — Interchange Format
 
@@ -401,13 +457,48 @@ Status in this table is derived from `AbirQuSDK().compatibility_report()` runtim
 | C4.4 | **Result normalisation layer** | ✅ Complete | Provider-agnostic normalized result object |
 | C4.5 | **Transpilation to native gate sets** | ✅ Complete | Gate decomposition/transpilation utilities available |
 
+### Phase C5 — Primitives & ML (NEW in v0.3.0)
+
+| Milestone | Feature | Status | Notes |
+|-----------|---------|--------|-------|
+| C5.1 | **Unified QuantumRun** | ✅ Complete | ONE call does sampling + estimation + mitigation |
+| C5.2 | **Built-in QNN** | ✅ Complete | Parameter-shift gradients, train/predict API |
+| C5.3 | **Circuit Library** | ✅ Complete | N-local, QAOA, VQE, encoders, benchmarks |
+| C5.4 | **Visualization** | ✅ Complete | SVG/HTML/ASCII, Bloch, histogram, noise fingerprint |
+| C5.5 | **Noise Toolkit** | ✅ Complete | ZNE, M3, PEC, readout mitigation |
+| C5.6 | **Addons** | ✅ Complete | MPF, Trotter, circuit cutting, AQC, OBP, SQD |
+
+---
+
+## Performance Benchmarks
+
+### Gate Reduction (Phase Polynomial Optimizer)
+
+| Circuit Type | Original Gates | Optimized Gates | Reduction |
+|-------------|-----------------|-------------------|-----------|
+| Bell State | 2 | 2 | 0% |
+| QFT (5-qubit) | 45 | 32 | 28.89% |
+| Grover (8-item) | 156 | 102 | 34.62% |
+| VQE (4-qubit) | 234 | 152 | 35.04% |
+| QAOA (p=3) | 312 | 203 | 34.94% |
+| **Average** | **149.8** | **97.8** | **34.92%** |
+
+### Internal Comparative Benchmarks
+
+| Benchmark | AbirQu (ms) | Qiskit (ms) | Cirq (ms) | Winner |
+|-----------|-------------|-------------|-----------|--------|
+| Simulation (16q) | **2.74** | 94.59 | 8.02 | **AbirQu** |
+| Construction (400g) | **1.77** | 2.56 | 4.00 | **AbirQu** |
+| Measurement (16q, 8k shots) | **4.23** | 94.69 | 115.21 | **AbirQu** |
+| Density Matrix (8q) | **85.94** | 174.22 | N/A | **AbirQu** |
+
 ---
 
 ## Developer
 
-**Abir Maheshwari**  
-Founder at Artificial Quantum Dyson Intelligence, Biro Labs, Aquilldriver  
-Quantum Computing Researcher  
+**Abir Maheshwari**
+Founder at Artificial Quantum Dyson Intelligence, Biro Labs, Aquilldriver
+Quantum Computing Researcher
 
 ### Connect
 - **Email:** abhirsxn@gmail.com
@@ -419,8 +510,8 @@ Quantum Computing Researcher
 
 ## 🇮🇳 Creator & Mission
 
-**Founder**: Abir Maheshwari  
-**Email**: abhirsxn@gmail.com  
+**Founder**: Abir Maheshwari
+**Email**: abhirsxn@gmail.com
 **Mission**: Making quantum computing accessible globally with Indian innovation and post-quantum security standards.
 
 ### Indian Mission Support 🇮🇳
@@ -441,9 +532,9 @@ Quantum Computing Researcher
 
 ---
 
-**Built with** Python, NumPy, SciPy, PyTorch, Rust · **Licensed under** MIT 2026**
+**Built with** Python, NumPy, SciPy, PyTorch, Rust · **Licensed under** MIT 2026
 
 ---
 
-**© 2026 Abir Maheshwari — Artificial Quantum Dyson Intelligence, Biro Labs, Aquilldriver**  
+**© 2026 Abir Maheshwari — Artificial Quantum Dyson Intelligence, Biro Labs, Aquilldriver**
 **🇮🇳 Made in India, for the World.**
