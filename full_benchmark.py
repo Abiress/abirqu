@@ -150,7 +150,7 @@ class BenchmarkSuite:
             elapsed = time.time() - start
             results["cirq"] = {
                 "construction_time_ms": elapsed * 1000,
-                "num_gates": len(circuit.all_operations()),
+                "num_gates": len(list(circuit.all_operations())),
                 "qubits": num_qubits
             }
 
@@ -187,7 +187,7 @@ class BenchmarkSuite:
                         if (target >> i) & 1 == 0:
                             qc.x(i)
                     qc.h(n_qubits - 1)
-                    qc.mct(list(range(n_qubits - 1)), n_qubits - 1)
+                    qc.mcx(list(range(n_qubits - 1)), n_qubits - 1)
                     qc.h(n_qubits - 1)
                     for i in range(n_qubits):
                         if (target >> i) & 1 == 0:
@@ -198,7 +198,7 @@ class BenchmarkSuite:
                     for i in range(n_qubits):
                         qc.x(i)
                     qc.h(n_qubits - 1)
-                    qc.mct(list(range(n_qubits - 1)), n_qubits - 1)
+                    qc.mcx(list(range(n_qubits - 1)), n_qubits - 1)
                     qc.h(n_qubits - 1)
                     for i in range(n_qubits):
                         qc.x(i)

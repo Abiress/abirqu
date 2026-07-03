@@ -1,139 +1,158 @@
 """
-OQC (Superconducting) Backend - Real Implementation
-Uses REST API for Oxford Quantum Computing systems
+OQC (Oxford Quantum Circuits) Backend — Real hardware via REST API.
 """
 
-import json
-import requests
-from typing import Dict, List, Optional, Any
+from __future__ import annotations
+
+import os
+import time
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+from ...backend import QuantumBackend, JobStatus, JobHandle
+from ...circuit import Circuit
 
 
 @dataclass
 class OQCCredentials:
-    """OQC credentials"""
-    api_key: str
-    endpoint: str = "https://api.oqc.se"
-    
+    api_key: str = ""
+    endpoint: str = "https://job-server.cloud.oqc.co"
+
     @classmethod
     def from_env(cls) -> "OQCCredentials":
-        import os
         return cls(
             api_key=os.getenv("OQC_API_KEY", ""),
-            endpoint=os.getenv("OQC_ENDPOINT", "https://api.oqc.se")
+            endpoint=os.getenv("OQC_ENDPOINT", "https://job-server.cloud.oqc.co"),
         )
 
 
-class OQCBackend:
-    """OQC superconductung backend with REST API"""
-    
-    def __init__(self, credentials: Optional[OQCCredentials] = None):
+class OQCBackend(QuantumBackend):
+    """OQC superconducting backend via REST API.
+
+    Parameters
+    ----------
+    credentials : OQCCredentials, optional
+        Falls back to environment variables.
+    device_name : str
+        ``'Lucy'`` (8-qubit), ``'Penny'`` (4-qubit), or ``'Simulator'``.
+    """
+
+    name = "OQC"
+    max_qubits = 8
+    native_gates = ["Rz", "SX", "CNOT"]
+    is_local = False
+
+    def __init__(
+        self,
+        credentials: Optional[OQCCredentials] = None,
+        device_name: str = "Lucy",
+    ):
         self.creds = credentials or OQCCredentials.from_env()
-        self.session = requests.Session()
-        self.session.headers.update({
+        self.device_name = device_name
+        self._session = None
+
+    def _get_session(self):
+        if self._session is not None:
+            return self._session
+        import requests
+        self._session = requests.Session()
+        self._session.headers.update({
             "Authorization": f"Bearer {self.creds.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         })
-    
+        return self._session
+
     def _request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
-        """Make authenticated request to OQC API"""
-        url = f"{self.creds.endpoint}/{endpoint.lstrip('/')}"
-        try:
-            response = self.session.request(method, url, **kwargs)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"OQC API request failed: {e}")
-    
-    def list_backends(self) -> List[Dict[str, Any]]:
-        """List available OQC backends"""
-        result = self._request("GET", "/v1/devices")
-        return result.get("devices", [])
-    
-    def get_backend_info(self, device_id: str) -> Dict[str, Any]:
-        """Get device information"""
-        return self._request("GET", f"/v1/devices/{device_id}")
-    
-    def create_qasm_circuit(self) -> Dict[str, Any]:
-        """Create Bell state QASM program"""
-        qasm = """
-        OPENQASM 2.0;
-        include "qelib1.inc";
-        qreg q[2];
-        creg c[2];
-        h q[0];
-        cx q[0],q[1];
-        measure q -> c;
-        """
-        return {
-            "qasm": qasm,
-            "shots": 1024
-        }
-    
-    def submit_circuit(self, circuit_qasm: str, device_id: str, shots: int = 1024) -> Dict[str, Any]:
-        """Submit circuit to OQC"""
+        session = self._get_session()
+        url = f"{self.creds.endpoint}{endpoint}"
+        resp = session.request(method, url, timeout=kwargs.pop("timeout", 30), **kwargs)
+        resp.raise_for_status()
+        return resp.json()
+
+    def _circuit_to_qasm(self, circuit: Circuit) -> str:
+        from ...converters import to_openqasm
+        return to_openqasm(circuit)
+
+    def run_circuit(
+        self,
+        circuit: Circuit,
+        shots: int = 1024,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        qasm = self._circuit_to_qasm(circuit)
+
         payload = {
-            "qasm": circuit_qasm,
-            "device": device_id,
-            "shots": shots
+            "name": "abirqu-job",
+            "shots": shots,
+            "backend": self.device_name,
+            "program": {"qasm": qasm},
         }
-        result = self._request("POST", "/v1/jobs", json=payload)
-        job_id = result.get("job_id")
-        
-        return self._poll_job(job_id)
-    
-    def _poll_job(self, job_id: str, timeout: int = 300) -> Dict[str, Any]:
-        """Poll job status"""
-        import time
-        
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            result = self._request("GET", f"/v1/jobs/{job_id}")
+        resp = self._request("POST", "/jobs", json=payload)
+        job_id = resp.get("job_id", resp.get("id"))
+
+        # Poll for completion
+        while True:
+            result = self._request("GET", f"/jobs/{job_id}")
             status = result.get("status", "")
-            
-            if status in ["COMPLETED", "FAILED"]:
-                return result
-            
+            if status == "COMPLETED":
+                break
+            if status in ("FAILED", "CANCELLED"):
+                raise RuntimeError(f"OQC job {job_id} ended with status={status}")
             time.sleep(2)
-        
-        raise TimeoutError(f"Job {job_id} timed out")
-    
-    def get_counts(self, job_result: Dict[str, Any]) -> Dict[str, int]:
-        """Extract counts from result"""
-        if "result" in job_result and "counts" in job_result["result"]:
-            return job_result["result"]["counts"]
-        return {}
-    
-    def get_oqc_backends(self) -> List[str]:
-        """List available OQC backends"""
-        return [
-            "Lucy",       # 8-qubit superconductung processor
-            "Penny",      # 4-qubit processor
-            "Simulator",  # Cloud simulator
-        ]
-    
-    def test_connection(self) -> bool:
-        """Test connection to OQC"""
-        if not self.creds.api_key:
-            return False
-        
+
+        counts = result.get("result", {}).get("counts", {})
+        total = sum(counts.values()) or shots
+        probs = {k: v / total for k, v in counts.items()}
+
+        return {
+            "success": True,
+            "backend": f"OQC:{self.device_name}",
+            "shots": shots,
+            "counts": counts,
+            "probabilities": probs,
+            "statevector": None,
+        }
+
+    def submit(
+        self,
+        circuit: Circuit,
+        shots: int = 1024,
+        **kwargs: Any,
+    ) -> JobHandle:
+        qasm = self._circuit_to_qasm(circuit)
+        payload = {
+            "name": "abirqu-job",
+            "shots": shots,
+            "backend": self.device_name,
+            "program": {"qasm": qasm},
+        }
+        resp = self._request("POST", "/jobs", json=payload)
+        return JobHandle(
+            job_id=resp.get("job_id", resp.get("id", "")),
+            backend=self,
+            status=JobStatus.QUEUED,
+        )
+
+    def query_job(self, job_id: str) -> JobStatus:
         try:
-            backends = self.list_backends()
-            return isinstance(backends, list)
+            data = self._request("GET", f"/jobs/{job_id}")
+            status_map = {
+                "QUEUED": JobStatus.QUEUED,
+                "RUNNING": JobStatus.RUNNING,
+                "COMPLETED": JobStatus.COMPLETED,
+                "FAILED": JobStatus.FAILED,
+                "CANCELLED": JobStatus.CANCELED,
+            }
+            return status_map.get(data.get("status", ""), JobStatus.UNKNOWN)
+        except Exception:
+            return JobStatus.UNKNOWN
+
+    def cancel_job(self, job_id: str) -> bool:
+        try:
+            self._request("DELETE", f"/jobs/{job_id}")
+            return True
         except Exception:
             return False
 
-
-if __name__ == "__main__":
-    backend = OQCBackend()
-    
-    print("Testing OQC (Superconducting) Backend...")
-    print(f"Credentials valid: {bool(backend.creds.api_key)}")
-    
-    if backend.test_connection():
-        print("✓ Connected to OQC")
-        backends = backend.list_backends()
-        print(f"Available backends: {len(backends)}")
-    else:
-        print("✗ Could not connect (check OQC_API_KEY)")
-        print("OQC backends:", backend.get_oqc_backends())
+    def list_backends(self) -> List[str]:
+        return ["Lucy", "Penny", "Simulator"]

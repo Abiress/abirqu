@@ -1,116 +1,142 @@
 """
-Quantinuum (H-Series) Backend - Real Implementation
-Uses pytket + Quantinuum backend
+Quantinuum H-Series Backend — Real hardware via pytket + pytket-quantinuum.
 """
 
-from typing import Dict, List, Optional, Any
+from __future__ import annotations
+
+import os
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+from ...backend import QuantumBackend, JobStatus, JobHandle
+from ...circuit import Circuit
 
 
 @dataclass
 class QuantinuumCredentials:
-    """Quantinuum credentials"""
-    api_key: str
-    endpoint: str = "https://api.quantinuum.lu"
-    
+    api_key: str = ""
+    issuer: str = "quantinuum"
+    client_id: str = ""
+
     @classmethod
     def from_env(cls) -> "QuantinuumCredentials":
-        import os
         return cls(
             api_key=os.getenv("QUANTINUUM_API_KEY", ""),
-            endpoint=os.getenv("QUANTINUUM_ENDPOINT", "https://api.quantinuum.lu")
+            issuer=os.getenv("QUANTINUUM_ISSUER", "quantinuum"),
+            client_id=os.getenv("QUANTINUUM_CLIENT_ID", ""),
         )
 
+    def validate(self) -> bool:
+        return bool(self.api_key)
 
-class QuantinuumBackend:
-    """Quantinuum H-Series backend using pytket"""
-    
-    def __init__(self, credentials: Optional[QuantinuumCredentials] = None):
+
+class QuantinuumBackend(QuantumBackend):
+    """Quantinuum H-Series backend using pytket.
+
+    Parameters
+    ----------
+    credentials : QuantinuumCredentials, optional
+        Falls back to environment variables.
+    device_name : str
+        H-Series device, e.g. ``'H1-1'`` or ``'H2-1'``.
+    """
+
+    name = "Quantinuum"
+    max_qubits = 56
+    native_gates = ["Rz", "Ry", "MS", "ZZ"]
+    is_local = False
+
+    def __init__(
+        self,
+        credentials: Optional[QuantinuumCredentials] = None,
+        device_name: str = "H1-1SC",
+    ):
         self.creds = credentials or QuantinuumCredentials.from_env()
-        
-        # Try to import pytket
-        try:
-            import pytket
-            from pytket.extensions import quantinuum
-            self.pytket_available = True
-        except ImportError:
-            self.pytket_available = False
-    
-    def create_circuit(self, num_qubits: int = 2) -> Any:
-        """Create a pytket circuit"""
-        if not self.pytket_available:
-            raise RuntimeError("pytket not installed. Install: pip install pytket pytket-quantinuum")
-        
-        from pytket import Circuit
-        return Circuit(num_qubits)
-    
-    def add_h_gate(self, circuit: Any, qubit: int) -> None:
-        """Add H gate"""
-        if not self.pytket_available:
-            raise RuntimeError("pytket not available")
-        from pytket import OpType
-        circuit.add_gate(OpType.H, [qubit])
-    
-    def add_cnot(self, circuit: Any, control: int, target: int) -> None:
-        """Add CNOT gate"""
-        if not self.pytket_available:
-            raise RuntimeError("pytket not available")
-        from pytket import OpType
-        circuit.add_gate(OpType.CX, [control, target])
-    
-    def create_bell_state(self) -> Any:
-        """Create Bell state circuit"""
-        circuit = self.create_circuit(2)
-        self.add_h_gate(circuit, 0)
-        self.add_cnot(circuit, 0, 1)
-        return circuit
-    
-    def compile_for_quantinuum(self, circuit: Any) -> Any:
-        """Compile circuit for Quantinuum backend"""
-        if not self.pytket_available:
-            raise RuntimeError("pytket-quantinuum not available")
-        
-        from pytket.extensions import quantinuum
-        device = quantinuum.H1()  # H-Series device
-        compiled = circuit.copy()
-        compiled.rename_qubits(device.default_mapping(circuit.n_qubits))
-        return compiled
-    
-    def get_quantinuum_backends(self) -> List[str]:
-        """List available Quantinuum backends"""
-        return [
-            "H1",      # 20-qubit H-Series
-            "H2",      # 32-qubit H-Series
-            "H1-LE",   # H1 with low energy
-            "H2-LE",   # H2 with low energy
-        ]
-    
-    def test_pytket(self) -> bool:
-        """Test pytket integration"""
-        if not self.pytket_available:
-            return False
-        
-        try:
-            circuit = self.create_bell_state()
-            compiled = self.compile_for_quantinuum(circuit)
-            return compiled.n_qubits > 0
-        except Exception:
-            return False
+        self.device_name = device_name
 
+    def _circuit_to_pytket(self, circuit: Circuit):
+        from ...converters import to_pytket
+        return to_pytket(circuit)
 
-if __name__ == "__main__":
-    backend = QuantinuumBackend()
-    
-    print("Testing Quantinuum (H-Series) Backend...")
-    print(f"pytket available: {backend.pytket_available}")
-    
-    if backend.pytket_available:
-        if backend.test_pytket():
-            print("✓ pytket + Quantinuum integration working")
-            bell = backend.create_bell_state()
-            print(f"Bell state circuit created: {bell.n_qubits} qubits")
-        else:
-            print("✗ pytket test failed")
-    else:
-        print("Install pytket: pip install pytket pytket-quantinuum")
-        print("Quantinuum backends:", backend.get_quantinuum_backends())
+    def run_circuit(
+        self,
+        circuit: Circuit,
+        shots: int = 1024,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        try:
+            from pytket.extensions.quantinuum import QuantinuumAPI
+        except ImportError as exc:
+            raise RuntimeError(
+                "Quantinuum backend requires 'pytket' and 'pytket-quantinuum'. "
+                "Install with: pip install pytket pytket-quantinuum"
+            ) from exc
+
+        api = QuantinuumAPI(token=self.creds.api_key)
+        tk_circuit = self._circuit_to_pytket(circuit)
+
+        result_handler = api.process_circuit(
+            tk_circuit,
+            shots=shots,
+            name="abirqu-job",
+            target=self.device_name,
+        )
+        status = result_handler.status()
+
+        # Poll until done
+        while status not in ("completed", "failed", "error"):
+            import time
+            time.sleep(2)
+            status = result_handler.status()
+
+        if status != "completed":
+            raise RuntimeError(f"Quantinuum job ended with status: {status}")
+
+        counts = result_handler.get_counts()
+        total = sum(counts.values())
+        probs = {k: v / total for k, v in counts.items()}
+
+        return {
+            "success": True,
+            "backend": f"Quantinuum:{self.device_name}",
+            "shots": shots,
+            "counts": counts,
+            "probabilities": probs,
+            "statevector": None,
+        }
+
+    def submit(
+        self,
+        circuit: Circuit,
+        shots: int = 1024,
+        **kwargs: Any,
+    ) -> JobHandle:
+        try:
+            from pytket.extensions.quantinuum import QuantinuumAPI
+        except ImportError as exc:
+            raise RuntimeError("pytket-quantinuum required.") from exc
+
+        api = QuantinuumAPI(token=self.creds.api_key)
+        tk_circuit = self._circuit_to_pytket(circuit)
+
+        result_handler = api.process_circuit(
+            tk_circuit,
+            shots=shots,
+            name="abirqu-job",
+            target=self.device_name,
+        )
+
+        return JobHandle(
+            job_id=str(id(result_handler)),
+            backend=self,
+            status=JobStatus.RUNNING,
+        )
+
+    def query_job(self, job_id: str) -> JobStatus:
+        return JobStatus.UNKNOWN
+
+    def cancel_job(self, job_id: str) -> bool:
+        return False
+
+    def list_backends(self) -> List[str]:
+        return ["H1-1", "H1-1SC", "H1-2", "H2-1", "H2-1SC"]

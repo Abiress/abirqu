@@ -1,135 +1,197 @@
 """
-Rigetti / QCS Backend - Real Implementation
-Uses pyquil and Quil IR for Rigetti systems
+Rigetti / QCS Backend — Real hardware via pyquil + QCS REST API.
 """
 
-import json
-from typing import Dict, List, Optional, Any
+from __future__ import annotations
+
+import os
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+from ...backend import QuantumBackend, JobStatus, JobHandle
+from ...circuit import Circuit
 
 
 @dataclass
 class RigettiCredentials:
-    """Rigetti credentials"""
-    api_key: str
-    endpoint: str = "https://api.rigetti.com"
-    
+    api_key: str = ""
+    endpoint: str = "https://qcs.rigetti.com"
+
     @classmethod
     def from_env(cls) -> "RigettiCredentials":
-        import os
         return cls(
-            api_key=os.getenv("RIGETTI_API_KEY", ""),
-            endpoint=os.getenv("RIGETTI_ENDPOINT", "https://api.rigetti.com")
+            api_key=os.getenv("RIGETTI_API_KEY", os.getenv("QCS_API_KEY", "")),
+            endpoint=os.getenv("RIGETTI_ENDPOINT", "https://qcs.rigetti.com"),
         )
 
 
-class RigettiBackend:
-    """Rigetti backend using pyquil + Quil IR"""
-    
-    def __init__(self, credentials: Optional[RigettiCredentials] = None):
+class RigettiBackend(QuantumBackend):
+    """Rigetti / QCS backend using pyquil.
+
+    Parameters
+    ----------
+    credentials : RigettiCredentials, optional
+        Falls back to environment variables.
+    device_name : str
+        QPU or QVM name, e.g. ``'Aspen-M-3'`` or ``'QVM'``.
+    """
+
+    name = "Rigetti-QCS"
+    max_qubits = 80
+    native_gates = ["RZ", "RX", "ISWAP", "CZ"]
+    is_local = False
+
+    def __init__(
+        self,
+        credentials: Optional[RigettiCredentials] = None,
+        device_name: str = "QVM",
+    ):
         self.creds = credentials or RigettiCredentials.from_env()
-        
-        # Try to import pyquil
+        self.device_name = device_name
+
+    def _circuit_to_quil(self, circuit: Circuit) -> str:
+        from ...converters import to_quil
+        return to_quil(circuit)
+
+    def run_circuit(
+        self,
+        circuit: Circuit,
+        shots: int = 1024,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        quil = self._circuit_to_quil(circuit)
+
+        # Try pyquil first
         try:
             import pyquil
-            self.pyquil_available = True
+            from pyquil import Program, get_qc
+            from pyquil.gates import MEASURE
+            from pyquil.quilbase import Declare
+
+            prog = Program()
+            ro = prog.declare("ro", "BIT", circuit.num_qubits)
+            for line in quil.split("\n"):
+                line = line.strip()
+                if not line or line.startswith("DECLARE") or line.startswith("MEASURE"):
+                    continue
+                # Parse and add gates
+                if line.startswith("H "):
+                    q = int(line.split()[1])
+                    prog += pyquil.gates.H(q)
+                elif line.startswith("CNOT "):
+                    parts = line.split()
+                    prog += pyquil.gates.CNOT(int(parts[1]), int(parts[2]))
+                elif line.startswith("X "):
+                    q = int(line.split()[1])
+                    prog += pyquil.gates.X(q)
+                elif line.startswith("Y "):
+                    q = int(line.split()[1])
+                    prog += pyquil.gates.Y(q)
+                elif line.startswith("Z "):
+                    q = int(line.split()[1])
+                    prog += pyquil.gates.Z(q)
+                elif line.startswith("CZ "):
+                    parts = line.split()
+                    prog += pyquil.gates.CZ(int(parts[1]), int(parts[2]))
+                elif line.startswith("SWAP "):
+                    parts = line.split()
+                    prog += pyquil.gates.SWAP(int(parts[1]), int(parts[2]))
+
+            for i in range(circuit.num_qubits):
+                prog += MEASURE(i, ro[i])
+
+            qc = get_qc(self.device_name)
+            executable = qc.compile(prog)
+            results = qc.run(executable)
+            bitstrings = results.readout_data.get("ro")
+            counts: Dict[str, int] = {}
+            for row in bitstrings:
+                key = "".join(str(b) for b in row)
+                counts[key] = counts.get(key, 0) + 1
+            total = sum(counts.values())
+            probs = {k: v / total for k, v in counts.items()}
+            return {
+                "success": True,
+                "backend": f"Rigetti:{self.device_name}",
+                "shots": shots,
+                "counts": counts,
+                "probabilities": probs,
+                "statevector": None,
+            }
         except ImportError:
-            self.pyquil_available = False
-    
-    def create_program(self, num_qubits: int = 2) -> Any:
-        """Create a pyquil program"""
-        if not self.pyquil_available:
-            raise RuntimeError("pyquil not installed. Install: pip install pyquil")
-        
-        import pyquil as pq
-        return pq.Program()
-    
-    def add_h_gate(self, program: Any, qubit: int) -> None:
-        """Add H gate"""
-        if not self.pyquil_available:
-            raise RuntimeError("pyquil not available")
-        import pyquil as pq
-        program += pq.H(qubit)
-    
-    def add_cnot(self, program: Any, control: int, target: int) -> None:
-        """Add CNOT gate"""
-        if not self.pyquil_available:
-            raise RuntimeError("pyquil not available")
-        import pyquil as pq
-        program += pq.CNOT(control, target)
-    
-    def create_bell_state(self) -> Any:
-        """Create Bell state program"""
-        program = self.create_program(2)
-        self.add_h_gate(program, 0)
-        self.add_cnot(program, 0, 1)
-        return program
-    
-    def to_quil(self, program: Any) -> str:
-        """Convert program to Quil IR"""
-        if not self.pyquil_available:
-            raise RuntimeError("pyquil not available")
-        return str(program)
-    
-    def submit_to_qcs(self, quil_code: str, shots: int = 1024) -> Dict[str, Any]:
-        """Submit Quil program to QCS"""
+            pass
+
+        # Fallback: REST API submission to QCS
         import requests
-        
-        headers = {
-            "X-API-Key": self.creds.api_key,
-            "Content-Type": "application/json"
+        headers = {"X-API-Key": self.creds.api_key, "Content-Type": "application/json"}
+        payload = {"quil": quil, "shots": shots, "target": self.device_name}
+        resp = requests.post(
+            f"{self.creds.endpoint}/v1/jobs",
+            headers=headers,
+            json=payload,
+            timeout=30,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        counts = data.get("result", {}).get("counts", {})
+        total = sum(counts.values()) or shots
+        probs = {k: v / total for k, v in counts.items()}
+        return {
+            "success": True,
+            "backend": f"Rigetti:{self.device_name}",
+            "shots": shots,
+            "counts": counts,
+            "probabilities": probs,
+            "statevector": None,
         }
-        
-        payload = {
-            "quil": quil_code,
-            "shots": shots
-        }
-        
+
+    def submit(
+        self,
+        circuit: Circuit,
+        shots: int = 1024,
+        **kwargs: Any,
+    ) -> JobHandle:
+        quil = self._circuit_to_quil(circuit)
+        import requests
+        headers = {"X-API-Key": self.creds.api_key, "Content-Type": "application/json"}
+        payload = {"quil": quil, "shots": shots, "target": self.device_name}
+        resp = requests.post(
+            f"{self.creds.endpoint}/v1/jobs",
+            headers=headers,
+            json=payload,
+            timeout=30,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return JobHandle(
+            job_id=data.get("job_id", data.get("id", "")),
+            backend=self,
+            status=JobStatus.QUEUED,
+        )
+
+    def query_job(self, job_id: str) -> JobStatus:
+        import requests
+        headers = {"X-API-Key": self.creds.api_key}
         try:
-            response = requests.post(
-                f"{self.creds.endpoint}/v1/jobs",
+            resp = requests.get(
+                f"{self.creds.endpoint}/v1/jobs/{job_id}",
                 headers=headers,
-                json=payload
+                timeout=10,
             )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"QCS submission failed: {e}")
-    
-    def get_rigetti_backends(self) -> List[str]:
-        """List available Rigetti backends"""
-        return [
-            "Aspen-M-3",      # 80-qubit processor
-            "Ankaa-3",      # Next-gen processor
-            "QVM",           # Rigetti simulator
-        ]
-    
-    def test_pyquil(self) -> bool:
-        """Test pyquil integration"""
-        if not self.pyquil_available:
-            return False
-        
-        try:
-            bell = self.create_bell_state()
-            quil_code = self.to_quil(bell)
-            return len(quil_code) > 0
+            resp.raise_for_status()
+            data = resp.json()
+            status_map = {
+                "queued": JobStatus.QUEUED,
+                "running": JobStatus.RUNNING,
+                "completed": JobStatus.COMPLETED,
+                "failed": JobStatus.FAILED,
+            }
+            return status_map.get(data.get("status", ""), JobStatus.UNKNOWN)
         except Exception:
-            return False
+            return JobStatus.UNKNOWN
 
+    def cancel_job(self, job_id: str) -> bool:
+        return False
 
-if __name__ == "__main__":
-    backend = RigettiBackend()
-    
-    print("Testing Rigetti/QCS Backend...")
-    print(f"pyquil available: {backend.pyquil_available}")
-    
-    if backend.pyquil_available:
-        if backend.test_pyquil():
-            print("✓ pyquil integration working")
-            bell = backend.create_bell_state()
-            print(f"Bell state Quil: {backend.to_quil(bell)[:50]}...")
-        else:
-            print("✗ pyquil test failed")
-    else:
-        print("Install pyquil: pip install pyquil")
-        print("Rigetti backends:", backend.get_rigetti_backends())
+    def list_backends(self) -> List[str]:
+        return ["Aspen-M-3", "Ankaa-3", "QVM"]

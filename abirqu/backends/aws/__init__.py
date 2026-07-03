@@ -1,161 +1,193 @@
 """
-AWS Braket Backend - Real Implementation
-Uses boto3/AWS SDK to interface with Braket service
+AWS Braket Backend — Real hardware via amazon-braket-sdk.
 """
 
-import json
-from typing import Dict, List, Optional, Any
+from __future__ import annotations
+
+import os
+import time
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+from ...backend import QuantumBackend, JobStatus, JobHandle
+from ...circuit import Circuit
 
 
 @dataclass
 class AWSBraketCredentials:
-    """AWS credentials for Braket"""
     aws_access_key_id: str
     aws_secret_access_key: str
     region: str = "us-east-1"
-    
+
     @classmethod
     def from_env(cls) -> "AWSBraketCredentials":
-        import os
         return cls(
             aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID", ""),
             aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY", ""),
-            region=os.getenv("AWS_REGION", "us-east-1")
+            region=os.getenv("AWS_REGION", "us-east-1"),
         )
-    
+
     def validate(self) -> bool:
-        return len(self.aws_access_key_id) > 0 and len(self.aws_secret_access_key) > 0
+        return bool(self.aws_access_key_id and self.aws_secret_access_key)
 
 
-class AWSBraketBackend:
-    """AWS Braket backend with real API calls"""
-    
-    def __init__(self, credentials: Optional[AWSBraketCredentials] = None):
+class BraketBackend(QuantumBackend):
+    """AWS Braket backend using amazon-braket-sdk.
+
+    Parameters
+    ----------
+    credentials : AWSBraketCredentials, optional
+        Falls back to environment variables.
+    device_arn : str
+        ARN of the Braket device.
+    s3_bucket : str
+        S3 bucket for results.
+    s3_prefix : str
+        S3 key prefix.
+    """
+
+    name = "AWS-Braket"
+    max_qubits = 34
+    native_gates = ["C", "Rx", "Ry", "Rz", "H", "X", "Y", "Z", "CNOT", "CZ"]
+    is_local = False
+
+    def __init__(
+        self,
+        credentials: Optional[AWSBraketCredentials] = None,
+        device_arn: str = "arn:aws:braket:::device/quantum-simulator/amazon/sv1",
+        s3_bucket: str = "",
+        s3_prefix: str = "abirqu-results",
+    ):
         self.creds = credentials or AWSBraketCredentials.from_env()
-        
-        # Try to import boto3
+        self.device_arn = device_arn
+        self.s3_bucket = s3_bucket
+        self.s3_prefix = s3_prefix
+        self._client = None
+
+    def _get_client(self):
+        if self._client is not None:
+            return self._client
         try:
             import boto3
             from botocore.config import Config
-            config = Config(retries={'max_attempts': 3, 'mode': 'standard'})
-            self.client = boto3.client(
+            config = Config(retries={"max_attempts": 3, "mode": "standard"})
+            self._client = boto3.client(
                 "braket",
                 aws_access_key_id=self.creds.aws_access_key_id,
                 aws_secret_access_key=self.creds.aws_secret_access_key,
                 region_name=self.creds.region,
-                config=config
+                config=config,
             )
-            self.boto3_available = True
-        except ImportError:
-            self.boto3_available = False
-            self.client = None
-    
-    def list_devices(self) -> List[Dict[str, Any]]:
-        """List available Braket devices"""
-        if not self.boto3_available:
-            raise RuntimeError("boto3 not installed. Install: pip install boto3")
-        
+            return self._client
+        except ImportError as exc:
+            raise RuntimeError(
+                "Braket backend requires boto3. Install with: pip install boto3"
+            ) from exc
+
+    def _circuit_to_braket(self, circuit: Circuit):
+        from ...converters import to_braket
+        return to_braket(circuit)
+
+    def run_circuit(
+        self,
+        circuit: Circuit,
+        shots: int = 1024,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
         try:
-            response = self.client.search_devices(
-                filters=[{"name": "status", "values": ["ONLINE"]}]
-            )
-            return response.get("devices", [])
-        except Exception as e:
-            raise RuntimeError(f"Failed to list devices: {e}")
-    
-    def get_device_info(self, device_arn: str) -> Dict[str, Any]:
-        """Get information about a specific device"""
-        if not self.boto3_available:
-            raise RuntimeError("boto3 not available")
-        
+            from braket.aws import AwsDevice
+        except ImportError as exc:
+            raise RuntimeError(
+                "Braket backend requires 'amazon-braket-sdk'. "
+                "Install with: pip install amazon-braket-sdk"
+            ) from exc
+
+        bc = self._circuit_to_braket(circuit)
+        device = AwsDevice(self.device_arn)
+        s3_dest = (self.s3_bucket, self.s3_prefix) if self.s3_bucket else None
+        task = device.run(bc, s3_destination_folder=s3_dest, shots=shots)
+        result = task.result()
+        counts = dict(result.measurement_counts)
+        total = sum(counts.values())
+        probs = {k: v / total for k, v in counts.items()}
+
+        return {
+            "success": True,
+            "backend": f"Braket:{self.device_arn.split('/')[-1]}",
+            "shots": shots,
+            "counts": counts,
+            "probabilities": probs,
+            "statevector": None,
+        }
+
+    def submit(
+        self,
+        circuit: Circuit,
+        shots: int = 1024,
+        **kwargs: Any,
+    ) -> JobHandle:
         try:
-            response = self.client.get_device(deviceArn=device_arn)
-            return response
-        except Exception as e:
-            raise RuntimeError(f"Failed to get device info: {e}")
-    
-    def create_task(self, device_arn: str, circuit_qasm: str, shots: int = 1024) -> Dict[str, Any]:
-        """Create a Braket task (job)"""
-        if not self.boto3_available:
-            raise RuntimeError("boto3 not available")
-        
-        import time
-        task_name = f"abirqu-task-{int(time.time())}"
-        
+            from braket.aws import AwsDevice
+        except ImportError as exc:
+            raise RuntimeError("Braket SDK required.") from exc
+
+        bc = self._circuit_to_braket(circuit)
+        device = AwsDevice(self.device_arn)
+        s3_dest = (self.s3_bucket, self.s3_prefix) if self.s3_bucket else None
+        task = device.run(bc, s3_destination_folder=s3_dest, shots=shots)
+
+        handle = JobHandle(
+            job_id=task.id,
+            backend=self,
+            status=JobStatus.RUNNING,
+        )
+        handle._braket_task = task
+        return handle
+
+    def query_job(self, job_id: str) -> JobStatus:
         try:
-            response = self.client.create_task(
-                taskName=task_name,
-                taskSpecification={
-                    "source": circuit_qasm,
-                    "shots": shots
-                },
-                deviceArn=device_arn
-            )
-            return response
-        except Exception as e:
-            raise RuntimeError(f"Failed to create task: {e}")
-    
-    def get_task_result(self, task_arn: str) -> Dict[str, Any]:
-        """Get task results"""
-        if not self.boto3_available:
-            raise RuntimeError("boto3 not available")
-        
-        import time
-        max_attempts = 60
-        
-        for attempt in range(max_attempts):
-            try:
-                response = self.client.get_task(taskArn=task_arn)
-                status = response.get("status")
-                
-                if status == "COMPLETED":
-                    return response.get("results", {})
-                elif status in ["FAILED", "CANCELLED"]:
-                    raise RuntimeError(f"Task {task_arn} {status}")
-                
-                time.sleep(5)
-            except Exception as e:
-                if attempt == max_attempts - 1:
-                    raise
-                time.sleep(2)
-        
-        raise TimeoutError(f"Task {task_arn} timed out")
-    
-    def get_aws_backends(self) -> List[str]:
-        """List available AWS Braket backends"""
-        return [
-            "arn:aws:braket:us-east-1::device/qpu/ionq/IonQDevice",
-            "arn:aws:braket:us-west-1::device/qpu/rigetti/Aspen-M-3",
-            "arn:aws:braket:us-east-1::device/simulator/sv1",
-            "arn:aws:braket:eu-west-2::device/qpu/oqc/Lucy",
-        ]
-    
-    def test_connection(self) -> bool:
-        """Test connection to AWS Braket"""
-        if not self.boto3_available:
-            return False
-        
+            from braket.aws import AwsQuantumTask
+            task = AwsQuantumTask(task_arn=job_id)
+            state = task.state()
+            state_map = {
+                "QUEUED": JobStatus.QUEUED,
+                "RUNNING": JobStatus.RUNNING,
+                "COMPLETED": JobStatus.COMPLETED,
+                "FAILED": JobStatus.FAILED,
+                "CANCELLED": JobStatus.CANCELED,
+            }
+            return state_map.get(state, JobStatus.UNKNOWN)
+        except Exception:
+            return JobStatus.UNKNOWN
+
+    def fetch_result(self, job_id: str) -> Dict[str, Any]:
+        from braket.aws import AwsQuantumTask
+        task = AwsQuantumTask(task_arn=job_id)
+        result = task.result()
+        counts = dict(result.measurement_counts)
+        total = sum(counts.values())
+        probs = {k: v / total for k, v in counts.items()}
+        return {
+            "success": True,
+            "backend": f"Braket:{self.device_arn.split('/')[-1]}",
+            "shots": total,
+            "counts": counts,
+            "probabilities": probs,
+            "statevector": None,
+        }
+
+    def cancel_job(self, job_id: str) -> bool:
         try:
-            devices = self.list_devices()
-            return isinstance(devices, list)
+            from braket.aws import AwsQuantumTask
+            task = AwsQuantumTask(task_arn=job_id)
+            task.cancel()
+            return True
         except Exception:
             return False
 
-
-if __name__ == "__main__":
-    backend = AWSBraketBackend()
-    
-    print("Testing AWS Braket Backend...")
-    print(f"boto3 available: {backend.boto3_available}")
-    
-    if backend.boto3_available:
-        if backend.test_connection():
-            print("✓ Connected to AWS Braket")
-            devices = backend.list_devices()
-            print(f"Available devices: {len(devices)}")
-        else:
-            print("✗ Could not connect (check AWS credentials)")
-    else:
-        print("Install boto3: pip install boto3")
-        print("AWS backends:", backend.get_aws_backends())
+    def list_devices(self) -> List[Dict[str, Any]]:
+        client = self._get_client()
+        response = client.search_devices(
+            filters=[{"name": "status", "values": ["ONLINE"]}]
+        )
+        return response.get("devices", [])

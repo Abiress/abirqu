@@ -121,6 +121,20 @@ class Circuit:
         self.gates: List[Gate] = []
         self.measurements: List[Measurement] = []
         self.classical_bits = 0  # Number of classical bits needed
+
+    def copy(self) -> 'Circuit':
+        """Create a deep copy of this circuit."""
+        new_circuit = Circuit(self.num_qubits, name=f"{self.name}_copy")
+        for gate in self.gates:
+            new_circuit.gates.append(
+                Gate(gate.name, list(gate.qubits), gate.matrix, list(gate.params))
+            )
+        for meas in self.measurements:
+            new_circuit.measurements.append(
+                Measurement(list(meas.qubits), list(meas.classical_bits))
+            )
+        new_circuit.classical_bits = self.classical_bits
+        return new_circuit
         
     def add_gate(self, gate_name: str, qubits: Union[int, List[int]], 
                  params: Optional[List[float]] = None) -> 'Circuit':

@@ -1,143 +1,200 @@
 """
-IonQ Backend - Real Implementation
-Uses ionq-sdk with HTTP REST API calls
+IonQ Backend — Real hardware via REST API.
 """
 
+from __future__ import annotations
+
 import os
-import requests
-import json
-from typing import Dict, List, Optional, Any
+import time
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+from ...backend import QuantumBackend, JobStatus, JobHandle
+from ...circuit import Circuit
 
 
 @dataclass
 class IonQCredentials:
-    """IonQ credentials"""
     api_key: str
-    endpoint: str = "https://api.ionq.com"
-    
+    endpoint: str = "https://api.ionq.co"
+
     @classmethod
     def from_env(cls) -> "IonQCredentials":
         return cls(
             api_key=os.getenv("IONQ_API_KEY", ""),
-            endpoint=os.getenv("IONQ_ENDPOINT", "https://api.ionq.com")
+            endpoint=os.getenv("IONQ_ENDPOINT", "https://api.ionq.co"),
         )
-    
+
     def validate(self) -> bool:
-        return len(self.api_key) > 0
+        return bool(self.api_key)
 
 
-class IonQBackend:
-    """IonQ backend with real API calls"""
-    
-    def __init__(self, credentials: Optional[IonQCredentials] = None):
+class IonQBackend(QuantumBackend):
+    """IonQ REST API backend.
+
+    Parameters
+    ----------
+    credentials : IonQCredentials, optional
+        Falls back to environment variables.
+    target : str
+        ``'simulator'`` (default) or a real device like ``'qpu.aria-1'``.
+    """
+
+    name = "IonQ"
+    max_qubits = 32
+    native_gates = ["GPI", "GPI2", "MS"]
+    is_local = False
+
+    _BASE_URL = "https://api.ionq.co/v0.3"
+
+    def __init__(
+        self,
+        credentials: Optional[IonQCredentials] = None,
+        target: str = "simulator",
+    ):
         self.creds = credentials or IonQCredentials.from_env()
-        self.session = requests.Session()
-        self.session.headers.update({
-            "Authorization": f"Bearer {self.creds.api_key}",
-            "Content-Type": "application/json"
-        })
-        self.base_url = self.creds.endpoint
-    
-    def _request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
-        """Make authenticated request to IonQ API"""
-        url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        try:
-            response = self.session.request(method, url, **kwargs)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"IonQ API request failed: {e}")
-    
-    def list_backends(self) -> List[Dict[str, Any]]:
-        """List available IonQ backends"""
-        result = self._request("GET", "/v1/backends")
-        return result.get("backends", [])
-    
-    def get_backend_info(self, backend_name: str) -> Dict[str, Any]:
-        """Get information about a specific backend"""
-        result = self._request("GET", f"/v1/backends/{backend_name}")
-        return result
-    
-    def create_bell_circuit(self) -> Dict[str, Any]:
-        """Create Bell state circuit for IonQ"""
-        return {
-            "qubits": 2,
-            "program": {
-                "instructions": [
-                    {"gate": "h", "target": 0},
-                    {"gate": "cnot", "control": 0, "target": 1}
-                ]
-            },
-            "shots": 1024
-        }
-    
-    def submit_circuit(self, circuit: Dict[str, Any], backend_name: str) -> Dict[str, Any]:
-        """Submit circuit to IonQ"""
-        payload = {
-            "backend": backend_name,
-            "circuit": circuit["program"],
-            "shots": circuit.get("shots", 1024)
-        }
-        result = self._request("POST", "/v1/jobs", json=payload)
-        job_id = result.get("job_id")
-        
-        # Poll for completion
-        return self._poll_job(job_id)
-    
-    def _poll_job(self, job_id: str, timeout: int = 300) -> Dict[str, Any]:
-        """Poll job status until completion"""
-        import time
-        
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            result = self._request("GET", f"/v1/jobs/{job_id}")
-            status = result.get("status", "")
-            
-            if status in ["completed", "failed", "cancelled"]:
-                return result
-            
-            time.sleep(2)
-        
-        raise TimeoutError(f"Job {job_id} timed out after {timeout}s")
-    
-    def get_counts(self, job_result: Dict[str, Any]) -> Dict[str, int]:
-        """Extract measurement counts"""
-        if "result" in job_result:
-            return job_result["result"].get("counts", {})
-        return {}
-    
-    def get_ionq_backends(self) -> List[str]:
-        """List available IonQ backends"""
-        return [
-            "ionq/harmony",      # Trapped-ion QPU
-            "ionq/aria",        # Next-gen trapped-ion
-            "ionq/simulator",   # Cloud simulator
-        ]
-    
-    def test_connection(self) -> bool:
-        """Test connection to IonQ"""
+        self.target = target
+        self._session = None
+
+    def _get_session(self):
+        if self._session is not None:
+            return self._session
         if not self.creds.validate():
-            return False
-        
+            raise ValueError("IonQ API key required. Set IONQ_API_KEY environment variable.")
+        import requests
+        self._session = requests.Session()
+        self._session.headers.update({
+            "Authorization": f"apiKey {self.creds.api_key}",
+            "Content-Type": "application/json",
+        })
+        return self._session
+
+    def _request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
+        session = self._get_session()
+        url = f"{self.creds.endpoint}{endpoint}"
+        resp = session.request(method, url, timeout=kwargs.pop("timeout", 30), **kwargs)
+        resp.raise_for_status()
+        return resp.json()
+
+    def run_circuit(
+        self,
+        circuit: Circuit,
+        shots: int = 1024,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        from ...converters import to_ionq_json
+        ionq_circuit = to_ionq_json(circuit)
+
+        payload = {
+            "target": self.target,
+            "shots": shots,
+            "input": {
+                "format": "ionq.circuit.v0",
+                "gateset": "native",
+                "qubits": circuit.num_qubits,
+                "circuit": ionq_circuit["circuit"],
+            },
+        }
+
+        resp = self._request("POST", f"{self._BASE_URL}/jobs", json=payload)
+        job_id = resp["id"]
+
+        # Poll for completion
+        while True:
+            data = self._request("GET", f"{self._BASE_URL}/jobs/{job_id}")
+            status = data.get("status", "")
+            if status == "completed":
+                break
+            if status in ("failed", "canceled"):
+                raise RuntimeError(f"IonQ job {job_id} ended with status={status}")
+            time.sleep(2)
+
+        raw_probs = data.get("data", {}).get("histogram", {})
+        probs = {
+            format(int(k), f"0{circuit.num_qubits}b"): v
+            for k, v in raw_probs.items()
+        }
+        counts = {state: int(round(prob * shots)) for state, prob in probs.items() if prob > 0}
+
+        return {
+            "success": True,
+            "backend": f"IonQ:{self.target}",
+            "shots": shots,
+            "counts": counts,
+            "probabilities": probs,
+            "statevector": None,
+        }
+
+    def submit(
+        self,
+        circuit: Circuit,
+        shots: int = 1024,
+        **kwargs: Any,
+    ) -> JobHandle:
+        from ...converters import to_ionq_json
+        ionq_circuit = to_ionq_json(circuit)
+
+        payload = {
+            "target": self.target,
+            "shots": shots,
+            "input": {
+                "format": "ionq.circuit.v0",
+                "gateset": "native",
+                "qubits": circuit.num_qubits,
+                "circuit": ionq_circuit["circuit"],
+            },
+        }
+
+        resp = self._request("POST", f"{self._BASE_URL}/jobs", json=payload)
+        return JobHandle(
+            job_id=resp["id"],
+            backend=self,
+            status=JobStatus.QUEUED,
+        )
+
+    def query_job(self, job_id: str) -> JobStatus:
         try:
-            backends = self.list_backends()
-            return isinstance(backends, list)
+            data = self._request("GET", f"{self._BASE_URL}/jobs/{job_id}")
+            status_map = {
+                "ready": JobStatus.QUEUED,
+                "running": JobStatus.RUNNING,
+                "completed": JobStatus.COMPLETED,
+                "failed": JobStatus.FAILED,
+                "canceled": JobStatus.CANCELED,
+            }
+            return status_map.get(data.get("status", ""), JobStatus.UNKNOWN)
+        except Exception:
+            return JobStatus.UNKNOWN
+
+    def fetch_result(self, job_id: str) -> Dict[str, Any]:
+        data = self._request("GET", f"{self._BASE_URL}/jobs/{job_id}")
+        raw_probs = data.get("data", {}).get("histogram", {})
+        n = data.get("qubits", 2)
+        probs = {format(int(k), f"0{n}b"): v for k, v in raw_probs.items()}
+        counts = {s: int(round(p * 1024)) for s, p in probs.items() if p > 0}
+        return {
+            "success": True,
+            "backend": f"IonQ:{self.target}",
+            "shots": 1024,
+            "counts": counts,
+            "probabilities": probs,
+            "statevector": None,
+        }
+
+    def cancel_job(self, job_id: str) -> bool:
+        try:
+            self._request("DELETE", f"{self._BASE_URL}/jobs/{job_id}")
+            return True
         except Exception:
             return False
 
-
-if __name__ == "__main__":
-    backend = IonQBackend()
-    
-    print("Testing IonQ Backend...")
-    print(f"Credentials valid: {backend.creds.validate()}")
-    print(f"Base URL: {backend.base_url}")
-    
-    if backend.test_connection():
-        print("✓ Connected to IonQ")
-        backends = backend.list_backends()
-        print(f"Available backends: {len(backends)}")
-    else:
-        print("✗ Could not connect (check IONQ_API_KEY)")
-        print("IonQ backends:", backend.get_ionq_backends())
+    def list_backends(self) -> List[Dict[str, Any]]:
+        try:
+            data = self._request("GET", "/v0.3/backends")
+            return data.get("backends", [])
+        except Exception:
+            return [
+                {"name": "simulator", "status": "online"},
+                {"name": "qpu.aria-1", "status": "online"},
+                {"name": "qpu.aria-2", "status": "online"},
+            ]

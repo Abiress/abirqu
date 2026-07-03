@@ -68,12 +68,26 @@ public class TestAbirQu {
         assertTrue(state.length == 8, "State vector has 8 elements (4 complex)");
         assertClose(state[0], 1.0/Math.sqrt(2), 1e-10, "Bell state real part of |00>");
         
+        // Test 6: Batch execution
+        System.out.println("\n--- Batch Execution ---");
+        AbirQuSimulator sim5 = new AbirQuSimulator(2);
+        AbirQuGate[] gates = new AbirQuGate[] {
+            AbirQuGate.h(0),
+            AbirQuGate.cnot(0, 1)
+        };
+        sim5.runCircuit(gates);
+        probs = sim5.getProbabilities();
+        assertClose(probs[0], 0.5, 1e-10, "Batch Bell state |00> probability");
+        assertClose(probs[3], 0.5, 1e-10, "Batch Bell state |11> probability");
+        
         // Cleanup
         sim.close();
         bell.close();
         sim2.close();
         sim3.close();
         sim4.close();
+        sim5.close();
+
         
         System.out.println("\n--- Results ---");
         System.out.println("Passed: " + passed);

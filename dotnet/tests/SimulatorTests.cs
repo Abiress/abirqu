@@ -65,5 +65,25 @@ namespace AbirQu.Tests
             
             sim.Dispose();
         }
+
+        [Fact]
+        public void TestRunCircuit()
+        {
+            var sim = new Simulator(2);
+            var gates = new AbirQuGate[]
+            {
+                AbirQuGate.H(0),
+                AbirQuGate.CNOT(0, 1)
+            };
+            sim.RunCircuit(gates);
+            var probs = sim.GetProbabilities();
+
+            Assert.True(Math.Abs(probs[0] - 0.5) < 1e-10);
+            Assert.True(Math.Abs(probs[3] - 0.5) < 1e-10);
+            Assert.True(Math.Abs(probs[1]) < 1e-10);
+            Assert.True(Math.Abs(probs[2]) < 1e-10);
+
+            sim.Dispose();
+        }
     }
 }

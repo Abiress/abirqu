@@ -44,4 +44,21 @@ class AbirQuSimulatorTest {
         assertTrue(kotlin.math.abs(probs[1] - 1.0) < 1e-10)
         sim.close()
     }
+
+    @Test
+    fun testRunCircuit() {
+        val sim = AbirQuSimulator(2)
+        val gates = arrayOf(
+            AbirQuGate.h(0),
+            AbirQuGate.cnot(0, 1)
+        )
+        sim.runCircuit(gates)
+        val probs = sim.getProbabilities()
+        
+        assertTrue(kotlin.math.abs(probs[0] - 0.5) < 1e-10)
+        assertTrue(kotlin.math.abs(probs[3] - 0.5) < 1e-10)
+        assertTrue(probs[1] < 1e-10)
+        assertTrue(probs[2] < 1e-10)
+        sim.close()
+    }
 }

@@ -1,42 +1,129 @@
 """
 AbirQu Backend Framework
 ========================
-Provides a unified, hardware-agnostic backend API for running quantum circuits.
+Unified, hardware-agnostic backend API for running quantum circuits.
 
-- FastBackend   : Local Rust statevector simulator (100% working, AVX-512/SIMD)
-- QuantumBackend: Abstract base class for all backends
-- IBMQBackend   : IBM Quantum stub (requires qiskit-ibm-runtime)
-- BraketBackend : AWS Braket stub (requires amazon-braket-sdk)
-- AzureBackend  : Azure Quantum stub (requires azure-quantum)
-- IonQBackend   : IonQ REST API stub
-- CirqBackend   : Google Quantum / Cirq stub
+Core classes:
+- QuantumBackend : Abstract base class for all backends
+- FastBackend    : Local Rust/NumPy statevector simulator
+- BackendRegistry: Auto-discovery and management of backends
+- JobHandle      : Async job tracking for remote backends
 
 Usage
 -----
-    from abirqu.backend import FastBackend
+    from abirqu.backend import FastBackend, BackendRegistry
     from abirqu.circuit import Circuit
 
     circ = Circuit(2)
     circ.h(0)
     circ.cnot(0, 1)
 
+    # Local simulation
     backend = FastBackend(n_qubits=2)
     result = backend.run_circuit(circ, shots=1024)
-    print(result["counts"])   # e.g. {'00': 512, '11': 512}
-    print(result["probabilities"])
+
+    # Remote hardware
+    registry = BackendRegistry()
+    backend = registry.get("ibm")
+    handle = backend.submit(circ, shots=1024)
+    result = handle.result()
 """
 
 from __future__ import annotations
 
 import abc
-import math
-import random
-from typing import Any, Dict, List, Optional
+import importlib
+import inspect
+import logging
+import time
+from enum import Enum
+from typing import Any, Dict, List, Optional, Type
 
 import numpy as np
 
 from .circuit import Circuit
 from .simulator import SimulatorBackend, RustSimulator, _serialize_circuit, HAS_RUST_CORE
+
+logger = logging.getLogger(__name__)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Job status and handle
+# ──────────────────────────────────────────────────────────────────────────────
+
+class JobStatus(str, Enum):
+    """Status of a quantum job."""
+    QUEUED = "queued"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELED = "canceled"
+    UNKNOWN = "unknown"
+
+
+class JobHandle:
+    """Handle for tracking an asynchronous quantum job.
+
+    Returned by ``QuantumBackend.submit()``.  Use :meth:`result` to block
+    until the job completes and retrieve the result dict.
+    """
+
+    def __init__(
+        self,
+        job_id: str,
+        backend: "QuantumBackend",
+        status: JobStatus = JobStatus.QUEUED,
+        poll_interval: float = 2.0,
+        timeout: float = 600.0,
+    ):
+        self.job_id = job_id
+        self.backend = backend
+        self._status = status
+        self._result: Optional[Dict[str, Any]] = None
+        self._error: Optional[Exception] = None
+        self.poll_interval = poll_interval
+        self.timeout = timeout
+
+    @property
+    def status(self) -> JobStatus:
+        return self._status
+
+    def cancel(self) -> bool:
+        """Cancel the job.  Returns True if cancellation was requested."""
+        try:
+            return self.backend.cancel_job(self.job_id)
+        except Exception:
+            return False
+
+    def result(self, timeout: Optional[float] = None) -> Dict[str, Any]:
+        """Block until the job completes and return the result."""
+        if self._result is not None:
+            return self._result
+        if self._error is not None:
+            raise self._error
+
+        t0 = time.monotonic()
+        max_wait = timeout or self.timeout
+
+        while time.monotonic() - t0 < max_wait:
+            status = self.backend.query_job(self.job_id)
+            self._status = status
+
+            if status == JobStatus.COMPLETED:
+                self._result = self.backend.fetch_result(self.job_id)
+                return self._result
+            elif status == JobStatus.FAILED:
+                self._error = RuntimeError(f"Job {self.job_id} failed")
+                raise self._error
+            elif status == JobStatus.CANCELED:
+                self._error = RuntimeError(f"Job {self.job_id} was canceled")
+                raise self._error
+
+            time.sleep(self.poll_interval)
+
+        raise TimeoutError(
+            f"Job {self.job_id} timed out after {max_wait}s (status={self._status})"
+        )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -46,13 +133,20 @@ from .simulator import SimulatorBackend, RustSimulator, _serialize_circuit, HAS_
 class QuantumBackend(abc.ABC):
     """Abstract base class for all AbirQu backends.
 
-    Every backend must implement :meth:`run_circuit` and expose a
-    ``name`` attribute.  The return value of ``run_circuit`` is always a
-    ``Result`` dict with at least the keys ``success``, ``counts``, and
-    ``probabilities``.
+    Every backend must implement :meth:`run_circuit` (synchronous) and
+    should implement :meth:`submit` (asynchronous) for remote backends.
+
+    Return value of ``run_circuit`` is always a ``Result`` dict with at
+    least the keys ``success``, ``counts``, and ``probabilities``.
     """
 
     name: str = "QuantumBackend"
+    max_qubits: Optional[int] = None
+    native_gates: List[str] = []
+    supports_noise_model: bool = False
+    is_local: bool = False
+
+    # ── Synchronous execution ─────────────────────────────────────────────
 
     @abc.abstractmethod
     def run_circuit(
@@ -61,25 +155,17 @@ class QuantumBackend(abc.ABC):
         shots: int = 1024,
         **kwargs: Any,
     ) -> Dict[str, Any]:
-        """Execute *circuit* and return a result dictionary.
-
-        Parameters
-        ----------
-        circuit: Circuit
-            The quantum circuit to execute.
-        shots: int
-            Number of measurement shots.  Pass ``0`` to get only the
-            statevector (no sampling).
+        """Execute *circuit* synchronously and return a result dictionary.
 
         Returns
         -------
         dict with keys:
-            success      – bool
-            backend      – str (backend name)
-            shots        – int
-            counts       – dict[bitstring, count]
-            probabilities– dict[bitstring, probability] | None
-            statevector  – list[complex] | None  (if shots==0)
+            success       – bool
+            backend       – str (backend name)
+            shots         – int
+            counts        – dict[bitstring, count]
+            probabilities – dict[bitstring, probability] | None
+            statevector   – list[complex] | None  (if shots==0)
         """
 
     def run_batch(
@@ -87,8 +173,50 @@ class QuantumBackend(abc.ABC):
         circuits: List[Circuit],
         shots: int = 1024,
     ) -> List[Dict[str, Any]]:
-        """Execute multiple circuits sequentially (override for parallelism)."""
+        """Execute multiple circuits sequentially."""
         return [self.run_circuit(c, shots=shots) for c in circuits]
+
+    # ── Asynchronous execution (remote backends) ──────────────────────────
+
+    def submit(
+        self,
+        circuit: Circuit,
+        shots: int = 1024,
+        **kwargs: Any,
+    ) -> JobHandle:
+        """Submit *circuit* asynchronously and return a :class:`JobHandle`.
+
+        Default implementation runs synchronously and wraps the result.
+        Override for real async remote backends.
+        """
+        job_id = f"local-{int(time.time() * 1000)}"
+        result = self.run_circuit(circuit, shots=shots, **kwargs)
+        handle = JobHandle(job_id=job_id, backend=self, status=JobStatus.COMPLETED)
+        handle._result = result
+        return handle
+
+    def query_job(self, job_id: str) -> JobStatus:
+        """Query the status of a submitted job.
+
+        Override for remote backends with real job polling.
+        """
+        return JobStatus.COMPLETED
+
+    def fetch_result(self, job_id: str) -> Dict[str, Any]:
+        """Fetch the result of a completed job.
+
+        Override for remote backends.
+        """
+        return {"success": True, "backend": self.name, "job_id": job_id}
+
+    def cancel_job(self, job_id: str) -> bool:
+        """Cancel a running job.  Returns True if successful.
+
+        Override for remote backends.
+        """
+        return False
+
+    # ── Helpers ───────────────────────────────────────────────────────────
 
     @staticmethod
     def _counts_to_probs(counts: Dict[str, int], shots: int) -> Dict[str, float]:
@@ -101,15 +229,14 @@ class QuantumBackend(abc.ABC):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# FastBackend — local Rust statevector (100% working)
+# FastBackend — local Rust/NumPy statevector simulator
 # ──────────────────────────────────────────────────────────────────────────────
 
 class FastBackend(QuantumBackend):
     """High-performance local Rust statevector simulator.
 
     Uses the compiled Rust core (AVX-512/SIMD optimised) when available,
-    falling back to the NumPy QVM for portability.  This is the fastest
-    and most accurate backend available — all computations are exact.
+    falling back to the NumPy QVM for portability.
 
     Parameters
     ----------
@@ -120,6 +247,8 @@ class FastBackend(QuantumBackend):
     """
 
     name = "AbirQu-FastBackend"
+    is_local = True
+    supports_noise_model = True
 
     def __init__(self, n_qubits: Optional[int] = None, use_gpu: bool = False):
         self._n_qubits = n_qubits
@@ -133,29 +262,25 @@ class FastBackend(QuantumBackend):
         noise_model=None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
-        """Run circuit on the local Rust simulator and return results."""
         n = self._n_qubits or circuit.num_qubits
 
-        # ── Rust path ─────────────────────────────────────────────────────────
+        # ── Rust path ─────────────────────────────────────────────────────
         if HAS_RUST_CORE:
             sim = RustSimulator(n)
             sim.run_circuit(_serialize_circuit(circuit))
 
-            # Get raw probabilities as bytes for speed
             raw = sim.get_probabilities_bytes()
             if isinstance(raw, (bytes, bytearray)):
                 probs_arr = np.frombuffer(raw, dtype=np.float64).copy()
             else:
                 probs_arr = np.array(sim.get_probabilities(), dtype=np.float64)
 
-            # Apply optional noise
             if noise_model is not None:
                 try:
                     probs_arr = noise_model.apply_to_probs_array(probs_arr, n)
                 except Exception:
                     pass
 
-            # Normalise
             total = probs_arr.sum()
             if total > 0:
                 probs_arr /= total
@@ -175,7 +300,6 @@ class FastBackend(QuantumBackend):
                     for u, c in zip(unique_idx, raw_counts)
                 }
 
-            # Retrieve statevector for shots=0 mode
             statevector = None
             if shots == 0:
                 try:
@@ -192,7 +316,7 @@ class FastBackend(QuantumBackend):
                 "statevector": statevector,
             }
 
-        # ── NumPy fallback ─────────────────────────────────────────────────────
+        # ── NumPy fallback ────────────────────────────────────────────────
         result = self._delegate.run(circuit, shots=shots, noise_model=noise_model)
         counts = result.get("counts", {})
         probs = self._counts_to_probs(counts, shots) if shots > 0 else {}
@@ -207,528 +331,126 @@ class FastBackend(QuantumBackend):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# IBM Quantum backend
+# BackendRegistry — auto-discovery and management
 # ──────────────────────────────────────────────────────────────────────────────
 
-class IBMQBackend(QuantumBackend):
-    """IBM Quantum backend using qiskit-ibm-runtime.
+class BackendRegistry:
+    """Registry of all available backends.
 
-    Requires: ``pip install qiskit qiskit-ibm-runtime``
-
-    Parameters
-    ----------
-    token: str
-        IBM Quantum API token from https://quantum.ibm.com/
-    backend_name: str
-        Name of the IBM device, e.g. ``'ibm_osaka'`` or ``'ibmq_qasm_simulator'``.
-    instance: str
-        Hub/group/project in the form ``'ibm-q/open/main'``.
+    Provides auto-discovery via ``importlib.metadata`` entry points and
+    manual registration.  Call :meth:`get` to retrieve a backend by name.
     """
 
-    name = "IBMQuantum"
+    _registry: Dict[str, Type[QuantumBackend]] = {}
+    _instances: Dict[str, QuantumBackend] = {}
 
-    def __init__(
-        self,
-        token: str,
-        backend_name: str = "ibmq_qasm_simulator",
-        instance: str = "ibm-q/open/main",
-    ):
-        self.token = token
-        self.backend_name = backend_name
-        self.instance = instance
-        self._service = None
-        self._backend = None
+    def __init__(self):
+        if not BackendRegistry._registry:
+            self._discover_builtin()
+            self._discover_entry_points()
 
-    def _connect(self):
-        if self._service is not None:
-            return
+    # ── Built-in discovery ────────────────────────────────────────────────
+
+    def _discover_builtin(self):
+        """Register built-in backends from this package."""
+        from . import backends as _pkg
+
+        _mapping = {
+            "fast": FastBackend,
+            "local": FastBackend,
+        }
+
+        # Scan backends subpackage for ABC-integrated backends
+        for name in dir(_pkg):
+            obj = getattr(_pkg, name, None)
+            if (
+                inspect.isclass(obj)
+                and issubclass(obj, QuantumBackend)
+                and obj is not QuantumBackend
+                and obj is not FastBackend
+            ):
+                key = getattr(obj, "name", name).lower().replace("-", "").replace("_", "")
+                _mapping[key] = obj
+
+        # Also scan this module for classes defined here
+        for name in dir():
+            obj = globals().get(name)
+            if (
+                inspect.isclass(obj)
+                and issubclass(obj, QuantumBackend)
+                and obj is not QuantumBackend
+                and obj is not FastBackend
+            ):
+                key = getattr(obj, "name", name).lower().replace("-", "").replace("_", "")
+                _mapping[key] = obj
+
+        BackendRegistry._registry.update(_mapping)
+
+    def _discover_entry_points(self):
+        """Discover backends registered via importlib.metadata entry points."""
         try:
-            from qiskit_ibm_runtime import QiskitRuntimeService
-            QiskitRuntimeService.save_account(
-                channel="ibm_quantum", token=self.token, overwrite=True
+            eps = importlib.metadata.entry_points()
+            group = getattr(eps, "select", None)
+            if group:
+                entries = group(group="abirqu.backends")
+            else:
+                entries = eps.get("abirqu.backends", [])
+            for ep in entries:
+                try:
+                    cls = ep.load()
+                    if inspect.isclass(cls) and issubclass(cls, QuantumBackend):
+                        key = getattr(cls, "name", ep.name).lower().replace("-", "").replace("_", "")
+                        BackendRegistry._registry[key] = cls
+                except Exception as exc:
+                    logger.warning("Failed to load backend plugin %s: %s", ep.name, exc)
+        except Exception:
+            pass
+
+    # ── Public API ────────────────────────────────────────────────────────
+
+    def register(self, name: str, backend_cls: Type[QuantumBackend]):
+        """Register a backend class under *name*."""
+        BackendRegistry._registry[name.lower()] = backend_cls
+
+    def get(self, name: str, **kwargs) -> QuantumBackend:
+        """Get a backend instance by name.
+
+        Returns a cached instance if one exists, otherwise creates one.
+        """
+        key = name.lower().replace("-", "").replace("_", "")
+        if key in BackendRegistry._instances:
+            return BackendRegistry._instances[key]
+
+        cls = BackendRegistry._registry.get(key)
+        if cls is None:
+            raise KeyError(
+                f"Unknown backend '{name}'. Available: {list(BackendRegistry._registry.keys())}"
             )
-            self._service = QiskitRuntimeService(
-                channel="ibm_quantum", instance=self.instance
-            )
-            self._backend = self._service.backend(self.backend_name)
-        except ImportError as exc:
-            raise RuntimeError(
-                "IBMQBackend requires 'qiskit-ibm-runtime'. "
-                "Install with: pip install qiskit qiskit-ibm-runtime"
-            ) from exc
 
-    def _circuit_to_qiskit(self, circuit: Circuit):
-        """Convert AbirQu Circuit to a Qiskit QuantumCircuit."""
-        from qiskit import QuantumCircuit as QkCircuit
-        qc = QkCircuit(circuit.num_qubits, circuit.num_qubits)
-        for gate in getattr(circuit, "gates", []):
-            name = gate.name.upper()
-            q = list(gate.qubits)
-            p = gate.params
-            if name == "H":
-                qc.h(q[0])
-            elif name in ("CNOT", "CX"):
-                qc.cx(q[0], q[1])
-            elif name == "X":
-                qc.x(q[0])
-            elif name == "Y":
-                qc.y(q[0])
-            elif name == "Z":
-                qc.z(q[0])
-            elif name == "S":
-                qc.s(q[0])
-            elif name == "T":
-                qc.t(q[0])
-            elif name == "RX":
-                qc.rx(float(p[0]), q[0])
-            elif name == "RY":
-                qc.ry(float(p[0]), q[0])
-            elif name == "RZ":
-                qc.rz(float(p[0]), q[0])
-            elif name == "CZ":
-                qc.cz(q[0], q[1])
-            elif name == "SWAP":
-                qc.swap(q[0], q[1])
-        qc.measure_all()
-        return qc
+        instance = cls(**kwargs)
+        BackendRegistry._instances[key] = instance
+        return instance
 
-    def run_circuit(
-        self,
-        circuit: Circuit,
-        shots: int = 1024,
-        **kwargs: Any,
-    ) -> Dict[str, Any]:
-        self._connect()
-        from qiskit import transpile
-        from qiskit_ibm_runtime import SamplerV2 as Sampler
+    def list_available(self) -> List[str]:
+        """List all registered backend names."""
+        return sorted(BackendRegistry._registry.keys())
 
-        qc = self._circuit_to_qiskit(circuit)
-        tqc = transpile(qc, self._backend)
-        sampler = Sampler(mode=self._backend)
-        job = sampler.run([tqc], shots=shots)
-        pub_result = job.result()[0]
-        raw_counts = pub_result.data.meas.get_counts()
-        total = sum(raw_counts.values())
-        probs = {k: v / total for k, v in raw_counts.items()}
-        return {
-            "success": True,
-            "backend": f"IBMQ:{self.backend_name}",
-            "shots": shots,
-            "counts": dict(raw_counts),
-            "probabilities": probs,
-            "statevector": None,
-        }
+    def is_available(self, name: str) -> bool:
+        """Check if a backend is registered."""
+        key = name.lower().replace("-", "").replace("_", "")
+        return key in BackendRegistry._registry
+
+    def clear(self):
+        """Clear cached instances (useful for testing)."""
+        BackendRegistry._instances.clear()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# AWS Braket backend
-# ──────────────────────────────────────────────────────────────────────────────
-
-class BraketBackend(QuantumBackend):
-    """AWS Braket backend.
-
-    Requires: ``pip install amazon-braket-sdk``
-
-    Parameters
-    ----------
-    device_arn: str
-        ARN of the Braket device, e.g.
-        ``'arn:aws:braket:::device/quantum-simulator/amazon/sv1'``
-    s3_bucket: str
-        S3 bucket for storing Braket results.
-    s3_prefix: str
-        S3 key prefix for result files.
-    """
-
-    name = "AWS-Braket"
-
-    def __init__(
-        self,
-        device_arn: str = "arn:aws:braket:::device/quantum-simulator/amazon/sv1",
-        s3_bucket: str = "",
-        s3_prefix: str = "abirqu-results",
-    ):
-        self.device_arn = device_arn
-        self.s3_bucket = s3_bucket
-        self.s3_prefix = s3_prefix
-
-    def _circuit_to_braket(self, circuit: Circuit):
-        try:
-            from braket.circuits import Circuit as BCircuit, Gate, Qubit
-        except ImportError as exc:
-            raise RuntimeError(
-                "BraketBackend requires 'amazon-braket-sdk'. "
-                "Install with: pip install amazon-braket-sdk"
-            ) from exc
-        bc = BCircuit()
-        for gate in getattr(circuit, "gates", []):
-            name = gate.name.upper()
-            q = list(gate.qubits)
-            p = gate.params
-            if name == "H":
-                bc.h(q[0])
-            elif name in ("CNOT", "CX"):
-                bc.cnot(q[0], q[1])
-            elif name == "X":
-                bc.x(q[0])
-            elif name == "Y":
-                bc.y(q[0])
-            elif name == "Z":
-                bc.z(q[0])
-            elif name == "S":
-                bc.s(q[0])
-            elif name == "T":
-                bc.t(q[0])
-            elif name == "RX":
-                bc.rx(q[0], float(p[0]))
-            elif name == "RY":
-                bc.ry(q[0], float(p[0]))
-            elif name == "RZ":
-                bc.rz(q[0], float(p[0]))
-            elif name == "CZ":
-                bc.cz(q[0], q[1])
-            elif name == "SWAP":
-                bc.swap(q[0], q[1])
-        return bc
-
-    def run_circuit(
-        self,
-        circuit: Circuit,
-        shots: int = 1024,
-        **kwargs: Any,
-    ) -> Dict[str, Any]:
-        try:
-            from braket.aws import AwsDevice, AwsSession
-        except ImportError as exc:
-            raise RuntimeError(
-                "BraketBackend requires 'amazon-braket-sdk'."
-            ) from exc
-        bc = self._circuit_to_braket(circuit)
-        device = AwsDevice(self.device_arn)
-        s3_dest = (self.s3_bucket, self.s3_prefix) if self.s3_bucket else None
-        task = device.run(bc, s3_destination_folder=s3_dest, shots=shots)
-        result = task.result()
-        counts = dict(result.measurement_counts)
-        total = sum(counts.values())
-        probs = {k: v / total for k, v in counts.items()}
-        return {
-            "success": True,
-            "backend": f"Braket:{self.device_arn.split('/')[-1]}",
-            "shots": shots,
-            "counts": counts,
-            "probabilities": probs,
-            "statevector": None,
-        }
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Azure Quantum backend
-# ──────────────────────────────────────────────────────────────────────────────
-
-class AzureBackend(QuantumBackend):
-    """Azure Quantum backend.
-
-    Requires: ``pip install azure-quantum qiskit-ionq``
-
-    Parameters
-    ----------
-    resource_id: str
-        Azure Quantum Workspace resource ID.
-    location: str
-        Azure region, e.g. ``'eastus'``.
-    provider_id: str
-        Provider, e.g. ``'ionq'`` or ``'quantinuum'``.
-    """
-
-    name = "Azure-Quantum"
-
-    def __init__(
-        self,
-        resource_id: str,
-        location: str = "eastus",
-        provider_id: str = "ionq",
-        target: str = "ionq.simulator",
-    ):
-        self.resource_id = resource_id
-        self.location = location
-        self.provider_id = provider_id
-        self.target = target
-
-    def run_circuit(
-        self,
-        circuit: Circuit,
-        shots: int = 1024,
-        **kwargs: Any,
-    ) -> Dict[str, Any]:
-        try:
-            from azure.quantum import Workspace
-            from azure.quantum.qiskit import AzureQuantumProvider
-        except ImportError as exc:
-            raise RuntimeError(
-                "AzureBackend requires 'azure-quantum'. "
-                "Install with: pip install azure-quantum"
-            ) from exc
-        workspace = Workspace(resource_id=self.resource_id, location=self.location)
-        provider = AzureQuantumProvider(workspace=workspace)
-        backend = provider.get_backend(self.target)
-
-        from qiskit import QuantumCircuit as QkCircuit, transpile
-        # Reuse IBM's helper to build a Qiskit circuit
-        ibmq_helper = IBMQBackend.__new__(IBMQBackend)
-        qc = ibmq_helper._circuit_to_qiskit(circuit)
-        tqc = transpile(qc, backend)
-        job = backend.run(tqc, shots=shots)
-        result = job.result()
-        counts = result.get_counts()
-        total = sum(counts.values())
-        probs = {k: v / total for k, v in counts.items()}
-        return {
-            "success": True,
-            "backend": f"Azure:{self.target}",
-            "shots": shots,
-            "counts": counts,
-            "probabilities": probs,
-            "statevector": None,
-        }
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# IonQ backend (REST API)
-# ──────────────────────────────────────────────────────────────────────────────
-
-class IonQBackend(QuantumBackend):
-    """IonQ REST API backend.
-
-    Requires: ``pip install requests``
-
-    Parameters
-    ----------
-    api_key: str
-        IonQ API key from https://cloud.ionq.com/
-    target: str
-        ``'simulator'`` (default) or a real device name like ``'qpu.aria-1'``.
-    """
-
-    name = "IonQ"
-    _BASE_URL = "https://api.ionq.co/v0.3"
-
-    def __init__(self, api_key: str, target: str = "simulator"):
-        self.api_key = api_key
-        self.target = target
-
-    def _circuit_to_ionq_json(self, circuit: Circuit) -> List[Dict]:
-        """Serialize to IonQ native JSON gate format."""
-        ops = []
-        for gate in getattr(circuit, "gates", []):
-            name = gate.name.upper()
-            q = list(gate.qubits)
-            p = gate.params
-            if name == "H":
-                ops.append({"gate": "h", "target": q[0]})
-            elif name in ("CNOT", "CX"):
-                ops.append({"gate": "cnot", "control": q[0], "target": q[1]})
-            elif name == "X":
-                ops.append({"gate": "x", "target": q[0]})
-            elif name == "Y":
-                ops.append({"gate": "y", "target": q[0]})
-            elif name == "Z":
-                ops.append({"gate": "z", "target": q[0]})
-            elif name == "S":
-                ops.append({"gate": "s", "target": q[0]})
-            elif name == "T":
-                ops.append({"gate": "t", "target": q[0]})
-            elif name == "RX":
-                ops.append({"gate": "rx", "target": q[0], "rotation": float(p[0])})
-            elif name == "RY":
-                ops.append({"gate": "ry", "target": q[0], "rotation": float(p[0])})
-            elif name == "RZ":
-                ops.append({"gate": "rz", "target": q[0], "rotation": float(p[0])})
-            elif name == "CZ":
-                ops.append({"gate": "cz", "control": q[0], "target": q[1]})
-            elif name == "SWAP":
-                ops.append({"gate": "swap", "targets": [q[0], q[1]]})
-        return ops
-
-    def run_circuit(
-        self,
-        circuit: Circuit,
-        shots: int = 1024,
-        **kwargs: Any,
-    ) -> Dict[str, Any]:
-        import requests  # standard in most environments
-
-        ops = self._circuit_to_ionq_json(circuit)
-        payload = {
-            "target": self.target,
-            "shots": shots,
-            "input": {
-                "format": "ionq.circuit.v0",
-                "gateset": "native",
-                "qubits": circuit.num_qubits,
-                "circuit": ops,
-            },
-        }
-        headers = {
-            "Authorization": f"apiKey {self.api_key}",
-            "Content-Type": "application/json",
-        }
-        resp = requests.post(
-            f"{self._BASE_URL}/jobs", json=payload, headers=headers, timeout=30
-        )
-        resp.raise_for_status()
-        job_id = resp.json()["id"]
-
-        # Poll until done
-        import time
-        while True:
-            r = requests.get(
-                f"{self._BASE_URL}/jobs/{job_id}", headers=headers, timeout=10
-            )
-            r.raise_for_status()
-            data = r.json()
-            status = data.get("status")
-            if status == "completed":
-                break
-            if status in ("failed", "canceled"):
-                raise RuntimeError(f"IonQ job {job_id} ended with status={status}")
-            time.sleep(2)
-
-        # IonQ returns probabilities directly
-        raw_probs = data.get("data", {}).get("histogram", {})
-        probs = {format(int(k), f"0{circuit.num_qubits}b"): v for k, v in raw_probs.items()}
-
-        # Convert probabilities to counts
-        counts: Dict[str, int] = {}
-        for state, prob in probs.items():
-            count = int(round(prob * shots))
-            if count > 0:
-                counts[state] = count
-
-        return {
-            "success": True,
-            "backend": f"IonQ:{self.target}",
-            "shots": shots,
-            "counts": counts,
-            "probabilities": probs,
-            "statevector": None,
-        }
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Cirq / Google Quantum backend
-# ──────────────────────────────────────────────────────────────────────────────
-
-class CirqBackend(QuantumBackend):
-    """Google Cirq simulator / Google Quantum backend.
-
-    Requires: ``pip install cirq``
-
-    Parameters
-    ----------
-    use_gpu: bool
-        If True, use ``cirq.CuStateVecSimulator`` (requires cuQuantum).
-    processor_id: str | None
-        Google QCS processor ID for real hardware (requires cirq-google
-        and service credentials).
-    """
-
-    name = "Cirq"
-
-    def __init__(self, use_gpu: bool = False, processor_id: Optional[str] = None):
-        self.use_gpu = use_gpu
-        self.processor_id = processor_id
-
-    def _circuit_to_cirq(self, circuit: Circuit):
-        import cirq
-        qubits = cirq.LineQubit.range(circuit.num_qubits)
-        ops = []
-        for gate in getattr(circuit, "gates", []):
-            name = gate.name.upper()
-            q = list(gate.qubits)
-            p = gate.params
-            if name == "H":
-                ops.append(cirq.H(qubits[q[0]]))
-            elif name in ("CNOT", "CX"):
-                ops.append(cirq.CNOT(qubits[q[0]], qubits[q[1]]))
-            elif name == "X":
-                ops.append(cirq.X(qubits[q[0]]))
-            elif name == "Y":
-                ops.append(cirq.Y(qubits[q[0]]))
-            elif name == "Z":
-                ops.append(cirq.Z(qubits[q[0]]))
-            elif name == "S":
-                ops.append(cirq.S(qubits[q[0]]))
-            elif name == "T":
-                ops.append(cirq.T(qubits[q[0]]))
-            elif name == "RX":
-                ops.append(cirq.rx(float(p[0]))(qubits[q[0]]))
-            elif name == "RY":
-                ops.append(cirq.ry(float(p[0]))(qubits[q[0]]))
-            elif name == "RZ":
-                ops.append(cirq.rz(float(p[0]))(qubits[q[0]]))
-            elif name == "CZ":
-                ops.append(cirq.CZ(qubits[q[0]], qubits[q[1]]))
-            elif name == "SWAP":
-                ops.append(cirq.SWAP(qubits[q[0]], qubits[q[1]]))
-        # Add measurements
-        ops.append(cirq.measure(*qubits, key="result"))
-        return cirq.Circuit(ops), qubits
-
-    def run_circuit(
-        self,
-        circuit: Circuit,
-        shots: int = 1024,
-        **kwargs: Any,
-    ) -> Dict[str, Any]:
-        try:
-            import cirq
-        except ImportError as exc:
-            raise RuntimeError(
-                "CirqBackend requires 'cirq'. Install with: pip install cirq"
-            ) from exc
-
-        n = circuit.num_qubits
-        cq, qubits = self._circuit_to_cirq(circuit)
-
-        if self.processor_id:
-            # Real hardware via cirq-google
-            try:
-                import cirq_google
-                engine = cirq_google.Engine(project_id=kwargs.get("project_id", ""))
-                sampler = engine.get_sampler(processor_id=self.processor_id)
-            except ImportError as exc:
-                raise RuntimeError("Real hardware requires 'cirq-google'.") from exc
-        else:
-            sampler = cirq.Simulator()
-
-        result = sampler.run(cq, repetitions=shots)
-        measurements = result.measurements["result"]  # shape (shots, n_qubits)
-
-        counts: Dict[str, int] = {}
-        for row in measurements:
-            key = "".join(str(b) for b in row)
-            counts[key] = counts.get(key, 0) + 1
-
-        probs = self._counts_to_probs(counts, shots)
-        return {
-            "success": True,
-            "backend": f"Cirq:{self.processor_id or 'simulator'}",
-            "shots": shots,
-            "counts": counts,
-            "probabilities": probs,
-            "statevector": None,
-        }
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Auto-selector: pick the best available backend
+# Auto-selector
 # ──────────────────────────────────────────────────────────────────────────────
 
 def get_best_backend(n_qubits: int = 30, **kwargs: Any) -> QuantumBackend:
-    """Return the fastest available local backend for the given qubit count.
-
-    Falls back gracefully: Rust → NumPy.
-    """
+    """Return the fastest available local backend for the given qubit count."""
     return FastBackend(n_qubits=n_qubits, **kwargs)
 
 
@@ -737,12 +459,10 @@ def get_best_backend(n_qubits: int = 30, **kwargs: Any) -> QuantumBackend:
 # ──────────────────────────────────────────────────────────────────────────────
 
 __all__ = [
+    "JobStatus",
+    "JobHandle",
     "QuantumBackend",
     "FastBackend",
-    "IBMQBackend",
-    "BraketBackend",
-    "AzureBackend",
-    "IonQBackend",
-    "CirqBackend",
+    "BackendRegistry",
     "get_best_backend",
 ]
