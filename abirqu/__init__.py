@@ -1,6 +1,6 @@
 """AbirQu — next-generation quantum computing library."""
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __author__ = "Abir Maheshwari"
 __email__ = "abhirsxn@gmail.com"
 __url__ = "https://github.com/abirqu/abirqu"
@@ -70,6 +70,46 @@ from .dwave import (
 from .simulation import (
     GPUSimulator, CliffordSimulator, MPSSimulator,
     is_clifford_only, estimate_bond_dimension,
+)
+
+# Primitives (unified execution)
+from .primitives import (
+    QuantumRun, SamplerResult, EstimatorResult, MitigationResult, QNNResult,
+    Sampler, QuasiDistribution, Estimator, QNN,
+)
+
+# Visualization
+from .visualization import (
+    CircuitDrawer, draw,
+    draw_text, draw_ascii, draw_svg, draw_html,
+    BlochSphere,
+    histogram_text, histogram_svg,
+    stateplot_svg, probability_svg, stateplot_ascii,
+    gate_map_svg, error_map_svg,
+    noise_fingerprint_svg, circuit_fingerprint_svg,
+)
+
+# Circuit Library
+from .library import (
+    real_amplitudes, efficient_su2, n_local,
+    qaoa_circuit, qaoa_maxcut,
+    vqe_hardware_efficient, vqe_uccsd, vqe_custom,
+    angle_encoding, amplitude_encoding, zz_feature_map, iqp_encoding,
+    ghz_circuit, w_state, qft_circuit, grover_circuit,
+    grover_oracle, bernstein_vazirani_circuit, quantum_fourier_transform,
+    random_circuit,
+)
+
+# Noise Toolkit
+from .noise_toolkit import (
+    ZeroNoiseExtrapolator, ReadoutMitigator, M3Mitigator,
+    PECCorrector, generate_calibration_circuits, generate_zne_circuits,
+)
+
+# Addons
+from .addons import (
+    MultiProductFormula, TrotterSuzuki, CircuitCutter,
+    AQCTensor, OperatorBackpropagation, SQDCorrector,
 )
 
 # Format exports
@@ -170,6 +210,29 @@ __all__ = [
     "PluginDiscovery", "CredentialManager", "CredentialManagerWithMFA",
     "ResultNormalizer", "NormalizedResult", "NativeGateSet", "GateDecomposer", "Transpiler",
     "PluginRegistry", "PluginManifest", "EventBus",
+    # Primitives
+    "QuantumRun", "SamplerResult", "EstimatorResult", "MitigationResult", "QNNResult",
+    "Sampler", "QuasiDistribution", "Estimator", "QNN",
+    # Visualization
+    "CircuitDrawer", "draw", "draw_text", "draw_ascii", "draw_svg", "draw_html",
+    "BlochSphere", "histogram_text", "histogram_svg",
+    "stateplot_svg", "probability_svg", "stateplot_ascii",
+    "gate_map_svg", "error_map_svg",
+    "noise_fingerprint_svg", "circuit_fingerprint_svg",
+    # Circuit Library
+    "real_amplitudes", "efficient_su2", "n_local",
+    "qaoa_circuit", "qaoa_maxcut",
+    "vqe_hardware_efficient", "vqe_uccsd", "vqe_custom",
+    "angle_encoding", "amplitude_encoding", "zz_feature_map", "iqp_encoding",
+    "ghz_circuit", "w_state", "qft_circuit", "grover_circuit",
+    "grover_oracle", "bernstein_vazirani_circuit", "quantum_fourier_transform",
+    "random_circuit",
+    # Noise Toolkit
+    "ZeroNoiseExtrapolator", "ReadoutMitigator", "M3Mitigator",
+    "PECCorrector", "generate_calibration_circuits", "generate_zne_circuits",
+    # Addons
+    "MultiProductFormula", "TrotterSuzuki", "CircuitCutter",
+    "AQCTensor", "OperatorBackpropagation", "SQDCorrector",
     # Formats
     "openqasm2", "openqasm3", "quil", "qir", "qasm_xt",
     # Backends (lazy)
