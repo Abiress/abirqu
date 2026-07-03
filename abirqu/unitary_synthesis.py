@@ -260,15 +260,20 @@ def _unitary_from_circuit_simple(circuit: Circuit, num_qubits: int) -> np.ndarra
         name = gate.name.upper()
         qubits = gate.qubits if isinstance(gate.qubits, list) else [gate.qubits]
         params = gate.params or []
-        if name == "RY":
-            theta = params[0] if params else 0
+        if name == "RX":
+            theta = float(np.real(params[0])) if params else 0.0
+            cx, sx = math.cos(theta / 2), math.sin(theta / 2)
+            Uq = np.array([[cx, -1j * sx], [-1j * sx, cx]])
+            U = _apply_single_qubit(U, Uq, qubits[0], num_qubits)
+        elif name == "RY":
+            theta = float(np.real(params[0])) if params else 0.0
             Uq = np.array([[math.cos(theta/2), -math.sin(theta/2)],
                            [math.sin(theta/2), math.cos(theta/2)]])
             U = _apply_single_qubit(U, Uq, qubits[0], num_qubits)
         elif name == "RZ":
-            phi = params[0] if params else 0
-            Uq = np.array([[math.exp(-1j*phi/2), 0],
-                           [0, math.exp(1j*phi/2)]])
+            phi = float(np.real(params[0])) if params else 0.0
+            Uq = np.array([[np.exp(-1j*phi/2), 0],
+                           [0, np.exp(1j*phi/2)]])
             U = _apply_single_qubit(U, Uq, qubits[0], num_qubits)
         elif name == "CNOT":
             U = _apply_cnot(U, qubits[0], qubits[1], num_qubits)
