@@ -88,6 +88,41 @@ AbirQu delivers end-to-end quantum computing: from circuit creation to hardware 
 | **OperatorBackpropagation** | `abirqu.addons` | Propagate operators backward for measurement reduction |
 | **SQDCorrector** | `abirqu.addons` | Sample-based Quantum Diagonalization for chemistry |
 
+### Scalable Unitary Synthesis (NEW in v0.3.0)
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **synthesize_unitary** | `abirqu.unitary_synthesis` | Variational quantum compilation — compile any unitary matrix into a hardware-efficient circuit |
+| **ScalableUnitarySynthesizer** | `abirqu.unitary_synthesis` | Layer-wise compilation for large systems (10+ qubits) |
+| **Synthesis Verification** | `abirqu.unitary_synthesis` | Compute fidelity between target unitary and synthesized circuit |
+
+### Automated Adaptive Error Mitigation (NEW in v0.3.0)
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **AdaptiveErrorMitigator** | `abirqu.adaptive_mitigation` | Auto-profiles hardware noise, selects best mitigation strategies — zero manual config |
+| **NoiseProfiler** | `abirqu.adaptive_mitigation` | Auto-detect noise type from calibration data or hardware characteristics |
+| **DriftMonitor** | `abirqu.adaptive_mitigation` | Track calibration drift over time, alert on significant changes |
+| **StrategySelector** | `abirqu.adaptive_mitigation` | Dynamic strategy selection based on real-time noise profile |
+
+### Pulse-Level Translation (NEW in v0.3.0)
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **AutomatedPulseEngine** | `abirqu.pulse_translator` | Translate gate-level circuits to hardware-native pulse schedules |
+| **PulseTranslator** | `abirqu.pulse_translator` | Gate-to-pulse mapping for superconducting, trapped-ion, neutral-atom |
+| **PulseScheduler** | `abirqu.pulse_translator` | Crosstalk-aware pulse scheduling with parallel execution |
+| **PulseOptimizer** | `abirqu.pulse_translator` | DRAG pulse optimization, amplitude calibration, waveform shaping |
+
+### Dynamic Circuits (NEW in v0.3.0)
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **DynamicCircuitSimulator** | `abirqu.dynamic_circuit` | Mid-circuit measurement, classical feedback, conditional gates |
+| **ForLoop / WhileLoop** | `abirqu.dynamic_circuit` | Classical control flow within quantum circuits |
+| **StreamingCircuitEngine** | `abirqu.dynamic_circuit` | Fragment-based execution for streaming / real-time circuits |
+| **VQEParameterPrefetcher** | `abirqu.dynamic_circuit` | Prefetch next VQE iteration while current runs on hardware |
+
 ### 12 Hardware Backends
 
 | Backend | Type | Status | Features |
@@ -332,6 +367,10 @@ my_custom = "my_plugin.backend:MyCustomBackend"
 | **Industry Algorithms** | ✅ QAOA, VQE, VRP with real implementations | Basic examples | Basic examples |
 | **Simulation Backends** | ✅ GPU, Clifford, MPS tensor network | Statevector only | Statevector only |
 | **Circuit Converters** | ✅ Qiskit, Braket, Cirq, IonQ, Pytket, Quil, QASM | N/A | N/A |
+| **Unitary Synthesis** | ✅ Variational compilation of arbitrary unitaries | ✅ UnitaryGate (limited) | ❌ Not native |
+| **Adaptive Error Mitigation** | ✅ Auto-profile, auto-select, drift monitoring | ❌ Manual configuration | ❌ Manual configuration |
+| **Pulse-Level Translation** | ✅ Superconducting, trapped-ion, neutral-atom, DRAG | ✅ qiskit.pulse | ❌ Not native |
+| **Dynamic Circuits** | ✅ Mid-circuit measurement, loops, conditionals | ✅ qiskit.dynamic | ✅ cirq.work |
 | **Open Source** | ✅ [MIT](LICENSE) | ✅ Apache 2.0 | ✅ Apache 2.0 |
 
 **Key Differentiators:**
@@ -344,6 +383,10 @@ my_custom = "my_plugin.backend:MyCustomBackend"
 7. **Post-Quantum Security** — Kyber-768 KEM, Dilithium-2 signatures, SPHINCS+-128f, BB84 QKD
 8. **3 Simulation Backends** — GPU (CuPy/NumPy), Clifford (stabilizer tableau), MPS (tensor network)
 9. **Circuit Cutting** — decompose large circuits for distributed execution (not in Qiskit core)
+10. **Unitary Synthesis** — compile any unitary matrix into hardware-efficient circuits via variational optimization
+11. **Adaptive Error Mitigation** — auto-profiles noise, drift monitoring, strategy selection — zero manual config
+12. **Pulse-Level Translation** — gate-to-pulse for superconducting/trapped-ion/neutral-atom with DRAG optimization
+13. **Dynamic Circuits** — mid-circuit measurement, classical feedback, while loops, VQE parameter prefetching
 
 ---
 
@@ -467,6 +510,10 @@ print(draw(bell, output="svg"))
 | C5.4 | **Visualization** | ✅ Complete | SVG/HTML/ASCII, Bloch, histogram, noise fingerprint |
 | C5.5 | **Noise Toolkit** | ✅ Complete | ZNE, M3, PEC, readout mitigation |
 | C5.6 | **Addons** | ✅ Complete | MPF, Trotter, circuit cutting, AQC, OBP, SQD |
+| C5.7 | **Unitary Synthesis** | ✅ Complete | Variational compilation, scalable to 10+ qubits |
+| C5.8 | **Adaptive Error Mitigation** | ✅ Complete | Auto-profile, auto-select, drift monitoring |
+| C5.9 | **Pulse-Level Translation** | ✅ Complete | Superconducting, trapped-ion, neutral-atom, DRAG |
+| C5.10 | **Dynamic Circuits** | ✅ Complete | Mid-circuit measurement, loops, conditionals, prefetching |
 
 ---
 
