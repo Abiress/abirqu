@@ -31,7 +31,7 @@ class AWSBraketCredentials:
         return bool(self.aws_access_key_id and self.aws_secret_access_key)
 
 
-class BraketBackend(QuantumBackend):
+class AWSBraketBackend(QuantumBackend):
     """AWS Braket backend using amazon-braket-sdk.
 
     Parameters
@@ -191,3 +191,7 @@ class BraketBackend(QuantumBackend):
             filters=[{"name": "status", "values": ["ONLINE"]}]
         )
         return response.get("devices", [])
+
+
+# Backward-compatible alias
+BraketBackend = AWSBraketBackend

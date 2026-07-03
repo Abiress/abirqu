@@ -1,7 +1,12 @@
 import os
 from typing import Any, Dict, Optional
 
-from ..backend import AzureBackend, BraketBackend, CirqBackend, FastBackend, IBMQBackend, IonQBackend
+from ..backend import FastBackend
+from ..backends.aws import AWSBraketBackend as BraketBackend
+from ..backends.azure import AzureQuantumBackend as AzureBackend
+from ..backends.google import GoogleQuantumBackend as CirqBackend
+from ..backends.ibm import IBMQuantumBackend as IBMQBackend
+from ..backends.ionq import IonQBackend
 from ..circuit import Circuit
 
 

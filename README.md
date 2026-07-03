@@ -21,7 +21,7 @@ AbirQu delivers end-to-end quantum computing: from circuit creation to hardware 
 
 ## Features
 
-### Core — Unified Execution (AbirQu-native, NOT a copy of Qiskit)
+### Core — Unified Execution
 
 | Feature | Module | Description |
 |---------|--------|-------------|
@@ -409,15 +409,15 @@ print(draw(bell, output="svg"))
 | Milestone | Language | Status | Notes |
 |-----------|----------|--------|-------|
 | C1.1 | **Python** | ✅ Complete | Native package — `pip install abirqu` |
-| C1.2 | **C / C++** | ✅ Complete | Expose `libabirqu.so` via stable C ABI (`abirqu.h`) |
-| C1.3 | **JavaScript / Node.js** | ✅ Complete | JS SDK package metadata and build scaffolding present |
-| C1.4 | **Java** | ✅ Complete | JVM wrapper sources present |
-| C1.5 | **Go** | ✅ Complete | `cgo` bindings present |
-| C1.6 | **Rust** | ✅ Complete | Rust crate and core sources present |
-| C1.7 | **.NET / C#** | ✅ Complete | P/Invoke wrapper sources present |
-| C1.8 | **Swift / Objective-C** | ✅ Complete | Swift interop wrapper present |
-| C1.9 | **Kotlin / JVM** | ✅ Complete | Kotlin/JVM binding sources present |
-| C1.10 | **WebAssembly (browser)** | ⚠️ Partial | WASM directory/build outputs not currently present in this repo snapshot |
+| C1.2 | **C / C++** | ✅ Complete | `include/abirqu.h` — C ABI header present |
+| C1.3 | **JavaScript / Node.js** | ✅ Complete | `js/package.json` — SDK scaffolding present |
+| C1.4 | **Java** | ⚠️ Planned | JVM wrapper not yet created |
+| C1.5 | **Go** | ⚠️ Planned | cgo bindings not yet created |
+| C1.6 | **Rust** | ✅ Complete | `Cargo.toml` + Rust crate sources present |
+| C1.7 | **.NET / C#** | ⚠️ Planned | P/Invoke wrapper not yet created |
+| C1.8 | **Swift / Objective-C** | ⚠️ Planned | Swift wrapper not yet created |
+| C1.9 | **Kotlin / JVM** | ⚠️ Planned | Kotlin binding not yet created |
+| C1.10 | **WebAssembly (browser)** | ⚠️ Planned | WASM build not yet created |
 
 ### Phase C2 — Quantum Hardware Compatibility
 
@@ -485,12 +485,12 @@ print(draw(bell, output="svg"))
 
 ### Internal Comparative Benchmarks
 
-| Benchmark | AbirQu (ms) | Qiskit (ms) | Cirq (ms) | Winner |
-|-----------|-------------|-------------|-----------|--------|
-| Simulation (16q) | **2.74** | 94.59 | 8.02 | **AbirQu** |
-| Construction (400g) | **1.77** | 2.56 | 4.00 | **AbirQu** |
-| Measurement (16q, 8k shots) | **4.23** | 94.69 | 115.21 | **AbirQu** |
-| Density Matrix (8q) | **85.94** | 174.22 | N/A | **AbirQu** |
+| Benchmark | AbirQu (ms) | Qiskit (ms) | Cirq (ms) |
+|-----------|-------------|-------------|-----------|
+| Simulation (16q) | 2.74 | 94.59 | 8.02 |
+| Construction (400g) | 1.77 | 2.56 | 4.00 |
+| Measurement (16q, 8k shots) | 4.23 | 94.69 | 115.21 |
+| Density Matrix (8q) | 85.94 | 174.22 | N/A |
 
 ---
 
