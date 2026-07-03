@@ -76,3 +76,6 @@ build/
 # Local compiled example binaries
 example_c
 example_cpp
+
+# Offline phases (not needed for SDK)
+abirqu/phases/
