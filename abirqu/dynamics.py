@@ -26,7 +26,7 @@ class VQEParameterPrefetcher:
 
 
 # Re-export phase 38 production implementations.
-from .phases.phase38 import (
+from .dynamic_circuit import (
     DynamicCircuitSimulator,
     GateOp,
     MidCircuitMeasure,

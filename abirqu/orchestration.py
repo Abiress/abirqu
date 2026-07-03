@@ -213,7 +213,7 @@ class QuantumCloudProvider:
 
 
 # Re-export phase 37 production implementations.
-from .phases.phase37 import (
+from .routing import (
     MultiObjectiveRouter,
     CircuitKnitter,
     BackendGlobalMap,

@@ -118,7 +118,7 @@ class QuantumLanguageModel:
 
 
 # Re-export phase 34 production implementations.
-from .phases.phase34 import (
+from .qml import (
     QuantumAssociativeMemory,
     QuantumInterferenceDecisionEngine,
     QuantumTensorNetworkAttention,

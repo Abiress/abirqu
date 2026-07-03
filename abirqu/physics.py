@@ -51,7 +51,7 @@ class BlackHoleScrambler:
 
 
 # Re-export phase 35 production implementations.
-from .phases.phase35 import (
+from .high_energy import (
     LatticeGaugeTheory,
     QuarkGluonPlasmaSimulator,
     SYKModel,

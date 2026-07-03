@@ -571,7 +571,7 @@ class AbirHubMarketplace:
 
 
 # Re-export phase 36 production implementations.
-from .phases.phase36 import (
+from .plugin_market import (
     PluginRegistry,
     PluginManifest,
     SandboxedNamespace,

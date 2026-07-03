@@ -90,7 +90,7 @@ class FoldingTopologyAnalyzer:
 
 
 # Re-export phase 32 production implementations.
-from .phases.phase32 import (
+from .bio_impl import (
     ProteinLatticeModel,
     MolecularDockingSimulator,
     ProtonTunnelingSimulator,

@@ -167,9 +167,6 @@ def __getattr__(name):
     if name == "AbirQuSDK":
         from .sdk import AbirQuSDK as _AbirQuSDK
         return _AbirQuSDK
-    if name == "phases":
-        from . import phases as _phases
-        return _phases
     raise AttributeError(name)
 
 

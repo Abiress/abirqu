@@ -111,7 +111,7 @@ class EntanglementSensorNetwork:
 
 
 # Re-export phase 31 production implementations.
-from .phases.phase31 import (
+from .space import (
     EntanglementSwapper,
     OrbitalSatelliteNoiseModel,
     DeepSpaceRelay,

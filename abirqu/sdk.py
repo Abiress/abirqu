@@ -18,10 +18,10 @@ from .algorithms import (
     vqe_hardware_efficient,
 )
 from .circuit import Circuit
-from .phases.phase12 import QuantumInternetProtocols, QuantumNetworkSimulator
-from .phases.phase27 import HardwareCapabilityProbe, HardwareExecutionManager
-from .phases.phase20 import ErrorMitigationPipeline
-from .phases.phase5 import AgenticDevelopmentHarness, CircuitGenerationAgent
+from .network import QuantumInternetProtocols, QuantumNetworkSimulator
+from .backends.hardware import HardwareCapabilityProbe, HardwareExecutionManager
+from .noise_toolkit import ErrorMitigationPipeline
+from .agents import AgenticDevelopmentHarness, CircuitGenerationAgent
 from .patterns import PatternAwareOptimizer
 from .tracker import QuantumAdvantageTracker
 from .optimize.transpiler import HardwareAwareTranspiler

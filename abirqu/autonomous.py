@@ -92,7 +92,7 @@ class AdaptiveCompilerPass:
 
 
 # Re-export phase 33 production implementations.
-from .phases.phase33 import (
+from .neutral_atom import (
     GateFidelityTracker,
     DynamicErrorSuppressor,
     RecalibrationAgent,

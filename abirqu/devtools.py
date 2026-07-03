@@ -216,7 +216,7 @@ class QuantumDebugger:
 
 
 # Re-export phase 39 production implementations.
-from .phases.phase39 import (
+from .devtools_phase import (
     QuantumDebugger,
     Breakpoint,
     StateSnapshot,

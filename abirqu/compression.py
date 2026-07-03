@@ -103,7 +103,7 @@ class SparseStateSimulator:
 
 
 # Re-export phase 40 production implementations.
-from .phases.phase40 import (
+from .sparse import (
     SparseStateVector,
     NVMeStateMapper,
     LazyAmplitudeEvaluator,
