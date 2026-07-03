@@ -230,6 +230,12 @@ __all__ = [
     # Addons
     "MultiProductFormula", "TrotterSuzuki", "CircuitCutter",
     "AQCTensor", "OperatorBackpropagation", "SQDCorrector",
+    # Scalable Unitary Synthesis
+    "synthesize_unitary", "ScalableUnitarySynthesizer",
+    # Automated Adaptive Error Mitigation
+    "AdaptiveErrorMitigator", "NoiseProfiler", "DriftMonitor", "StrategySelector",
+    # Pulse-Level Translation
+    "AutomatedPulseEngine", "PulseTranslator", "PulseScheduler", "PulseOptimizer", "HardwareProfile",
     # Formats
     "openqasm2", "openqasm3", "quil", "qir", "qasm_xt",
     # Backends (lazy)
