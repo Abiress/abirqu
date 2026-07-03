@@ -71,7 +71,10 @@ AbirQu delivers end-to-end quantum computing: from circuit creation to hardware 
 | Feature | Module | Description |
 |---------|--------|-------------|
 | **ZeroNoiseExtrapolator** | `abirqu.noise_toolkit` | ZNE with Richardson, linear, exponential extrapolation |
+| **Gate Folding ZNE** | `abirqu.noise_toolkit` | G→GG†G identity insertion for precise noise amplification |
+| **ZNE Pipeline** | `abirqu.noise_toolkit` | Complete fold→execute→extrapolate pipeline |
 | **ReadoutMitigator** | `abirqu.noise_toolkit` | Confusion matrix inversion for readout errors |
+| **Enhanced Readout Mitigator** | `abirqu.noise_toolkit` | Tikhonov regularization, per-qubit correction, bootstrap CI |
 | **M3Mitigator** | `abirqu.noise_toolkit` | Matrix-free Measurement Mitigation — scalable to larger systems |
 | **PECCorrector** | `abirqu.noise_toolkit` | Probabilistic Error Cancellation |
 | **Calibration Circuits** | `abirqu.noise_toolkit` | Auto-generate calibration circuits for confusion matrix |
@@ -174,7 +177,45 @@ AbirQu delivers end-to-end quantum computing: from circuit creation to hardware 
 | **GPU Simulator** | `abirqu.simulation` | CuPy/NumPy statevector with GPU acceleration |
 | **Clifford Simulator** | `abirqu.simulation` | Stabilizer tableau for Clifford circuits |
 | **MPS Simulator** | `abirqu.simulation` | Matrix Product State / tensor network simulation |
+| **Monte Carlo Simulator** | `abirqu.simulation` | Quantum Jumps — stochastic pure-state trajectories, O(2^n) memory vs O(4^n) density matrix |
 | **NumPy Simulator** | `abirqu.numpy_sim` | Pure Python/NumPy statevector (portable fallback) |
+
+### Advanced Simulation Engines (100+ Qubit Support)
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **Monte Carlo Wavefunction** | `abirqu.simulation.monte_carlo` | Stochastic trajectory averaging for open quantum systems — simulates noise at O(2^n) memory |
+| **Noise Channels** | `abirqu.simulation.monte_carlo` | Amplitude damping, phase damping, depolarizing, bit/phase flip, thermal relaxation |
+| **Time-Evolution ODE Solver** | `abirqu.simulation.ode_solver` | RK4/RK45/Euler integration of Schrödinger equation for continuous Hamiltonian evolution |
+| **Lindblad Master Equation** | `abirqu.simulation.ode_solver` | Open system simulation with jump operators and dissipation |
+| **Hamiltonian Builder** | `abirqu.simulation.ode_solver` | Build custom Hamiltonians: rotations, detuning, exchange, Ising, transverse field |
+| **Thermal State Solver** | `abirqu.simulation.ode_solver` | Gibbs states, von Neumann entropy, finite-temperature dynamics |
+| **Waveform Generator** | `abirqu.simulation.waveform` | Gaussian, square, Kaiser, derivative-Gaussian, arbitrary pulse shapes |
+| **DRAG Pulses** | `abirqu.simulation.waveform` | Derivative Removal by Adiabatic Gate — suppresses leakage to higher levels |
+| **Pulse Composer** | `abirqu.simulation.waveform` | Concatenation, parallel, stacking of waveform envelopes |
+| **Pulse Modulator** | `abirqu.simulation.waveform` | IQ modulation/demodulation onto carrier frequencies |
+| **Pulse Shape Library** | `abirqu.simulation.waveform` | Pre-built π, √X, √Y, CZ, CNOT cross-resonance pulse shapes |
+
+### Parameterized Circuit Caching (Hybrid VQE/QAOA)
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **DAG Circuit** | `abirqu.dag_circuit` | Compile circuit structure once into a DAG, update parameters in O(k) |
+| **Dynamic Parameter Binding** | `abirqu.dag_circuit` | Update rotation angles without recompiling circuit structure |
+| **Parallel Layer Detection** | `abirqu.dag_circuit` | Identify gates that can execute simultaneously |
+| **DAG Executor** | `abirqu.dag_circuit` | Rapid parameter update → circuit conversion → execution loop |
+| **Parameter-Shift Gradient** | `abirqu.dag_circuit` | Compute analytic gradients via parameter shift rule |
+
+### Native Quantum Optimizers
+
+| Optimizer | Module | Description |
+|-----------|--------|-------------|
+| **COBYLA** | `abirqu.quantum_optimizer` | Constrained optimization by linear approximation — gradient-free |
+| **SPSA** | `abirqu.quantum_optimizer` | Simultaneous Perturbation Stochastic Approximation — 2 evaluations/iteration |
+| **Adam** | `abirqu.quantum_optimizer` | Adaptive Moment Estimation — works well for noisy quantum objectives |
+| **Gradient Descent** | `abirqu.quantum_optimizer` | With momentum and bounds support |
+| **Nelder-Mead** | `abirqu.quantum_optimizer` | Simplex method via COBYLA with large initial step |
+| **VQE/QAOA Loops** | `abirqu.quantum_optimizer` | Pre-built optimize_vqe() and optimize_qaoa() with ansatz functions |
 
 ### Transpiler Pipeline
 
@@ -365,12 +406,18 @@ my_custom = "my_plugin.backend:MyCustomBackend"
 | **Quantum OS** | ✅ Scheduler, resource manager, virtual QPU, cost estimation | External tools | External tools |
 | **PQC Security** | ✅ Kyber-768, Dilithium-2, SPHINCS+-128f, BB84 QKD | Not included | Not included |
 | **Industry Algorithms** | ✅ QAOA, VQE, VRP with real implementations | Basic examples | Basic examples |
-| **Simulation Backends** | ✅ GPU, Clifford, MPS tensor network | Statevector only | Statevector only |
+| **Simulation Backends** | ✅ GPU, Clifford, MPS tensor network, Monte Carlo | Statevector only | Statevector only |
 | **Circuit Converters** | ✅ Qiskit, Braket, Cirq, IonQ, Pytket, Quil, QASM | N/A | N/A |
 | **Unitary Synthesis** | ✅ Variational compilation of arbitrary unitaries | ✅ UnitaryGate (limited) | ❌ Not native |
 | **Adaptive Error Mitigation** | ✅ Auto-profile, auto-select, drift monitoring | ❌ Manual configuration | ❌ Manual configuration |
 | **Pulse-Level Translation** | ✅ Superconducting, trapped-ion, neutral-atom, DRAG | ✅ qiskit.pulse | ❌ Not native |
 | **Dynamic Circuits** | ✅ Mid-circuit measurement, loops, conditionals | ✅ qiskit.dynamic | ✅ cirq.work |
+| **Monte Carlo Noise** | ✅ Stochastic trajectory simulation O(2^n) memory | ❌ Not available | ❌ Not available |
+| **ODE Hamiltonian Solver** | ✅ RK45 time evolution with Lindblad master equation | ❌ Not native | ❌ Not native |
+| **Waveform Enveloping** | ✅ Gaussian/DRAG/Kaiser pulse shapes, IQ modulation | ✅ qiskit.pulse | ❌ Not native |
+| **DAG Parameter Caching** | ✅ Compile once, O(k) parameter update for VQE/QAOA | ✅ TranspileLayout | ❌ Not native |
+| **Native Optimizers** | ✅ COBYLA, SPSA, Adam, gradient descent in-process | Via scipy | Via scipy |
+| **Gate Folding ZNE** | ✅ G→GG†G identity insertion for noise amplification | ❌ Not native | ❌ Not native |
 | **Open Source** | ✅ [MIT](LICENSE) | ✅ Apache 2.0 | ✅ Apache 2.0 |
 
 **Key Differentiators:**
@@ -387,6 +434,12 @@ my_custom = "my_plugin.backend:MyCustomBackend"
 11. **Adaptive Error Mitigation** — auto-profiles noise, drift monitoring, strategy selection — zero manual config
 12. **Pulse-Level Translation** — gate-to-pulse for superconducting/trapped-ion/neutral-atom with DRAG optimization
 13. **Dynamic Circuits** — mid-circuit measurement, classical feedback, while loops, VQE parameter prefetching
+14. **Monte Carlo Wavefunction** — stochastic trajectory noise simulation at O(2^n) memory (density matrix needs O(4^n))
+15. **Time-Evolution ODE Solver** — continuous Hamiltonian simulation via RK45 integration with Lindblad master equation
+16. **Waveform Enveloping** — Gaussian/DRAG/Kaiser pulse shapes for hardware-ready pulse-level control
+17. **DAG Parameterized Caching** — compile circuit once, update parameters in O(k) for VQE/QAOA loops
+18. **Native Quantum Optimizers** — COBYLA, SPSA, Adam in-process with simulator (zero IPC overhead)
+19. **Gate Folding ZNE** — G→GG†G identity insertion for precise noise amplification and extrapolation
 
 ---
 
