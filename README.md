@@ -93,6 +93,11 @@ AbirQu delivers end-to-end quantum computing: from circuit creation to hardware 
 
 ### Status & Badges
 
+![🇮🇳 Indian Quantum Mission](https://img.shields.io/badge/%F0%9F%87%AE%F0%9F%87%B3_Indian_Quantum_Mission-Enabled-brightgreen?style=for-the-badge&labelColor=FF9933)
+![🇮🇳 Made in India, for the World](https://img.shields.io/badge/%F0%9F%87%AE%F0%9F%87%B3_Made_in_India-For_the_World-blue?style=for-the-badge&labelColor=138808)
+![🚀 Breakthrough Innovation](https://img.shields.io/badge/%F0%9F%9A%80_Breakthrough-Innovation-critical?style=for-the-badge)
+![🌍 Novel Quantum SDK](https://img.shields.io/badge/%F0%9F%8C%8D_Novel_Quantum_SDK-First_of_its_Kind-orange?style=for-the-badge)
+
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
 ![Version](https://img.shields.io/badge/version-0.3.0-blue)
 ![Backends](https://img.shields.io/badge/backends-12%20Real-purple)
@@ -109,6 +114,16 @@ AbirQu delivers end-to-end quantum computing: from circuit creation to hardware 
 ![Hardware](https://img.shields.io/badge/hardware-Intel%2FAMD%2FQualcomm%2FMediaTek-blueviolet)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Tests](https://img.shields.io/badge/tests-39%2F39%20PASS-brightgreen)
+
+<p align="center">
+  <b>🇮🇳 A Breakthrough Quantum Computing SDK — Built in India, for the World 🌍</b>
+</p>
+
+> **AbirQu is the world's first full-stack quantum SDK** built entirely in India with 6 production domain modules, 12 hardware backends, and full hardware independence across Intel, AMD, Qualcomm, and MediaTek processors. This is not a wrapper — this is a ground-up quantum computing infrastructure created for the Indian Quantum Mission and global adoption.
+
+<p align="center">
+  <b>Supported by:</b> Indian Quantum Mission &nbsp;|&nbsp; Made for IISc, TIFR, IITs, DRDO, ISRO &nbsp;|&nbsp; <a href="https://aqdi.world">Artificial Quantum Dyson Intelligence</a>
+</p>
 
 ---
 
