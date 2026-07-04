@@ -112,6 +112,37 @@ from .addons import (
     AQCTensor, OperatorBackpropagation, SQDCorrector,
 )
 
+# ─── Production Modules ───────────────────────────────────────────────
+
+# Quantum Chemistry (Pharmaceuticals & Drug Discovery)
+from .chemistry import (
+    JordanWignerMapper, BravyiKitaevMapper, ParityMapper,
+    FermionicOperator, build_hamiltonian_from_integrals,
+    PySCFHook, OpenFermionHook, MolecularData, run_molecular_vqe,
+    MatchgateShadows,
+)
+
+# OSINT & Intelligence (Graph Analysis & Data Encoding)
+from .osint import (
+    IntelligenceGraph, GraphNode, GraphEdge, GraphToIsingCompiler,
+    QuantumDataEncoder, QRAMEmulator, TensorNetworkEmbedding,
+)
+
+# Cryptanalysis (Oracle Synthesis & Lattice Simulation)
+from .crypto import (
+    OracleSynthesizer, ModularArithmetic, LatticeSimulation,
+)
+
+# Space & Deep Tech (HHL Solver & Q-PINNs)
+from .space import HHLSolver
+from .qpinn import QPINN, NavierStokesQPINN, PDESpec, TrainingConfig
+
+# Agentic Orchestration
+from .agentic import (
+    MultiGPUSimulator, AgentOrchestrator, DistributedQuantumComputer,
+    ExecutionTarget, ExecutionPlan,
+)
+
 # Format exports
 from .formats import openqasm2, openqasm3, quil, qir, qasm_xt
 
@@ -242,4 +273,20 @@ __all__ = [
     "IBMQuantumBackend", "BraketBackend", "AzureQuantumBackend", "GoogleQuantumBackend",
     "IonQBackend", "RigettiBackend", "QuantinuumBackend", "PasqalBackend",
     "OQCBackend", "QuEraBackend", "DWaveBackend", "SpinQBackend",
+    # ─── Production Modules ───────────────────────────────────────
+    # Quantum Chemistry
+    "JordanWignerMapper", "BravyiKitaevMapper", "ParityMapper",
+    "FermionicOperator", "build_hamiltonian_from_integrals",
+    "PySCFHook", "OpenFermionHook", "MolecularData", "run_molecular_vqe",
+    "MatchgateShadows",
+    # OSINT & Intelligence
+    "IntelligenceGraph", "GraphNode", "GraphEdge", "GraphToIsingCompiler",
+    "QuantumDataEncoder", "QRAMEmulator", "TensorNetworkEmbedding",
+    # Cryptanalysis
+    "OracleSynthesizer", "ModularArithmetic", "LatticeSimulation",
+    # Space & Deep Tech
+    "HHLSolver", "QPINN", "NavierStokesQPINN", "PDESpec", "TrainingConfig",
+    # Agentic Orchestration
+    "MultiGPUSimulator", "AgentOrchestrator", "DistributedQuantumComputer",
+    "ExecutionTarget", "ExecutionPlan",
 ]
