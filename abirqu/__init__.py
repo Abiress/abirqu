@@ -1,6 +1,6 @@
 """AbirQu — next-generation quantum computing library."""
 
-__version__ = "0.8.0"
+__version__ = "1.0.0"
 __author__ = "Abir Maheshwari"
 __email__ = "abhirsxn@gmail.com"
 __url__ = "https://github.com/abirqu/abirqu"
@@ -289,4 +289,8 @@ __all__ = [
     # Agentic Orchestration
     "MultiGPUSimulator", "AgentOrchestrator", "DistributedQuantumComputer",
     "ExecutionTarget", "ExecutionPlan",
+    # Hardware Control (v1.0.0)
+    "HardwareCalibration", "QubitProperties", "GateProperties",
+    "DeviceCharacterizer", "NoiseProfiler", "HardwareAwareCompiler",
+    "CloudManager", "CloudProvider",
 ]

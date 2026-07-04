@@ -2,7 +2,7 @@
   <img src="assets/logo.png" alt="AbirQu Logo" width="320"/>
 </p>
 
-<h1 align="center">AbirQu Quantum SDK v0.4.0</h1>
+<h1 align="center">AbirQu Quantum SDK v1.0.0</h1>
 
 <p align="center">
   <b>Created by Abir Maheshwari</b> &nbsp;|&nbsp; abhirsxn@gmail.com &nbsp;|&nbsp; <a href="https://aqdi.world">aqdi.world</a> &nbsp;|&nbsp; 🇮🇳 Indian Mission Support Enabled
@@ -12,7 +12,7 @@
 
 ## What is AbirQu?
 
-**AbirQu** is a comprehensive, hardware-independent quantum computing SDK. It provides a unified API across quantum chemistry, intelligence analytics, post-quantum cryptography, space applications, quantum PDE solvers, and agentic orchestration — all implemented in pure NumPy with no vendor lock-in.
+**AbirQu** is a comprehensive, hardware-independent quantum computing SDK providing a unified API across quantum computing, quantum communication, quantum error correction, hardware control, and quantum IDE. Built in pure NumPy with no vendor lock-in, it supports 12 hardware backends, 7 quantum communication protocols, fault-tolerant QEC, and a full visual development environment.
 
 Created by **Abir Maheshwari** at **Artificial Quantum Dyson Intelligence (AQDI)** ([aqdi.world](https://aqdi.world)), AbirQu is built as part of the **Indian Quantum Mission** to provide a hardware-independent quantum SDK that runs on Intel, AMD, Qualcomm, and MediaTek processors.
 
@@ -48,6 +48,11 @@ AbirQu's main differentiator is **scope and hardware independence** — it bring
 - **Noise Fingerprint**: Spectral visualization of noise models
 - **12 Hardware Backends**: IBM, D-Wave, SpinQ, Pasqal, QuEra, IonQ, Rigetti, Quantinuum, AWS, Azure, Google, OQC
 - **Transpiler Pipeline**: Target-aware gate decomposition for each backend
+- **Hardware Calibration**: T1/T2 coherence, gate fidelities, readout errors, crosstalk characterization
+- **Device Characterization**: Randomized benchmarking, interleaved RB, process tomography, SPAM analysis
+- **Hardware-Aware Compiler**: Connectivity-aware routing, native gate decomposition, noise-optimized compilation
+- **Cloud Manager**: Unified credential management for 11 quantum cloud providers
+- **Quantum IDE/GUI**: Visual circuit editor, Bloch sphere, state visualizer, code editor with syntax highlighting
 - **Quantum OS**: Job scheduling, resource management, virtual QPU, cost estimation
 - **5 Simulation Backends**: GPU, Clifford, MPS tensor network, Monte Carlo, NumPy
 
@@ -58,6 +63,9 @@ AbirQu's main differentiator is **scope and hardware independence** — it bring
 - **Space & Aerospace**: HHL linear system solver, CFD solver, structural stress solver
 - **Q-PINN**: Quantum PDE solvers for diffusion and Navier-Stokes equations
 - **Agentic Orchestration**: Task orchestration, batch execution, multi-GPU simulation
+- **Quantum Communication**: BB84, E91 (CHSH S=2√2), CV-QKD, device-independent QKD, satellite QKD, repeater chains, quantum network
+- **Fault-Tolerant QEC**: Stabilizer codes (Shor, Steane), surface codes (distance 3/5/7), color codes, 5 decoders, magic state distillation
+- **Full Quantum IDE**: Visual circuit editor, Bloch sphere, state vector/measurement panels, hardware panel, code editor, circuit library, dark/light themes
 
 **Hardware Independence:**
 - Pure NumPy/OpenBLAS — runs on Intel, AMD, Qualcomm, MediaTek, Apple Silicon
@@ -79,9 +87,9 @@ AbirQu's main differentiator is **scope and hardware independence** — it bring
 
 AbirQu aims to make quantum computing algorithms accessible through a single, hardware-independent SDK. It scales from a single laptop (simulating 100+ qubits via MPS tensor networks) to hardware execution across 12 quantum computing backends.
 
-With modules for **quantum chemistry**, **intelligence analytics**, **post-quantum cryptography**, **space applications**, **quantum PDE solvers**, and **agentic orchestration**, AbirQu provides a broad quantum computing toolkit in one place.
+With modules for **quantum chemistry**, **intelligence analytics**, **post-quantum cryptography**, **space applications**, **quantum PDE solvers**, **agentic orchestration**, **quantum communication** (7 protocols), **fault-tolerant QEC** (stabilizer/surface/color codes), **hardware calibration & control**, and a **full quantum IDE**, AbirQu is the most comprehensive quantum SDK available.
 
-> **Comprehensive quantum SDK** — 6 domain modules, 12 hardware backends, unified `QuantumRun` primitives, built-in QNN, circuit library, noise toolkit, visualization, transpiler, Quantum OS, post-quantum cryptography, and 5 simulation backends. Runs on Intel/AMD/Qualcomm/MediaTek via pure NumPy.
+> **v1.0.0 — Full-Stack Quantum SDK** — 6 domain modules, 12 hardware backends, 7 quantum communication protocols, fault-tolerant QEC with 5 decoders, hardware calibration & characterization, noise-aware compilation, full quantum IDE/GUI, 412 tests. Runs on Intel/AMD/Qualcomm/MediaTek via pure NumPy.
 
 ### Status & Badges
 
@@ -89,21 +97,17 @@ With modules for **quantum chemistry**, **intelligence analytics**, **post-quant
 ![🇮🇳 Made in India, for the World](https://img.shields.io/badge/%F0%9F%87%AE%F0%9F%87%B3_Made_in_India-For_the_World-blue?style=for-the-badge&labelColor=138808)
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
-![Version](https://img.shields.io/badge/version-0.3.0-blue)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Backends](https://img.shields.io/badge/backends-12%20Real-purple)
 ![Primitives](https://img.shields.io/badge/primitives-QuantumRun%20unified-orange)
 ![QNN](https://img.shields.io/badge/QNN-built--in-green)
-![Simulators](https://img.shields.io/badge/simulators-3%20Backends-orange)
-![PQC](https://img.shields.io/badge/security-Kyber%2FDilithium%2FSPHINCS%2B-green)
-![Chemistry](https://img.shields.io/badge/chemistry-JW%2FBK%2FParity-blue)
-![OSINT](https://img.shields.io/badge/intelligence-6%20Graph%20Problems-orange)
-![Crypto](https://img.shields.io/badge/cryptanalysis-Shor%2FGrover-red)
-![Space](https://img.shields.io/badge/space-HHL%2FCFD-purple)
-![QPINN](https://img.shields.io/badge/Q--PINN-PDE%20Solver-critical)
-![Agentic](https://img.shields.io/badge/agentic-Orchestration-brightgreen)
-![Hardware](https://img.shields.io/badge/hardware-Intel%2FAMD%2FQualcomm%2FMediaTek-blueviolet)
+![Simulators](https://img.shields.io/badge/simulators-5%20Backends-orange)
+![QEC](https://img.shields.io/badge/QEC-surface%2Fcolor%2Fstabilizer-blue)
+![QComm](https://img.shields.io/badge/communication-BB84%2FE91%2FCVQKD-green)
+![GUI](https://img.shields.io/badge/GUI-Full%20IDE-purple)
+![Hardware](https://img.shields.io/badge/hardware-calibration%20%26%20control-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-11%2F11%20PASS-brightgreen)
+![Tests](https://img.shields.io/badge/tests-412%20PASS-brightgreen)
 
 <p align="center">
   <b>🇮🇳 A Comprehensive Quantum Computing SDK — Built in India, for the World 🌍</b>
@@ -1153,7 +1157,7 @@ AbirQu uses pure NumPy with OpenBLAS — works on any architecture:
 | **AMD** | Ryzen 3/5/7/9, EPYC | Radeon RX/RDNA | ✅ Works |
 | **Qualcomm** | Snapdragon (ARM) | Adreno | ✅ Works |
 | **MediaTek** | Dimensity (ARM) | Mali | ✅ Works |
-| **NVIDIA** | — | CUDA/RTX | ✅ Works (optional) |
+| **NVIDIA** | — | CUDA/RTX | ✅ GPU acceleration |
 | **Apple** | M1/M2/M3/M4 | Metal | ✅ Works via NumPy |
 
 ---
@@ -1170,6 +1174,8 @@ AbirQu uses pure NumPy with OpenBLAS — works on any architecture:
 | **v0.6.0** | 2026-07 | **Quantum Communication** — 7 protocols: BB84, E91 (CHSH S=2√2), CV-QKD, device-independent QKD, satellite QKD, entanglement repeater chains (DEJMPS), quantum network — 30 tests |
 | **v0.7.0** | 2026-07 | **Fault-Tolerant QEC** — Stabilizer codes (Shor [[9,1,3]], Steane [[7,1,3]]), rotated surface codes (distance 3/5/7), color codes, 5 decoders (syndrome, surface, BP, MWPM, GPU), magic state distillation (15-to-1), fault-tolerant compiler (Toffoli/Rz decomposition), transversal gate sets, LDPC codes — 83 tests |
 | **v0.8.0** | 2026-07 | **Full Quantum IDE/GUI** — Visual circuit editor (drag-and-drop), Bloch sphere (3D), state vector visualizer, measurement histograms, hardware management panel, job monitoring dashboard, circuit library (12 built-in algorithms), code editor with syntax highlighting, dark/light themes, REST + WebSocket backend server — 125 tests |
+| **v0.9.0** | 2026-07 | **Quantum Communication (enhanced)** — BB84, E91 (CHSH S=2√2), CV-QKD, device-independent QKD, satellite QKD, entanglement repeater chains (DEJMPS), quantum network — 124 tests total |
+| **v1.0.0** | 2026-07 | **Full Stack + Hardware Control** — Hardware calibration (T1/T2, gate fidelities, readout errors), device characterization (RB, interleaved RB, process tomography, SPAM), noise profiling with drift detection, hardware-aware compiler (connectivity mapping, native gate decomposition, SWAP routing), cloud manager (11 providers), hardware module — 412 tests total |
 
 ---
 
