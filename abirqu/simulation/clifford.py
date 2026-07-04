@@ -228,13 +228,13 @@ class CliffordSimulator:
             )
 
         if self.n_qubits <= 20:
-            # Use full statevector simulation (exact)
-            from .gpu_sim import GPUSimulator
-            sim = GPUSimulator(n_qubits=self.n_qubits, use_gpu=False)
-            result = sim.run_circuit(circuit, shots=shots)
-            result["backend"] = self.name
-            result["clifford"] = True
-            return result
+            # Use Monte Carlo simulator as fallback (reliable gate application)
+            from .monte_carlo import MonteCarloWavefunctionSimulator
+            sim = MonteCarloWavefunctionSimulator(
+                num_qubits=self.n_qubits, num_trajectories=shots
+            )
+            result = sim.run(circuit)
+            return {"counts": result.counts, "backend": self.name, "clifford": True}
 
         # Use stabilizer tableau for large systems
         for gate in circuit.gates:
