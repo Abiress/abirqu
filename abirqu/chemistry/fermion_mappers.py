@@ -96,7 +96,7 @@ class JordanWignerMapper:
         if p == q:
             # Number operator: a_p† a_p = (I - Z_p)/2
             return [
-                PauliTerm(0.5 * coeff, self._z_string()),
+                PauliTerm(0.5 * coeff, ['I'] * self.n_qubits),
                 PauliTerm(-0.5 * coeff, self._z_at(p)),
             ]
 
@@ -144,53 +144,134 @@ class JordanWignerMapper:
     def map_two_body(self, p: int, q: int, r: int, s: int,
                      coeff: complex = 1.0) -> List[PauliTerm]:
         """
-        Map a_p† a_q† a_r a_s to Pauli operators.
+        Map a_p† a_q† a_r a_s to Pauli operators using Jordan-Wigner.
 
-        Handles all ordering cases (p < q, r < s, etc.).
+        Uses the identity:
+            a_p† a_q† a_r a_s = (1/4)(X_p - iY_p)(X_q - iY_q)(X_r + iY_r)(X_s + iY_s)
+                                 × Z-string between operators
+
+        For efficiency, we decompose into normal-ordered products.
         """
         terms = []
-        # a_p† a_q† a_r a_s
-        # = a_p† (δ_{qr} - a_r a_q†) a_s
-        # = δ_{qr} a_p† a_s - a_p† a_r a_q† a_s
+
+        # Handle special cases first
+        if p == q or r == s:
+            # Antisymmetry: a_p† a_p† = 0
+            return []
+
+        if p == s and q == r:
+            # a_p† a_q† a_q a_p = n_p * n_q - δ_{pq} * n_p
+            if p == q:
+                # All same: a_p† a_p† a_p a_p = 0
+                return []
+            terms.extend(self._number_number(p, q, coeff))
+            return self._simplify_terms(terms)
 
         if q == r:
-            # a_p† a_q† a_q a_s = a_p† a_s * n_q (if p!=s, q!=p, q!=s)
-            if p == s:
-                # a_p† a_q† a_q a_p = n_p * n_q (number-number)
-                terms.extend(self._number_number(p, q, coeff))
-            else:
-                # a_p† a_s * n_q
-                terms.extend(self._map_one_body_scaled(p, s, coeff))
+            # a_p† a_q† a_q a_s = a_p† a_s * n_q
+            one_body = self.map_one_body(p, s, coeff)
+            for t in one_body:
                 # Multiply by n_q = (I - Z_q)/2
-                # This creates a product of Pauli terms
-                one_body = self._map_one_body_scaled(p, s, coeff)
-                scaled_terms = []
-                for t in one_body:
-                    # Multiply each by (I - Z_q)/2
-                    i_term = PauliTerm(0.5 * t.coefficient, list(t.paulis))
-                    z_term = PauliTerm(-0.5 * t.coefficient, list(t.paulis))
-                    z_term.paulis[q] = self._combine_z(t.paulis[q], 'Z')
-                    scaled_terms.extend([i_term, z_term])
-                terms.extend(scaled_terms)
-        else:
-            # General case: map each one-body operator
-            # First map a_p† a_s
-            ps_terms = self.map_one_body(p, s, coeff)
-            # Then map a_q† a_r
-            qr_terms = self.map_one_body(q, r, 1.0)
-            # Tensor product of the two sets
-            for ps in ps_terms:
-                for qr in qr_terms:
-                    combined_paulis = list(ps.paulis)
-                    combined_coeff = ps.coefficient * qr.coefficient
-                    for i, p_char in enumerate(qr.paulis):
-                        if p_char != 'I':
-                            combined_paulis[i] = self._combine_z(
-                                combined_paulis[i], p_char
-                            )
-                    terms.append(PauliTerm(combined_coeff, combined_paulis))
+                i_paulis = list(t.paulis)
+                terms.append(PauliTerm(0.5 * t.coefficient, i_paulis))
 
+                z_paulis = list(t.paulis)
+                z_paulis[q] = self._combine_z(z_paulis[q], 'Z')
+                terms.append(PauliTerm(-0.5 * t.coefficient, z_paulis))
+            return self._simplify_terms(terms)
+
+        if p == r:
+            # a_p† a_q† a_p a_s = δ_{ps} n_q - a_q† a_s * n_p
+            if p == s:
+                # a_p† a_q† a_p a_p = 0 (a_p a_p = 0)
+                return []
+            one_body = self.map_one_body(q, s, coeff)
+            for t in one_body:
+                i_paulis = list(t.paulis)
+                terms.append(PauliTerm(0.5 * t.coefficient, i_paulis))
+
+                z_paulis = list(t.paulis)
+                z_paulis[p] = self._combine_z(z_paulis[p], 'Z')
+                terms.append(PauliTerm(-0.5 * t.coefficient, z_paulis))
+            return self._simplify_terms(terms)
+
+        if p == s:
+            # a_p† a_q† a_r a_p = δ_{pr} n_q - n_p * (a_q† a_r)
+            # = n_q * δ_{pr} - n_p * (one-body(q,r))
+            # Since p != r here, δ_{pr} = 0
+            one_body = self.map_one_body(q, r, -coeff)
+            for t in one_body:
+                i_paulis = list(t.paulis)
+                terms.append(PauliTerm(0.5 * t.coefficient, i_paulis))
+
+                z_paulis = list(t.paulis)
+                z_paulis[p] = self._combine_z(z_paulis[p], 'Z')
+                terms.append(PauliTerm(-0.5 * t.coefficient, z_paulis))
+            return self._simplify_terms(terms)
+
+        # General case: use the full JW mapping
+        # a_p† a_q† a_r a_s = (1/16) * product of Pauli strings
+        terms = self._general_jw_two_body(p, q, r, s, coeff)
         return self._simplify_terms(terms)
+
+    def _general_jw_two_body(self, p: int, q: int, r: int, s: int,
+                              coeff: complex) -> List[PauliTerm]:
+        """
+        Full Jordan-Wigner mapping for a_p† a_q† a_r a_s.
+
+        Uses the expansion:
+            a_p† = (X_p - iY_p) Z_{p+1}...Z_{n-1} / 2
+            a_p = (X_p + iY_p) Z_{p+1}...Z_{n-1} / 2
+        """
+        terms = []
+        base = ['I'] * self.n_qubits
+
+        # a_p† → (X_p - iY_p)/2 × Z-string
+        # a_q† → (X_q - iY_q)/2 × Z-string
+        # a_r → (X_r + iY_r)/2 × Z-string
+        # a_s → (X_s + iY_s)/2 × Z-string
+
+        # Product of 4 terms, each with X±iY and Z-strings
+        # This gives 16 Pauli strings
+
+        # For efficiency, we compute the Z-string overlap analytically
+        # The Z-strings from a_p†, a_q†, a_r, a_s combine
+
+        for p_sign in [1, -1]:  # X ± iY for a_p†
+            for q_sign in [1, -1]:  # X ± iY for a_q†
+                for r_sign in [1, -1]:  # X ± iY for a_r
+                    for s_sign in [1, -1]:  # X ± iY for a_s
+                        paulis = list(base)
+                        # Coefficient from (±i) factors
+                        c = coeff / 16.0
+                        if p_sign == -1:
+                            c *= -1j
+                        if q_sign == -1:
+                            c *= -1j
+                        if r_sign == 1:
+                            c *= 1
+                        else:
+                            c *= 1j
+                        if s_sign == 1:
+                            c *= 1
+                        else:
+                            c *= 1j
+
+                        # Apply X or Y to each qubit
+                        paulis[p] = 'X' if p_sign == 1 else 'Y'
+                        paulis[q] = 'X' if q_sign == 1 else 'Y'
+                        paulis[r] = 'X' if r_sign == 1 else 'Y'
+                        paulis[s] = 'X' if s_sign == 1 else 'Y'
+
+                        # Z-string between consecutive qubits
+                        all_positions = sorted([p, q, r, s])
+                        for idx in range(min(all_positions), max(all_positions)):
+                            if idx not in [p, q, r, s]:
+                                paulis[idx] = 'Z'
+
+                        terms.append(PauliTerm(c, paulis))
+
+        return terms
 
     def map_hamiltonian(self, one_electron: List[Tuple[int, int, complex]],
                         two_electron: List[Tuple[int, int, int, int, complex]]

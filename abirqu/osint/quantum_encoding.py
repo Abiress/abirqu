@@ -272,6 +272,10 @@ class QuantumDataEncoder:
         if norm_right > 1e-15:
             self._exact_state_prep(circ, right / norm_right, qubits[:-1])
 
+    def feature_map(self, features: np.ndarray, entanglement: str = "linear") -> Circuit:
+        """Alias for encode_feature_map."""
+        return self.encode_feature_map(features, entanglement)
+
     def encode_feature_map(self, features: np.ndarray, entanglement: str = "linear") -> Circuit:
         """
         Quantum feature map for quantum kernel methods.

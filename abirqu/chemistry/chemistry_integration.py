@@ -421,6 +421,11 @@ def run_molecular_vqe(
             - "n_parameters": Number of ansatz parameters
             - "convergence": List of energies per iteration
     """
+    # Ensure integrals are loaded
+    if mol_data.one_electron_integrals is None:
+        hook = PySCFHook(pyscf_available=False)
+        mol_data = hook.run_calculation(mol_data.name)
+
     # Get Hamiltonian
     hamiltonian, n_qubits = mol_data.get_hamiltonian(mapper)
 
