@@ -1166,6 +1166,9 @@ AbirQu uses pure NumPy with OpenBLAS — works on any architecture:
 | **v0.2.0** | 2026-05 | Full-stack quantum OS — QuantumScheduler, JobQueue, ResourceManager, VirtualQPU, CostEstimator, Post-Quantum Security (Kyber/Dilithium/SPHINCS+), 3 simulation backends (GPU, Clifford, MPS), circuit library, visualization |
 | **v0.3.0** | 2026-06 | QuantumRun primitives (unified sampling + estimation + mitigation + ML), QNN with parameter-shift gradients, 6 production modules (Chemistry, OSINT, Crypto, Space, Q-PINN, Agentic), Scalable Unitary Synthesis, Adaptive Error Mitigation, Pulse-Level Translation, Dynamic Circuits, Circuit Fingerprint, Noise Fingerprint |
 | **v0.4.0** | 2026-07 | **Novel contributions** — Noise-Adaptive Circuit Compiler (4-pass noise-aware optimization), SPAE for QNLP (stochastic-phase amplitude encoding), Entanglement-Aware Circuit Cutting (bond dimension heuristics), Hybrid MPS-Clifford Simulator (dynamic switching between MPS and Clifford tableau) |
+| **v0.5.0** | 2026-07 | Pauli string optimizer, state tomography, randomized benchmarking, CircuitCompiler, CI/CD pipeline, 5 tutorials — 94 tests |
+| **v0.6.0** | 2026-07 | **Quantum Communication** — 7 protocols: BB84, E91 (CHSH S=2√2), CV-QKD, device-independent QKD, satellite QKD, entanglement repeater chains (DEJMPS), quantum network — 30 tests |
+| **v0.7.0** | 2026-07 | **Fault-Tolerant QEC** — Stabilizer codes (Shor [[9,1,3]], Steane [[7,1,3]]), rotated surface codes (distance 3/5/7), color codes, 5 decoders (syndrome, surface, BP, MWPM, GPU), magic state distillation (15-to-1), fault-tolerant compiler (Toffoli/Rz decomposition), transversal gate sets, LDPC codes — 83 tests |
 
 ---
 

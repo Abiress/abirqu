@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "abirqu"
-version = "0.6.0"
+version = "0.7.0"
 description = "Full-stack quantum computing SDK — real hardware support for IBM, D-Wave, SpinQ, and all quantum computers"
 readme = "README.md"
 license = {text = "MIT"}

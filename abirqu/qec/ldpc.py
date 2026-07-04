@@ -7,6 +7,29 @@ GPU-accelerated LDPC decoding with belief propagation.
 import numpy as np
 from typing import List, Dict, Tuple, Optional
 
+
+class LDPCCode:
+    """LDPC code defined by a parity-check matrix."""
+
+    def __init__(self, parity_matrix: Optional[np.ndarray] = None):
+        if parity_matrix is None:
+            parity_matrix = np.array([
+                [1, 1, 0, 1, 0, 0],
+                [0, 1, 1, 0, 1, 0],
+                [1, 0, 1, 0, 0, 1],
+            ], dtype=int)
+        self.parity_matrix = parity_matrix
+        self.n = parity_matrix.shape[1]
+        self.m = parity_matrix.shape[0]
+        self.k = self.n - self.m
+
+    def compute_syndrome(self, error: np.ndarray) -> np.ndarray:
+        return self.parity_matrix @ error % 2
+
+    def __repr__(self):
+        return f"LDPCCode(n={self.n}, k={self.k})"
+
+
 class LDPCDecoder:
     """GPU-accelerated LDPC decoder using belief propagation."""
     
