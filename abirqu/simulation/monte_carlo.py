@@ -377,7 +377,7 @@ class MonteCarloWavefunctionSimulator:
 
             # Apply noise channels for each qubit involved
             for q in qubits:
-                if q in self.noise_channels:
+                if self.noise_channels and q in self.noise_channels:
                     for channel in self.noise_channels[q]:
                         jumped, jump_idx, new_state = channel.sample_jump(
                             state, q, self.num_qubits

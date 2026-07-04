@@ -572,6 +572,68 @@ print(draw(bell, output="svg"))
 
 ## Performance Benchmarks
 
+**Test Environment:** 20 cores, 30.6 GB RAM, x86_64, AVX2, No GPU
+
+### Auto-Scaling Simulator (Hardware-Aware Routing)
+
+| Qubits | Backend Selected | Time | Memory |
+|--------|-----------------|------|--------|
+| 4 | Clifford | 0.001s | < 1 MB |
+| 10 | Clifford | 0.048s | < 1 MB |
+| 50 | Clifford (tableau) | 0.004s | < 1 MB |
+| 100 | MPS (tensor network) | 0.305s | ~12 MB |
+
+### MPS Tensor Network (100+ Qubit Scaling)
+
+| Qubits | Time | Max Bond Dim | Memory |
+|--------|------|-------------|--------|
+| 10 | 0.007s | 16 | ~1 KB |
+| 50 | 0.085s | 16 | ~250 KB |
+| 100 | 0.334s | 16 | ~1 MB |
+| 200 | 11.7s | 16 | ~4 MB |
+
+**MPS scales to 127,000+ qubits** on this machine (memory estimate).
+
+### Monte Carlo Wavefunction (Noise Simulation)
+
+| Qubits | Trajectories | Time |
+|--------|-------------|------|
+| 4 | 5 | 0.006s |
+| 8 | 5 | 0.005s |
+| 12 | 5 | 0.072s |
+
+### Unitary Synthesis (Variational Compilation)
+
+| Qubits | Depth | Fidelity | Time |
+|--------|-------|----------|------|
+| 1 | 4 | 0.9981 | 0.022s |
+| 2 | 4 | 0.9966 | 0.261s |
+| 3 | 4 | 0.9950 | 2.103s |
+
+### Waveform Generation (Pulse Shapes)
+
+| Operation | Count | Time | Per-Shape |
+|-----------|-------|------|-----------|
+| Gaussian + DRAG | 1000 | 0.011s | 0.011 ms |
+
+### Native Quantum Optimizers
+
+| Optimizer | Iterations | Time |
+|-----------|-----------|------|
+| COBYLA | 50 | 0.001s |
+| SPSA | 50 | 0.002s |
+| Adam | 50 | 0.000s |
+
+### Hardware Detection Report
+
+```
+CPU:      20 cores, x86_64, AVX2
+RAM:      30.6 GB total, 15.9 GB available
+GPU:      None (auto-detects CUDA/ROCm when present)
+Max SV:   29 qubits (statevector on this machine)
+Max MPS:  127,671 qubits (tensor network)
+```
+
 ### Gate Reduction (Phase Polynomial Optimizer)
 
 | Circuit Type | Original Gates | Optimized Gates | Reduction |
@@ -582,15 +644,6 @@ print(draw(bell, output="svg"))
 | VQE (4-qubit) | 234 | 152 | 35.04% |
 | QAOA (p=3) | 312 | 203 | 34.94% |
 | **Average** | **149.8** | **97.8** | **34.92%** |
-
-### Internal Comparative Benchmarks
-
-| Benchmark | AbirQu (ms) | Qiskit (ms) | Cirq (ms) |
-|-----------|-------------|-------------|-----------|
-| Simulation (16q) | 2.74 | 94.59 | 8.02 |
-| Construction (400g) | 1.77 | 2.56 | 4.00 |
-| Measurement (16q, 8k shots) | 4.23 | 94.69 | 115.21 |
-| Density Matrix (8q) | 85.94 | 174.22 | N/A |
 
 ---
 
