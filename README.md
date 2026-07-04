@@ -189,7 +189,7 @@ With modules for **quantum chemistry**, **intelligence analytics**, **post-quant
 | **OperatorBackpropagation** | `abirqu.addons` | Propagate operators backward for measurement reduction |
 | **SQDCorrector** | `abirqu.addons` | Sample-based Quantum Diagonalization for chemistry |
 
-### Scalable Unitary Synthesis (NEW in v0.3.0)
+### Scalable Unitary Synthesis
 
 | Feature | Module | Description |
 |---------|--------|-------------|
@@ -197,7 +197,7 @@ With modules for **quantum chemistry**, **intelligence analytics**, **post-quant
 | **ScalableUnitarySynthesizer** | `abirqu.unitary_synthesis` | Layer-wise compilation for large systems (10+ qubits) |
 | **Synthesis Verification** | `abirqu.unitary_synthesis` | Compute fidelity between target unitary and synthesized circuit |
 
-### Automated Adaptive Error Mitigation (NEW in v0.3.0)
+### Automated Adaptive Error Mitigation
 
 | Feature | Module | Description |
 |---------|--------|-------------|
@@ -206,7 +206,7 @@ With modules for **quantum chemistry**, **intelligence analytics**, **post-quant
 | **DriftMonitor** | `abirqu.adaptive_mitigation` | Track calibration drift over time, alert on significant changes |
 | **StrategySelector** | `abirqu.adaptive_mitigation` | Dynamic strategy selection based on real-time noise profile |
 
-### Pulse-Level Translation (NEW in v0.3.0)
+### Pulse-Level Translation
 
 | Feature | Module | Description |
 |---------|--------|-------------|
@@ -215,7 +215,7 @@ With modules for **quantum chemistry**, **intelligence analytics**, **post-quant
 | **PulseScheduler** | `abirqu.pulse_translator` | Crosstalk-aware pulse scheduling with parallel execution |
 | **PulseOptimizer** | `abirqu.pulse_translator` | DRAG pulse optimization, amplitude calibration, waveform shaping |
 
-### Dynamic Circuits (NEW in v0.3.0)
+### Dynamic Circuits
 
 | Feature | Module | Description |
 |---------|--------|-------------|
@@ -224,7 +224,7 @@ With modules for **quantum chemistry**, **intelligence analytics**, **post-quant
 | **StreamingCircuitEngine** | `abirqu.dynamic_circuit` | Fragment-based execution for streaming / real-time circuits |
 | **VQEParameterPrefetcher** | `abirqu.dynamic_circuit` | Prefetch next VQE iteration while current runs on hardware |
 
-### Novel Contributions (NEW)
+### Novel Contributions (NEW in v0.4.0)
 
 These are novel algorithms developed specifically for AbirQu, adding capabilities not found in other quantum SDKs.
 
@@ -373,7 +373,7 @@ These are novel algorithms developed specifically for AbirQu, adding capabilitie
 | **Error Mitigation** | `abirqu.mitigation` | Readout mitigation + ZNE extrapolation pipeline |
 | **Industry Algorithms** | `abirqu.industry` | QAOA portfolio optimization, VQE Hubbard model, VRP annealing |
 
-### Quantum Chemistry (NEW in v0.3.0)
+### Quantum Chemistry
 
 | Feature | Module | Description |
 |---------|--------|-------------|
@@ -384,7 +384,7 @@ These are novel algorithms developed specifically for AbirQu, adding capabilitie
 | **MolecularData** | `abirqu.chemistry` | Pre-built H2, LiH, H2O benchmark data with exact energies |
 | **MatchgateShadows** | `abirqu.chemistry` | Rapid state tomography — O(n) single-qubit, O(n²) two-qubit expectations |
 
-### OSINT & Intelligence Analytics (NEW in v0.3.0)
+### OSINT & Intelligence Analytics
 
 | Feature | Module | Description |
 |---------|--------|-------------|
@@ -396,7 +396,7 @@ These are novel algorithms developed specifically for AbirQu, adding capabilitie
 | **QRAMEmulator** | `abirqu.osint` | Quantum Random Access Memory emulation |
 | **TensorNetworkEmbedding** | `abirqu.osint` | MPS-based tensor network embedding for 40+ qubit data |
 
-### Cryptanalysis & Post-Quantum Cryptography (NEW in v0.3.0)
+### Cryptanalysis & Post-Quantum Cryptography
 
 | Feature | Module | Description |
 |---------|--------|-------------|
@@ -405,7 +405,7 @@ These are novel algorithms developed specifically for AbirQu, adding capabilitie
 | **LatticeSimulation** | `abirqu.crypto` | Kyber-512/768/1024 and Dilithium-2/3/5 key generation, centered binomial/discrete Gaussian sampling |
 | **quantum_vulnerability_assessment** | `abirqu.crypto` | Grover attack + quantum BKZ complexity analysis for any PQC parameter set |
 
-### Space & Deep Tech (NEW in v0.3.0)
+### Space & Deep Tech
 
 | Feature | Module | Description |
 |---------|--------|-------------|
@@ -413,7 +413,7 @@ These are novel algorithms developed specifically for AbirQu, adding capabilitie
 | **solve_cfd_linear_system** | `abirqu.space` | 2D diffusion equation solver via implicit Euler + HHL |
 | **solve_structural_stress** | `abirqu.space` | Structural mechanics stiffness matrix solver |
 
-### Q-PINN — Quantum Physics-Informed Neural Networks (NEW in v0.3.0)
+### Q-PINN — Quantum Physics-Informed Neural Networks
 
 | Feature | Module | Description |
 |---------|--------|-------------|
@@ -422,7 +422,7 @@ These are novel algorithms developed specifically for AbirQu, adding capabilitie
 | **NavierStokesQPINN** | `abirqu.qpinn` | Subclass for 2D/3D incompressible Navier-Stokes equations |
 | **Adam Optimizer** | `abirqu.qpinn` | Standalone Adam optimizer — zero external dependencies |
 
-### Agentic Orchestration (NEW in v0.3.0)
+### Agentic Orchestration
 
 | Feature | Module | Description |
 |---------|--------|-------------|
@@ -1001,7 +1001,7 @@ print(draw(bell, output="svg"))
 | C4.4 | **Result normalisation layer** | ✅ Complete | Provider-agnostic normalized result object |
 | C4.5 | **Transpilation to native gate sets** | ✅ Complete | Gate decomposition/transpilation utilities available |
 
-### Phase C5 — Primitives & ML (NEW in v0.3.0)
+### Phase C5 — Primitives & ML
 
 | Milestone | Feature | Status | Notes |
 |-----------|---------|--------|-------|
@@ -1155,6 +1155,17 @@ AbirQu uses pure NumPy with OpenBLAS — works on any architecture:
 | **MediaTek** | Dimensity (ARM) | Mali | ✅ Works |
 | **NVIDIA** | — | CUDA/RTX | ✅ Works (optional) |
 | **Apple** | M1/M2/M3/M4 | Metal | ✅ Works via NumPy |
+
+---
+
+## Version History
+
+| Version | Date | Key Additions |
+|---------|------|---------------|
+| **v0.1.0** | 2026-04 | Initial release — Rust simulator, density matrix, QEC, 12 hardware backends (IBM, D-Wave, SpinQ, IonQ, Rigetti, Quantinuum, Pasqal, OQC, QuEra, AWS, Azure, Google), SDK bindings (Python, Rust, Go, JavaScript, .NET, Swift, Kotlin, WebAssembly) |
+| **v0.2.0** | 2026-05 | Full-stack quantum OS — QuantumScheduler, JobQueue, ResourceManager, VirtualQPU, CostEstimator, Post-Quantum Security (Kyber/Dilithium/SPHINCS+), 3 simulation backends (GPU, Clifford, MPS), circuit library, visualization |
+| **v0.3.0** | 2026-06 | QuantumRun primitives (unified sampling + estimation + mitigation + ML), QNN with parameter-shift gradients, 6 production modules (Chemistry, OSINT, Crypto, Space, Q-PINN, Agentic), Scalable Unitary Synthesis, Adaptive Error Mitigation, Pulse-Level Translation, Dynamic Circuits, Circuit Fingerprint, Noise Fingerprint |
+| **v0.4.0** | 2026-07 | **Novel contributions** — Noise-Adaptive Circuit Compiler (4-pass noise-aware optimization), SPAE for QNLP (stochastic-phase amplitude encoding), Entanglement-Aware Circuit Cutting (bond dimension heuristics), Hybrid MPS-Clifford Simulator (dynamic switching between MPS and Clifford tableau) |
 
 ---
 
