@@ -780,8 +780,7 @@ Max MPS:  127,671 qubits (tensor network)
 ## Developer
 
 **Abir Maheshwari**
-Founder at Artificial Quantum Dyson Intelligence, Biro Labs, Aquilldriver
-Quantum Computing Researcher
+Founder at [Artificial Quantum Dyson Intelligence](https://aqdi.world), Biro Labs, Aquilldriver
 
 ### Connect
 - **Website:** [https://aqdi.world](https://aqdi.world)
@@ -794,16 +793,55 @@ Quantum Computing Researcher
 
 ## 🇮🇳 Creator & Mission
 
-**Founder**: Abir Maheshwari
-**Email**: abhirsxn@gmail.com
-**Mission**: Making quantum computing accessible globally with Indian innovation and post-quantum security standards.
+### Founder
+
+**Abir Maheshwari** — Creator of AbirQu Quantum SDK
+
+**Email:** abhirsxn@gmail.com
+**Website:** [https://aqdi.world](https://aqdi.world)
+**Organization:** Artificial Quantum Dyson Intelligence (AQDI), Biro Labs, Aquilldriver
+
+### Mission
+
+Making quantum computing accessible globally with Indian innovation and post-quantum security standards.
+
+AbirQu was built from the ground up in India to solve a problem no other quantum SDK addresses: **true hardware independence**. Every module runs on Intel, AMD, Qualcomm, and MediaTek processors — both CPU and GPU — using pure NumPy with zero vendor lock-in. This is not a wrapper around IBM's Qiskit or Google's Cirq. This is an independent, ground-up quantum computing infrastructure built for the next decade.
+
+### Why This Matters
+
+The global quantum computing landscape is dominated by a few Western companies. India needs its own quantum infrastructure — not just for national security, but for scientific sovereignty. AbirQu provides:
+
+- **Post-Quantum Security**: Kyber-768, Dilithium-2, SPHINCS+-128f, BB84 QKD — built into the SDK, ready for Indian government and defense applications
+- **Hardware Independence**: Runs on any processor (Intel, AMD, ARM, Qualcomm, MediaTek) with any GPU (NVIDIA, AMD, Intel Arc, Qualcomm Adreno, ARM Mali)
+- **Production Chemistry**: Fermion-to-qubit mappers (Jordan-Wigner, Bravyi-Kitaev, Parity) for Indian pharmaceutical and materials research
+- **Intelligence Analytics**: Graph-to-Ising compilers for Indian defense and financial intelligence networks
+- **Space & Aerospace**: HHL linear system solvers and Q-PINNs for ISRO and Indian aerospace applications
 
 ### Indian Mission Support 🇮🇳
 
-- ✅ LDPC error correction (quantum advantage for India)
-- ✅ Post-quantum cryptography support
-- ✅ 40-phase roadmap for quantum internet integration
-- ✅ Support for Indian quantum research collaborations
+- ✅ **Post-Quantum Cryptography**: Kyber-768 KEM, Dilithium-2 signatures, SPHINCS+-128f — NIST-approved, ready for Indian government deployment
+- ✅ **LDPC Error Correction**: Quantum error correction for quantum advantage in Indian research
+- ✅ **Drug Discovery**: Quantum chemistry simulation for Indian pharmaceutical companies — PySCF/OpenFermion integration hooks ready
+- ✅ **Defense Intelligence**: Graph-to-Ising compilers for Indian intelligence network analysis
+- ✅ **Space Applications**: HHL solvers for orbital mechanics, fluid dynamics, and structural analysis — ready for ISRO
+- ✅ **40-Phase Roadmap**: Complete quantum internet integration roadmap for India
+- ✅ **Indian Research Collaborations**: Open to partnerships with IISc, TIFR, IITs, DRDO, ISRO, and all Indian quantum research institutions
+- ✅ **Made in India, for the World**: Every line of code written in India, available under MIT license for global adoption
+
+### Supported Hardware (Auto-Detected)
+
+AbirQu automatically detects and optimizes for:
+
+| Processor | CPU | GPU | Status |
+|-----------|-----|-----|--------|
+| **Intel** | Core i3/i5/i7/i9, Xeon | Arc A-series | ✅ Auto-detected |
+| **AMD** | Ryzen 3/5/7/9, EPYC | Radeon RX/RDNA | ✅ Auto-detected |
+| **Qualcomm** | Snapdragon (ARM) | Adreno | ✅ Auto-detected |
+| **MediaTek** | Dimensity (ARM) | Mali | ✅ Auto-detected |
+| **NVIDIA** | — | CUDA/RTX | ✅ Auto-detected (optional) |
+| **Apple** | M1/M2/M3/M4 | Metal | ✅ Auto-detected via NumPy |
+
+All modules use **pure NumPy** with OpenBLAS backend — works on any architecture without recompilation.
 
 ---
 
@@ -816,7 +854,8 @@ Quantum Computing Researcher
 
 ---
 
-**Built with** Python, NumPy, SciPy, PyTorch, Rust · **Licensed under** MIT 2026
+**Built with** Python, NumPy, SciPy, Rust · **Licensed under** MIT 2026
+**Runs on** Intel, AMD, Qualcomm, MediaTek, Apple Silicon — CPU and GPU · **No vendor lock-in**
 
 ---
 

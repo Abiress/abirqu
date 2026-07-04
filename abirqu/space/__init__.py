@@ -343,6 +343,10 @@ class HHLSolver:
             viscosity: Kinematic viscosity ν
             velocity_field: Optional velocity field for advection
 
+        Note:
+            This method creates its own HHLSolver with the correct number of qubits
+            for the given grid size.
+
         Returns:
             (solution, circuit, info)
         """
@@ -381,7 +385,9 @@ class HHLSolver:
             A = np.pad(A, ((0, 2 ** n_qubits - N), (0, 2 ** n_qubits - N)))
             b = np.pad(b, (0, 2 ** n_qubits - N))
 
-        return self.solve(A, b)
+        # Create a solver with correct qubit count for this matrix size
+        solver = HHLSolver(n_qubits, precision_qubits=min(8, n_qubits))
+        return solver.solve(A, b)
 
     def solve_structural_stress(
         self,
