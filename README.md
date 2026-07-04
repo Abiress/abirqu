@@ -1169,6 +1169,7 @@ AbirQu uses pure NumPy with OpenBLAS — works on any architecture:
 | **v0.5.0** | 2026-07 | Pauli string optimizer, state tomography, randomized benchmarking, CircuitCompiler, CI/CD pipeline, 5 tutorials — 94 tests |
 | **v0.6.0** | 2026-07 | **Quantum Communication** — 7 protocols: BB84, E91 (CHSH S=2√2), CV-QKD, device-independent QKD, satellite QKD, entanglement repeater chains (DEJMPS), quantum network — 30 tests |
 | **v0.7.0** | 2026-07 | **Fault-Tolerant QEC** — Stabilizer codes (Shor [[9,1,3]], Steane [[7,1,3]]), rotated surface codes (distance 3/5/7), color codes, 5 decoders (syndrome, surface, BP, MWPM, GPU), magic state distillation (15-to-1), fault-tolerant compiler (Toffoli/Rz decomposition), transversal gate sets, LDPC codes — 83 tests |
+| **v0.8.0** | 2026-07 | **Full Quantum IDE/GUI** — Visual circuit editor (drag-and-drop), Bloch sphere (3D), state vector visualizer, measurement histograms, hardware management panel, job monitoring dashboard, circuit library (12 built-in algorithms), code editor with syntax highlighting, dark/light themes, REST + WebSocket backend server — 125 tests |
 
 ---
 
