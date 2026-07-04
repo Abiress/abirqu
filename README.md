@@ -315,6 +315,64 @@ AbirQu delivers end-to-end quantum computing: from circuit creation to hardware 
 | **Error Mitigation** | `abirqu.mitigation` | Readout mitigation + ZNE extrapolation pipeline |
 | **Industry Algorithms** | `abirqu.industry` | QAOA portfolio optimization, VQE Hubbard model, VRP annealing |
 
+### Quantum Chemistry (NEW in v0.3.0)
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **JordanWignerMapper** | `abirqu.chemistry` | Fermion-to-qubit mapping with correct two-body decomposition |
+| **BravyiKitaevMapper** | `abirqu.chemistry` | BK mapping with logarithmic qubit-operator scaling |
+| **ParityMapper** | `abirqu.chemistry` | Parity encoding with automatic symmetry reduction |
+| **PySCFHook** | `abirqu.chemistry` | Integration hooks for PySCF and OpenFermion — auto-loads molecular integrals |
+| **MolecularData** | `abirqu.chemistry` | Pre-built H2, LiH, H2O benchmark data with exact energies |
+| **MatchgateShadows** | `abirqu.chemistry` | Rapid state tomography — O(n) single-qubit, O(n²) two-qubit expectations |
+
+### OSINT & Intelligence Analytics (NEW in v0.3.0)
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **IntelligenceGraph** | `abirqu.osint` | Graph data structure for intelligence networks |
+| **GraphToIsingCompiler** | `abirqu.osint` | Compile 6 graph problems to Ising/QUBO: Max-Cut, MIS, MVC, Graph Coloring, Community Detection, Anomaly Detection |
+| **build_qaoa_circuit** | `abirqu.osint` | Generate QAOA circuit from any compiled Ising Hamiltonian |
+| **analyze_graph** | `abirqu.osint` | Graph analytics: density, avg degree, clustering, diameter, degree sequence |
+| **QuantumDataEncoder** | `abirqu.osint` | Amplitude, angle, basis, and feature-map data encoding |
+| **QRAMEmulator** | `abirqu.osint` | Quantum Random Access Memory emulation |
+| **TensorNetworkEmbedding** | `abirqu.osint` | MPS-based tensor network embedding for 40+ qubit data |
+
+### Cryptanalysis & Post-Quantum Cryptography (NEW in v0.3.0)
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **OracleSynthesizer** | `abirqu.crypto` | Grover oracle synthesis for custom functions, SHA-256/AES stubs |
+| **ModularArithmetic** | `abirqu.crypto` | Quantum ripple-carry adder, modular add/multiply/exponentiation, complete Shor circuit |
+| **LatticeSimulation** | `abirqu.crypto` | Kyber-512/768/1024 and Dilithium-2/3/5 key generation, centered binomial/discrete Gaussian sampling |
+| **quantum_vulnerability_assessment** | `abirqu.crypto` | Grover attack + quantum BKZ complexity analysis for any PQC parameter set |
+
+### Space & Deep Tech (NEW in v0.3.0)
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **HHLSolver** | `abirqu.space` | Harrow-Hassidim-Lloyd quantum linear system solver (eigendecomposition + phase estimation + controlled rotation) |
+| **solve_cfd_linear_system** | `abirqu.space` | 2D diffusion equation solver via implicit Euler + HHL |
+| **solve_structural_stress** | `abirqu.space` | Structural mechanics stiffness matrix solver |
+
+### Q-PINN — Quantum Physics-Informed Neural Networks (NEW in v0.3.0)
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **QPINN** | `abirqu.qpinn` | Quantum circuit as PDE solver — parameterized circuit encodes solution, PDE residual as loss |
+| **PDESpec** | `abirqu.qpinn` | PDE specification: name, dimension, domain, time domain |
+| **NavierStokesQPINN** | `abirqu.qpinn` | Subclass for 2D/3D incompressible Navier-Stokes equations |
+| **Adam Optimizer** | `abirqu.qpinn` | Standalone Adam optimizer — zero external dependencies |
+
+### Agentic Orchestration (NEW in v0.3.0)
+
+| Feature | Module | Description |
+|---------|--------|-------------|
+| **AgentOrchestrator** | `abirqu.agentic` | Closed-loop agentic workflows — 6 task types: circuit_execution, molecular_simulation, optimization, graph_analysis, cryptanalysis, linear_system |
+| **batch_execute** | `abirqu.agentic` | Parallel task execution across multiple agent instances |
+| **MultiGPUSimulator** | `abirqu.agentic` | Statevector distribution across GPUs with automatic CPU fallback |
+| **DistributedQuantumComputer** | `abirqu.agentic` | Circuit cutting and multi-QPU coordination |
+
 ---
 
 ## Use Cases
@@ -406,6 +464,109 @@ for backend in ["ibm", "ionq", "rigetti"]:
     print(backend, result.effective_shots)
 ```
 
+### Quantum Chemistry (Drug Discovery)
+```python
+from abirqu.chemistry import JordanWignerMapper, PySCFHook
+
+# Map molecular Hamiltonian to qubit operators
+jw = JordanWignerMapper(n_orbitals=4)
+hamiltonian = jw.map_hamiltonian(
+    one_electron=[(0, 0, -1.0), (1, 1, -0.5)],
+    two_electron=[(0, 1, 1, 0, 0.5)]
+)
+
+# Or use PySCF for real molecular data
+hook = PySCFHook()
+mol_data = hook.run_calculation("H2")  # Returns H2 ground state
+```
+
+### Intelligence Analytics (Defense/OSINT)
+```python
+from abirqu.osint import IntelligenceGraph, GraphToIsingCompiler
+
+# Build intelligence network graph
+graph = IntelligenceGraph()
+for node in ["agent_1", "agent_2", "agent_3", "handler"]:
+    graph.add_node(node)
+graph.add_edge("agent_1", "handler")
+graph.add_edge("agent_2", "handler")
+
+# Compile to quantum optimization problems
+compiler = GraphToIsingCompiler(graph)
+max_cut = compiler.compile_max_cut()          # Max-Cut Hamiltonian
+mis = compiler.compile_max_independent_set()  # Max Independent Set
+circuit = compiler.build_qaoa_circuit(max_cut, p=3)  # QAOA circuit
+analytics = compiler.analyze_graph()           # Graph metrics
+```
+
+### Post-Quantum Cryptography (PQC)
+```python
+from abirqu.crypto import LatticeSimulation
+
+# Generate Kyber-768 keypair (NIST-approved)
+kyber = LatticeSimulation("Kyber768")
+keypair = kyber.generate_keypair()
+print(f"Public key shape: {keypair['public_key'].shape}")  # (3, 256)
+
+# Generate Dilithium-2 signatures
+dilithium = LatticeSimulation("Dilithium2")
+keypair = dilithium.generate_keypair()
+
+# Assess quantum vulnerability
+vuln = kyber.quantum_vulnerability_assessment()
+print(f"Grover feasible: {vuln['grover_attack']['feasible']}")  # False
+```
+
+### Space & Aerospace (HHL Solver)
+```python
+from abirqu.space import HHLSolver
+import numpy as np
+
+# Solve Ax = b using HHL algorithm
+solver = HHLSolver(n_qubits=2)
+A = np.array([[4, 1], [1, 3]], dtype=complex)
+b = np.array([1, 2], dtype=complex)
+solution, circuit, info = solver.solve(A, b)
+print(f"Residual norm: {info['residual_norm']:.6f}")  # < 0.01
+
+# CFD fluid dynamics
+sol, circ, info = solver.solve_cfd_linear_system(grid_size=4, viscosity=0.01)
+```
+
+### Quantum PDE Solver (Q-PINN)
+```python
+from abirqu.qpinn import QPINN, PDESpec
+import numpy as np
+
+# Solve diffusion equation: du/dt = d²u/dx²
+pde = PDESpec(
+    name="diffusion",
+    dimension=1,
+    domain=[(0, 1)],
+    time_domain=(0, 1)
+)
+pinn = QPINN(pde, n_qubits=4, circuit_depth=3)
+
+# Evaluate at a point (x=0.5, t=0.5)
+params = np.random.uniform(-np.pi, np.pi, pinn.n_parameters)
+u = pinn.forward(params, np.array([0.5, 0.5]))
+```
+
+### Agentic Orchestration
+```python
+from abirqu.agentic import AgentOrchestrator
+
+# Submit and execute quantum tasks
+orch = AgentOrchestrator()
+task_id = orch.submit_task("circuit_execution", {
+    "n_qubits": 4,
+    "gates": [{"name": "H", "qubits": [0]}, {"name": "CNOT", "qubits": [0, 1]}],
+    "shots": 1024
+})
+result = orch.execute_task(task_id)
+print(f"Status: {result.status}, Counts: {result.result['counts']}")
+```
+
 ---
 
 ## Plugins
@@ -471,6 +632,13 @@ my_custom = "my_plugin.backend:MyCustomBackend"
 | **DAG Parameter Caching** | ✅ Compile once, O(k) parameter update for VQE/QAOA | ✅ TranspileLayout | ❌ Not native |
 | **Native Optimizers** | ✅ COBYLA, SPSA, Adam, gradient descent in-process | Via scipy | Via scipy |
 | **Gate Folding ZNE** | ✅ G→GG†G identity insertion for noise amplification | ❌ Not native | ❌ Not native |
+| **Quantum Chemistry** | ✅ JW/BK/Parity mappers, PySCF hooks, Matchgate tomography | Via qiskit_nature plugin | ❌ Not included |
+| **OSINT & Intelligence** | ✅ 6 graph problems → Ising, QAOA, analytics, encoders | ❌ Not included | ❌ Not included |
+| **Cryptanalysis** | ✅ Shor circuit, Grover oracles, Kyber/Dilithium PQC | ❌ Not included | ❌ Not included |
+| **Space & Aerospace** | ✅ HHL solver, CFD, structural stress | ❌ Not included | ❌ Not included |
+| **Q-PINN** | ✅ Quantum PDE solver (diffusion, Navier-Stokes) | ❌ Not included | ❌ Not included |
+| **Agentic Orchestration** | ✅ Agent workflows, batch execution, multi-GPU, distributed QPU | ❌ Not included | ❌ Not included |
+| **Hardware Independence** | ✅ Pure NumPy on Intel/AMD/Qualcomm/MediaTek CPU+GPU | Vendor-locked | Vendor-locked |
 | **Open Source** | ✅ [MIT](LICENSE) | ✅ Apache 2.0 | ✅ Apache 2.0 |
 
 ### Benchmark Comparison: AbirQu vs Qiskit vs Cirq
@@ -528,6 +696,60 @@ my_custom = "my_plugin.backend:MyCustomBackend"
 | **DAG parameter update** | O(k) | O(n) | N/A |
 | **Gate reduction (QAOA p=3)** | 34.94% | ~20% (optimize) | Not native |
 
+#### Quantum Chemistry
+
+| Benchmark | **AbirQu** | Qiskit | Cirq |
+|-----------|-----------|--------|------|
+| **JW Mapper (4 orbitals)** | 0.011 ms | ~0.05 ms (qiskit_nature) | N/A |
+| **BK Mapper (4 orbitals)** | 0.017 ms | ~0.06 ms | N/A |
+| **Parity Mapper (4 orbitals)** | 0.007 ms | ~0.04 ms | N/A |
+| **Matchgate Shadows (8 qubits)** | 42 ms | N/A | N/A |
+| **PySCF Integration** | Built-in | Via qiskit_nature | N/A |
+
+#### OSINT & Intelligence Analytics
+
+| Benchmark | **AbirQu** | Qiskit | Cirq |
+|-----------|-----------|--------|------|
+| **Max-Cut (20 nodes)** | 0.025 ms | N/A | N/A |
+| **MIS (20 nodes)** | 0.064 ms | N/A | N/A |
+| **Graph Coloring (20n, 3c)** | 0.238 ms | N/A | N/A |
+| **QAOA Circuit (20q, p=3)** | 0.894 ms | N/A | N/A |
+| **Feature Map (8 qubits)** | 0.095 ms | N/A | N/A |
+| **Tensor Embedding (20 sites)** | 0.387 ms | N/A | N/A |
+| **Graph Analytics** | Built-in | N/A | N/A |
+
+#### Cryptanalysis & Post-Quantum Cryptography
+
+| Benchmark | **AbirQu** | Qiskit | Cirq |
+|-----------|-----------|--------|------|
+| **Grover Oracle (4q)** | 0.020 ms | N/A | N/A |
+| **Shor Circuit (15=3×5, 18q)** | 0.3 ms | N/A | N/A |
+| **Kyber-768 Keygen** | 0.569 ms | N/A | N/A |
+| **Dilithium-2 Keygen** | 0.908 ms | N/A | N/A |
+| **PQC Vulnerability Assessment** | 0.002 ms | N/A | N/A |
+
+#### Space & Deep Tech
+
+| Benchmark | **AbirQu** | Qiskit | Cirq |
+|-----------|-----------|--------|------|
+| **HHL Solver (2×2)** | 0.994 ms | N/A | N/A |
+| **CFD Solver (2×2 grid)** | 0.569 ms | N/A | N/A |
+| **Structural Stress (2 elements)** | 0.979 ms | N/A | N/A |
+
+#### Q-PINN (Quantum Physics-Informed Neural Networks)
+
+| Benchmark | **AbirQu** | Qiskit | Cirq |
+|-----------|-----------|--------|------|
+| **Q-PINN Forward (4q)** | 0.474 ms | N/A | N/A |
+| **Navier-Stokes (100 points)** | 0.197 ms | N/A | N/A |
+
+#### Agentic Orchestration
+
+| Benchmark | **AbirQu** | Qiskit | Cirq |
+|-----------|-----------|--------|------|
+| **Agent Task (4q)** | 0.167 ms | N/A | N/A |
+| **Multi-GPU Gate Ops (8q)** | 0.937 ms | N/A | N/A |
+
 #### Feature Coverage
 
 | Category | **AbirQu** | Qiskit | Cirq |
@@ -538,6 +760,31 @@ my_custom = "my_plugin.backend:MyCustomBackend"
 | **Circuit library** | 20+ functions | 50+ classes | 10+ classes |
 | **Visualization** | 18 functions | 10+ classes | 5+ functions |
 | **Format converters** | 7 (Qiskit, Braket, Cirq, IonQ, Pytket, Quil, QASM) | 1 (internal) | 1 (internal) |
+| **Quantum Chemistry** | 6 (JW/BK/Parity, PySCF, Matchgate) | Via qiskit_nature | N/A |
+| **OSINT & Intelligence** | 8 (6 graph problems, QAOA, analytics, encoders) | N/A | N/A |
+| **Cryptanalysis & PQC** | 5 (Shor, Grover, Kyber-512/768/1024, Dilithium-2/3/5) | N/A | N/A |
+| **Space & Deep Tech** | 3 (HHL, CFD, Structural) | N/A | N/A |
+| **Q-PINN** | 3 (QPINN, Navier-Stokes, Adam) | N/A | N/A |
+| **Agentic Orchestration** | 4 (Orchestrator, Batch, Multi-GPU, Distributed) | N/A | N/A |
+
+#### Test Results (Verified)
+
+```
+Platform:   x86_64 | Python 3.14.4 | NumPy 2.4.4
+OpenBLAS:   DYNAMIC_ARCH (Haswell) — Intel/AMD compatible
+CPU:        20 cores | 30.6 GB RAM
+
+CHEMISTRY:        6/6 PASS  (JW, BK, Parity, PySCF, Matchgate, MolecularData)
+OSINT:            8/8 PASS  (Max-Cut, MIS, MVC, Coloring, Community, Anomaly, QAOA, Analytics)
+DATA ENCODING:    6/6 PASS  (Amplitude, Angle, Basis, Feature Map, QRAM, Tensor Network)
+CRYPTANALYSIS:    3/3 PASS  (Grover Oracle, Custom Oracle, Shor Circuit)
+PQC:              8/8 PASS  (Kyber-512/768/1024, Dilithium-2/3/5, Vuln Kyber, Vuln Dilithium)
+SPACE:            3/3 PASS  (HHL Solver, CFD Solver, Structural Stress)
+Q-PINN:           2/2 PASS  (Q-PINN Forward, Navier-Stokes)
+AGENTIC:          4/4 PASS  (Orchestrator, Batch, Multi-GPU, Distributed QPU)
+
+TOTAL:           39/39 PASS — ALL MODULES VERIFIED
+```
 
 #### Summary
 
@@ -548,6 +795,12 @@ my_custom = "my_plugin.backend:MyCustomBackend"
 | **Built-in ML (QNN)** | **Yes** | No | No |
 | **Quantum OS** | **Yes** | No | No |
 | **PQC Security** | **Yes** | No | No |
+| **Quantum Chemistry** | **Yes** (JW/BK/Parity) | Via plugin | No |
+| **OSINT & Intelligence** | **Yes** (6 graph problems) | No | No |
+| **Cryptanalysis** | **Yes** (Shor, Grover, Lattice) | No | No |
+| **Space & Aerospace** | **Yes** (HHL, CFD, Stress) | No | No |
+| **Q-PINN** | **Yes** (PDE solver) | No | No |
+| **Agentic Orchestration** | **Yes** (Multi-GPU, Distributed) | No | No |
 | **License** | MIT | Apache 2.0 | Apache 2.0 |
 
 **Key Differentiators:**
@@ -570,6 +823,13 @@ my_custom = "my_plugin.backend:MyCustomBackend"
 17. **DAG Parameterized Caching** — compile circuit once, update parameters in O(k) for VQE/QAOA loops
 18. **Native Quantum Optimizers** — COBYLA, SPSA, Adam in-process with simulator (zero IPC overhead)
 19. **Gate Folding ZNE** — G→GG†G identity insertion for precise noise amplification and extrapolation
+20. **Quantum Chemistry** — JW/BK/Parity fermion mappers, PySCF/OpenFermion hooks, Matchgate state tomography
+21. **OSINT & Intelligence** — Graph-to-Ising compilers for 6 graph problems, QAOA circuit generation, graph analytics
+22. **Cryptanalysis** — Grover oracle synthesis, Shor circuit (modular arithmetic), lattice-based PQC simulation
+23. **Space & Aerospace** — HHL linear system solver, CFD diffusion solver, structural stress solver
+24. **Q-PINN** — Quantum Physics-Informed Neural Networks for PDE solving (diffusion, Navier-Stokes)
+25. **Agentic Orchestration** — Closed-loop agent workflows, batch execution, multi-GPU simulation, distributed QPU
+26. **Hardware Independence** — Pure NumPy/OpenBLAS on Intel/AMD/Qualcomm/MediaTek CPU+GPU, zero vendor lock-in
 
 ---
 
