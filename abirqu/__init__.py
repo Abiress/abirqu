@@ -1,6 +1,6 @@
 """AbirQu — next-generation quantum computing library."""
 
-__version__ = "0.4.0"
+__version__ = "0.6.0"
 __author__ = "Abir Maheshwari"
 __email__ = "abhirsxn@gmail.com"
 __url__ = "https://github.com/abirqu/abirqu"
