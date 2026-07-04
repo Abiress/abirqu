@@ -12,24 +12,24 @@
 
 ## What is AbirQu?
 
-**AbirQu** is a full-stack quantum computing SDK built from the ground up — not a wrapper, not a fork, not a collection of bindings. It is an independent, ground-up implementation of quantum computing infrastructure designed for the next generation of quantum applications.
+**AbirQu** is a comprehensive, hardware-independent quantum computing SDK. It provides a unified API across quantum chemistry, intelligence analytics, post-quantum cryptography, space applications, quantum PDE solvers, and agentic orchestration — all implemented in pure NumPy with no vendor lock-in.
 
-Created by **Abir Maheshwari** at **Artificial Quantum Dyson Intelligence (AQDI)** ([aqdi.world](https://aqdi.world)), AbirQu was born from a single conviction: quantum computing should not be gated behind vendor lock-in, proprietary ecosystems, or fragmented toolchains. One SDK should connect to every quantum computer, run on every platform, and scale from a laptop to a supercomputer — without compromise.
+Created by **Abir Maheshwari** at **Artificial Quantum Dyson Intelligence (AQDI)** ([aqdi.world](https://aqdi.world)), AbirQu is built as part of the **Indian Quantum Mission** to provide a hardware-independent quantum SDK that runs on Intel, AMD, Qualcomm, and MediaTek processors.
 
 ### What's Inside AbirQu
 
-AbirQu is not just a quantum circuit library. It is a **complete quantum computing ecosystem** spanning 6 production-ready domain modules, 12 hardware backends, 5 simulation engines, and a full quantum operating system layer:
+AbirQu brings together quantum computing algorithms from multiple domains into a single SDK with a unified API:
 
 | Module | What It Does | Key Capabilities |
 |--------|-------------|------------------|
-| **Quantum Chemistry** | Molecular simulation for drug discovery and materials science | Jordan-Wigner, Bravyi-Kitaev, Parity mappers · PySCF/OpenFermion hooks · Matchgate state tomography |
-| **OSINT & Intelligence** | Graph optimization for defense, finance, and network analysis | 6 graph problems → Ising/QUBO (Max-Cut, MIS, MVC, Coloring, Community, Anomaly) · QAOA circuit generation · Graph analytics |
-| **Cryptanalysis & PQC** | Post-quantum cryptography and quantum cryptanalysis | Shor factoring circuit · Grover oracle synthesis · Kyber-512/768/1024 KEM · Dilithium-2/3/5 signatures · Quantum vulnerability assessment |
-| **Space & Aerospace** | Quantum algorithms for orbital mechanics, fluid dynamics, structural analysis | HHL linear system solver · 2D CFD diffusion solver · Structural stress solver |
-| **Q-PINN** | Quantum Physics-Informed Neural Networks for PDE solving | Parameterized quantum circuits as PDE solvers · Diffusion, Navier-Stokes equations · Standalone Adam optimizer |
-| **Agentic Orchestration** | Closed-loop quantum workflows and distributed execution | Agent task orchestrator · Batch execution · Multi-GPU simulation · Distributed QPU coordination |
+| **Quantum Chemistry** | Molecular Hamiltonian mapping | Jordan-Wigner, Bravyi-Kitaev, Parity mappers · PySCF/OpenFermion hooks · Matchgate state tomography |
+| **OSINT & Intelligence** | Graph optimization problems | 6 graph problems → Ising/QUBO (Max-Cut, MIS, MVC, Coloring, Community, Anomaly) · QAOA circuit generation · Graph analytics |
+| **Cryptanalysis & PQC** | Quantum algorithms for cryptography | Shor factoring circuit · Grover oracle synthesis · Kyber-512/768/1024 parameter generation · Dilithium-2/3/5 sampling |
+| **Space & Aerospace** | Quantum linear system solvers | HHL algorithm · 2D CFD diffusion solver · Structural stress solver |
+| **Q-PINN** | Quantum PDE solvers | Parameterized quantum circuits for diffusion and Navier-Stokes equations |
+| **Agentic Orchestration** | Task scheduling and execution | Agent task orchestrator · Batch execution · Multi-GPU simulation |
 
-**All modules run on Intel, AMD, Qualcomm, and MediaTek processors** — both CPU and GPU — using pure NumPy with OpenBLAS DYNAMIC_ARCH backend. No vendor lock-in. No recompilation needed.
+All modules use **pure NumPy with OpenBLAS DYNAMIC_ARCH** — runs on Intel, AMD, Qualcomm, MediaTek, and Apple Silicon without recompilation.
 
 ### The Problem AbirQu Solves
 
@@ -39,64 +39,53 @@ AbirQu eliminates this fragmentation. One function — `QuantumRun` — does sam
 
 ### What Makes AbirQu Different
 
-AbirQu is not competing with Qiskit or Cirq — it is solving problems they were never designed to address. Qiskit is an excellent IBM-specific toolchain. Cirq is an excellent Google-specific toolchain. Neither was built to be a universal quantum operating system. AbirQu was.
+AbirQu's main differentiator is **scope and hardware independence** — it brings together quantum algorithms from multiple domains into a single SDK with a unified API, running on any CPU/GPU via pure NumPy.
 
-**Core Infrastructure (unique to AbirQu):**
-- **Unified QuantumRun**: ONE function does sampling + estimation + mitigation + ML. Every other SDK requires separate classes.
-- **Built-in QNN**: Quantum neural network with parameter-shift gradients. Other SDKs require separate ML packages.
-- **Noise Fingerprint**: Spectral visualization of noise models — unique to AbirQu, absent from every other SDK.
-- **12 Real Hardware Backends**: IBM, D-Wave, SpinQ, Pasqal, QuEra, IonQ, Rigetti, Quantinuum, AWS, Azure, Google, OQC — connected through one interface.
-- **Full Transpiler Pipeline**: Target-aware gate decomposition, SWAP routing, and ASAP scheduling for every backend.
-- **Quantum OS**: Job scheduling (FIFO, priority, fair-share), resource management, virtual QPU, and cost estimation.
-- **Post-Quantum Security**: Kyber-768 KEM, Dilithium-2 signatures, SPHINCS+-128f, BB84 QKD — built into the SDK.
-- **Monte Carlo Wavefunction**: Stochastic trajectory noise simulation at O(2^n) memory — density matrix needs O(4^n).
-- **Time-Evolution ODE Solver**: Continuous Hamiltonian simulation via RK45 integration with Lindblad master equation.
-- **Waveform Enveloping**: Gaussian, DRAG, Kaiser pulse shapes for hardware-ready pulse-level control.
-- **DAG Parameterized Caching**: Compile circuit once, update parameters in O(k) for VQE/QAOA loops.
-- **Gate Folding ZNE**: G→GG†G identity insertion for precise noise amplification and extrapolation.
+**Core Infrastructure:**
+- **Unified QuantumRun**: One function does sampling + estimation + mitigation + ML
+- **Built-in QNN**: Quantum neural network with parameter-shift gradients
+- **Noise Fingerprint**: Spectral visualization of noise models
+- **12 Hardware Backends**: IBM, D-Wave, SpinQ, Pasqal, QuEra, IonQ, Rigetti, Quantinuum, AWS, Azure, Google, OQC
+- **Transpiler Pipeline**: Target-aware gate decomposition for each backend
+- **Quantum OS**: Job scheduling, resource management, virtual QPU, cost estimation
+- **5 Simulation Backends**: GPU, Clifford, MPS tensor network, Monte Carlo, NumPy
 
-**Production Domain Modules (new in v0.3.0):**
-- **Quantum Chemistry**: JW/BK/Parity fermion-to-qubit mappers with correct two-body decomposition, PySCF/OpenFermion integration hooks, Matchgate shadow tomography for rapid state reconstruction.
-- **OSINT & Intelligence**: Graph-to-Ising compilers for 6 optimization problems (Max-Cut, MIS, MVC, Graph Coloring, Community Detection, Anomaly Detection), QAOA circuit generation, graph analytics, amplitude/angle/basis/feature-map data encoding, QRAM emulation, tensor network embedding.
-- **Cryptanalysis & PQC**: Grover oracle synthesis for custom functions, complete Shor factoring circuit with modular arithmetic, Kyber-512/768/1024 and Dilithium-2/3/5 key generation with centered binomial/discrete Gaussian sampling, quantum vulnerability assessment.
-- **Space & Aerospace**: HHL quantum linear system solver (eigendecomposition + phase estimation + controlled rotation), 2D CFD diffusion solver via implicit Euler, structural stress solver.
-- **Q-PINN**: Quantum Physics-Informed Neural Networks — parameterized quantum circuits as PDE solvers for diffusion and Navier-Stokes equations, standalone Adam optimizer with zero dependencies.
-- **Agentic Orchestration**: Closed-loop agent workflows with 6 task types, batch execution, multi-GPU statevector simulation with CPU fallback, circuit cutting and distributed QPU coordination.
+**Domain Modules (what most SDKs don't include):**
+- **Quantum Chemistry**: JW/BK/Parity fermion-to-qubit mappers, PySCF hooks, Matchgate tomography
+- **OSINT & Intelligence**: Graph-to-Ising compilers for 6 optimization problems, QAOA circuits, graph analytics
+- **Cryptanalysis & PQC**: Shor factoring circuit, Grover oracles, Kyber/Dilithium parameter generation
+- **Space & Aerospace**: HHL linear system solver, CFD solver, structural stress solver
+- **Q-PINN**: Quantum PDE solvers for diffusion and Navier-Stokes equations
+- **Agentic Orchestration**: Task orchestration, batch execution, multi-GPU simulation
 
 **Hardware Independence:**
-- Pure NumPy with OpenBLAS DYNAMIC_ARCH — runs on Intel, AMD, Qualcomm, MediaTek, Apple Silicon
+- Pure NumPy/OpenBLAS — runs on Intel, AMD, Qualcomm, MediaTek, Apple Silicon
 - GPU acceleration via CuPy with automatic CPU fallback
-- No vendor lock-in, no recompilation, works on any architecture
+- No vendor lock-in, no recompilation needed
 
 ### Who Is AbirQu For?
 
-- **Quantum Researchers** who need a single toolchain that works across providers without rewriting code for each.
-- **Quantum Software Companies** who need to support multiple backends without maintaining separate adapters.
-- **Students and Educators** who want to learn quantum computing without being locked into one vendor's ecosystem.
-- **Quantum Hardware Vendors** who want their hardware accessible through a universal API.
-- **Enterprise Teams** who need post-quantum security, job scheduling, and cost estimation built into their quantum stack.
-- **Pharmaceutical Companies** who need quantum chemistry simulation for drug discovery — JW/BK/Parity mappers with PySCF hooks ready for molecular Hamiltonians.
-- **Defense & Intelligence Agencies** who need graph optimization for network analysis — 6 graph problems compiled to Ising/QUBO for quantum annealing.
-- **Aerospace & Space Organizations** (ISRO, NASA, ESA) who need quantum linear system solvers for CFD, structural analysis, and orbital mechanics.
-- **Cybersecurity Teams** who need post-quantum cryptography — Kyber-768, Dilithium-2, SPHINCS+-128f ready for deployment.
-- **AI/ML Engineers** who want quantum-enhanced neural networks — Q-PINNs for solving PDEs, QNNs with parameter-shift gradients.
+- **Quantum Researchers** who want a single SDK with algorithms from multiple quantum domains.
+- **Quantum Software Developers** who need a unified API across different hardware backends.
+- **Students and Educators** who want to learn quantum computing with a hardware-independent SDK.
+- **Enterprise Teams** who want post-quantum cryptography and job scheduling in their quantum stack.
+- **Pharmaceutical Researchers** exploring quantum chemistry simulation with fermion-to-qubit mappers.
+- **Defense & Intelligence Analysts** working on graph optimization problems.
+- **Aerospace Engineers** exploring quantum linear system solvers for CFD and structural analysis.
+- **Cybersecurity Teams** evaluating post-quantum cryptographic algorithms.
 
 ### The Vision
 
-AbirQu is building toward a world where quantum computing is as accessible as classical cloud computing. The SDK is designed to scale from a single laptop (simulating 100+ qubits via MPS tensor networks) to a quantum cluster (executing on 12 different hardware backends simultaneously). The Quantum OS layer ensures that quantum resources are managed with the same rigor as classical cloud infrastructure — scheduling, prioritization, cost tracking, and multi-tenant isolation.
+AbirQu aims to make quantum computing algorithms accessible through a single, hardware-independent SDK. It scales from a single laptop (simulating 100+ qubits via MPS tensor networks) to hardware execution across 12 quantum computing backends.
 
-With production modules for **quantum chemistry**, **intelligence analytics**, **post-quantum cryptography**, **space applications**, **quantum PDE solvers**, and **agentic orchestration**, AbirQu is not just a quantum computing library — it is quantum infrastructure for the next decade.
+With modules for **quantum chemistry**, **intelligence analytics**, **post-quantum cryptography**, **space applications**, **quantum PDE solvers**, and **agentic orchestration**, AbirQu provides a broad quantum computing toolkit in one place.
 
-> **Full-stack quantum computing SDK** — 6 production domain modules (Chemistry, OSINT, Cryptanalysis, Space, Q-PINN, Agentic), 12 hardware backends (IBM, D-Wave, SpinQ, Pasqal, QuEra, IonQ, Rigetti, Quantinuum, AWS, Azure, Google, OQC), unified `QuantumRun` primitives, built-in QNN, circuit library, noise fingerprinting, visualization, transpiler pipeline, Quantum OS, post-quantum security (Kyber/Dilithium/SPHINCS+), and 5 simulation backends. **All modules run on Intel/AMD/Qualcomm/MediaTek CPUs and GPUs** — zero vendor lock-in.
-
-AbirQu delivers end-to-end quantum computing: from circuit creation to hardware execution on real quantum computers, with a complete operating system layer for job scheduling, resource management, and cost optimization. For the first time, a single SDK provides quantum solutions for **drug discovery**, **defense intelligence**, **post-quantum security**, **aerospace engineering**, **PDE solving**, and **agentic workflows** — all running on commodity hardware.
+> **Comprehensive quantum SDK** — 6 domain modules, 12 hardware backends, unified `QuantumRun` primitives, built-in QNN, circuit library, noise toolkit, visualization, transpiler, Quantum OS, post-quantum cryptography, and 5 simulation backends. Runs on Intel/AMD/Qualcomm/MediaTek via pure NumPy.
 
 ### Status & Badges
 
-![🇮🇳 Indian Quantum Mission](https://img.shields.io/badge/%F0%9F%87%AE%F0%9F%87%B3_Indian_Quantum_Mission-Enabled-brightgreen?style=for-the-badge&labelColor=FF9933)
+![🇮🇳 Indian Quantum Mission](https://img.shields.io/badge/%F0%9F%87%AE%F0%9F%87%B3_Indian_Quantum_Mission-Supported-brightgreen?style=for-the-badge&labelColor=FF9933)
 ![🇮🇳 Made in India, for the World](https://img.shields.io/badge/%F0%9F%87%AE%F0%9F%87%B3_Made_in_India-For_the_World-blue?style=for-the-badge&labelColor=138808)
-![🚀 Breakthrough Innovation](https://img.shields.io/badge/%F0%9F%9A%80_Breakthrough-Innovation-critical?style=for-the-badge)
-![🌍 Novel Quantum SDK](https://img.shields.io/badge/%F0%9F%8C%8D_Novel_Quantum_SDK-First_of_its_Kind-orange?style=for-the-badge)
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
 ![Version](https://img.shields.io/badge/version-0.3.0-blue)
@@ -116,13 +105,13 @@ AbirQu delivers end-to-end quantum computing: from circuit creation to hardware 
 ![Tests](https://img.shields.io/badge/tests-39%2F39%20PASS-brightgreen)
 
 <p align="center">
-  <b>🇮🇳 A Breakthrough Quantum Computing SDK — Built in India, for the World 🌍</b>
+  <b>🇮🇳 A Comprehensive Quantum Computing SDK — Built in India, for the World 🌍</b>
 </p>
 
-> **AbirQu is the world's first full-stack quantum SDK** built entirely in India with 6 production domain modules, 12 hardware backends, and full hardware independence across Intel, AMD, Qualcomm, and MediaTek processors. This is not a wrapper — this is a ground-up quantum computing infrastructure created for the Indian Quantum Mission and global adoption.
+> **AbirQu** is a comprehensive, hardware-independent quantum SDK with 6 domain modules, 12 hardware backends, and pure NumPy implementation that runs on Intel, AMD, Qualcomm, and MediaTek processors. Built in India as part of the Indian Quantum Mission, designed for global adoption.
 
 <p align="center">
-  <b>Supported by:</b> Indian Quantum Mission &nbsp;|&nbsp; Made for IISc, TIFR, IITs, DRDO, ISRO &nbsp;|&nbsp; <a href="https://aqdi.world">Artificial Quantum Dyson Intelligence</a>
+  <b>Supported by:</b> Indian Quantum Mission &nbsp;|&nbsp; Built for IISc, TIFR, IITs, DRDO, ISRO &nbsp;|&nbsp; <a href="https://aqdi.world">Artificial Quantum Dyson Intelligence</a>
 </p>
 
 ---
@@ -1118,45 +1107,40 @@ Founder at [Artificial Quantum Dyson Intelligence](https://aqdi.world), Biro Lab
 
 ### Mission
 
-Making quantum computing accessible globally with Indian innovation and post-quantum security standards.
+Making quantum computing algorithms accessible through a hardware-independent SDK, built in India for global adoption.
 
-AbirQu was built from the ground up in India to solve a problem no other quantum SDK addresses: **true hardware independence**. Every module runs on Intel, AMD, Qualcomm, and MediaTek processors — both CPU and GPU — using pure NumPy with zero vendor lock-in. This is not a wrapper around IBM's Qiskit or Google's Cirq. This is an independent, ground-up quantum computing infrastructure built for the next decade.
+AbirQu provides a comprehensive quantum toolkit that runs on Intel, AMD, Qualcomm, and MediaTek processors using pure NumPy — no vendor lock-in, no recompilation needed.
 
-### Why This Matters
+### What AbirQu Provides
 
-The global quantum computing landscape is dominated by a few Western companies. India needs its own quantum infrastructure — not just for national security, but for scientific sovereignty. AbirQu provides:
+- **Quantum Chemistry**: JW/BK/Parity fermion-to-qubit mappers for molecular simulation
+- **Intelligence Analytics**: Graph-to-Ising compilers for optimization problems
+- **Post-Quantum Cryptography**: Kyber and Dilithium parameter generation
+- **Space Applications**: HHL linear system solvers for CFD and structural analysis
+- **Hardware Independence**: Pure NumPy on any CPU/GPU architecture
 
-- **Post-Quantum Security**: Kyber-768, Dilithium-2, SPHINCS+-128f, BB84 QKD — built into the SDK, ready for Indian government and defense applications
-- **Hardware Independence**: Runs on any processor (Intel, AMD, ARM, Qualcomm, MediaTek) with any GPU (NVIDIA, AMD, Intel Arc, Qualcomm Adreno, ARM Mali)
-- **Production Chemistry**: Fermion-to-qubit mappers (Jordan-Wigner, Bravyi-Kitaev, Parity) for Indian pharmaceutical and materials research
-- **Intelligence Analytics**: Graph-to-Ising compilers for Indian defense and financial intelligence networks
-- **Space & Aerospace**: HHL linear system solvers and Q-PINNs for ISRO and Indian aerospace applications
+### Indian Quantum Mission Support 🇮🇳
 
-### Indian Mission Support 🇮🇳
+- ✅ **Quantum Chemistry**: Fermion-to-qubit mappers for pharmaceutical research
+- ✅ **Graph Optimization**: Ising compilers for network analysis problems
+- ✅ **Post-Quantum Cryptography**: Kyber/Dilithium parameter generation
+- ✅ **Space Applications**: HHL solvers for CFD and structural analysis
+- ✅ **Hardware Independence**: Runs on Intel, AMD, Qualcomm, MediaTek processors
+- ✅ **Open Source**: MIT license, available for Indian research institutions
+- ✅ **Made in India, for the World**: Built in India, available globally
 
-- ✅ **Post-Quantum Cryptography**: Kyber-768 KEM, Dilithium-2 signatures, SPHINCS+-128f — NIST-approved, ready for Indian government deployment
-- ✅ **LDPC Error Correction**: Quantum error correction for quantum advantage in Indian research
-- ✅ **Drug Discovery**: Quantum chemistry simulation for Indian pharmaceutical companies — PySCF/OpenFermion integration hooks ready
-- ✅ **Defense Intelligence**: Graph-to-Ising compilers for Indian intelligence network analysis
-- ✅ **Space Applications**: HHL solvers for orbital mechanics, fluid dynamics, and structural analysis — ready for ISRO
-- ✅ **40-Phase Roadmap**: Complete quantum internet integration roadmap for India
-- ✅ **Indian Research Collaborations**: Open to partnerships with IISc, TIFR, IITs, DRDO, ISRO, and all Indian quantum research institutions
-- ✅ **Made in India, for the World**: Every line of code written in India, available under MIT license for global adoption
+### Supported Hardware
 
-### Supported Hardware (Auto-Detected)
-
-AbirQu automatically detects and optimizes for:
+AbirQu uses pure NumPy with OpenBLAS — works on any architecture:
 
 | Processor | CPU | GPU | Status |
 |-----------|-----|-----|--------|
-| **Intel** | Core i3/i5/i7/i9, Xeon | Arc A-series | ✅ Auto-detected |
-| **AMD** | Ryzen 3/5/7/9, EPYC | Radeon RX/RDNA | ✅ Auto-detected |
-| **Qualcomm** | Snapdragon (ARM) | Adreno | ✅ Auto-detected |
-| **MediaTek** | Dimensity (ARM) | Mali | ✅ Auto-detected |
-| **NVIDIA** | — | CUDA/RTX | ✅ Auto-detected (optional) |
-| **Apple** | M1/M2/M3/M4 | Metal | ✅ Auto-detected via NumPy |
-
-All modules use **pure NumPy** with OpenBLAS backend — works on any architecture without recompilation.
+| **Intel** | Core i3/i5/i7/i9, Xeon | Arc A-series | ✅ Works |
+| **AMD** | Ryzen 3/5/7/9, EPYC | Radeon RX/RDNA | ✅ Works |
+| **Qualcomm** | Snapdragon (ARM) | Adreno | ✅ Works |
+| **MediaTek** | Dimensity (ARM) | Mali | ✅ Works |
+| **NVIDIA** | — | CUDA/RTX | ✅ Works (optional) |
+| **Apple** | M1/M2/M3/M4 | Metal | ✅ Works via NumPy |
 
 ---
 
