@@ -198,6 +198,24 @@ def __getattr__(name):
     if name == "AbirQuSDK":
         from .sdk import AbirQuSDK as _AbirQuSDK
         return _AbirQuSDK
+
+    # Hardware module imports (lazy)
+    hardware_imports = {
+        "HardwareCalibration": (".hardware.calibration", "HardwareCalibration"),
+        "QubitProperties": (".hardware.calibration", "QubitProperties"),
+        "GateProperties": (".hardware.calibration", "GateProperties"),
+        "DeviceCharacterizer": (".hardware.characterization", "DeviceCharacterizer"),
+        "NoiseProfiler": (".hardware.noise_profiler", "NoiseProfiler"),
+        "HardwareAwareCompiler": (".hardware.hw_compiler", "HardwareAwareCompiler"),
+        "CloudManager": (".hardware.cloud_manager", "CloudManager"),
+        "CloudProvider": (".hardware.cloud_manager", "CloudProvider"),
+    }
+    if name in hardware_imports:
+        module_path, attr_name = hardware_imports[name]
+        import importlib
+        mod = importlib.import_module(module_path, package="abirqu")
+        return getattr(mod, attr_name)
+
     raise AttributeError(name)
 
 
