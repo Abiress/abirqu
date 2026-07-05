@@ -256,6 +256,42 @@ Complete learning path from beginner to advanced quantum computing.
 | 179 | [Enterprise Risk](179.md) | Assessment, mitigation, compliance |
 | 180 | [Strategic Planning](180.md) | Strategy, competition, growth |
 
+## Web3 & Emerging Tech (181-184)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 181 | [Cryptocurrency](181.md) | Blockchain, transactions, wallets |
+| 182 | [NFTs & Digital Art](182.md) | Creation, ownership, authentication |
+| 183 | [Metaverse](183.md) | Virtual worlds, avatars, economies |
+| 184 | [Web3](184.md) | DApps, smart contracts, DAOs |
+
+## Cloud & Infrastructure (185-191)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 185 | [Edge Computing](185.md) | Edge nodes, processing, optimization |
+| 186 | [Fog Computing](186.md) | Fog layers, distribution, management |
+| 187 | [Serverless](187.md) | Functions, orchestration, scaling |
+| 188 | [Containers](188.md) | Docker, Kubernetes, orchestration |
+| 189 | [DevOps](189.md) | CI/CD, automation, deployment |
+| 190 | [SRE](190.md) | Reliability, monitoring, incident |
+| 191 | [Platform Engineering](191.md) | Internal platforms, developer experience |
+
+## Data & ML Engineering (192-196)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 192 | [Data Engineering](192.md) | Pipelines, warehousing, quality |
+| 193 | [ML Ops](193.md) | Model lifecycle, monitoring, deployment |
+| 194 | [Feature Engineering](194.md) | Feature stores, selection, transformation |
+| 195 | [Model Deployment](195.md) | Serving, scaling, optimization |
+| 196 | [A/B Testing](196.md) | Experiments, analysis, optimization |
+
+## Product & Strategy (197-200)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 197 | [Growth Hacking](197.md) | Acquisition, activation, retention |
+| 198 | [Product Management](198.md) | Roadmaps, metrics, user research |
+| 199 | [OKRs](199.md) | Objectives, key results, tracking |
+| 200 | [Future Roadmap](200.md) | Quantum computing roadmap |
+
 ---
 
 ## Learning Path
@@ -275,8 +311,8 @@ Master expert-level topics in quantum computing.
 ### Cutting-Edge (111-120)
 Explore cutting-edge applications and research topics.
 
-### Domain Applications (121-180)
-Apply quantum computing to real-world domains and business functions.
+### Domain Applications (121-200)
+Apply quantum computing to real-world domains, business, and technology.
 
 ---
 
@@ -289,4 +325,4 @@ Apply quantum computing to real-world domains and business functions.
 
 ---
 
-*180 tutorials covering quantum computing from basics to advanced business.*
+*200 tutorials covering quantum computing from basics to future roadmap.*
