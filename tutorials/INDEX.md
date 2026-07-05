@@ -116,6 +116,20 @@ Complete learning path from beginner to advanced quantum computing.
 | 79 | [Complexity Theory](79.md) | BQP, QMA, lower bounds |
 | 80 | [Expert Info Theory](80.md) | Capacity, Shannon theory |
 
+## Expert Topics III (81-90)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 81 | [Expert Cryptography](81.md) | Signatures, secret sharing, OT |
+| 82 | [Expert QML II](82.md) | NAS, meta-learning, transfer |
+| 83 | [Expert Optimization II](83.md) | TSP, scheduling, portfolio |
+| 84 | [Expert Chemistry II](84.md) | Full CI, coupled cluster |
+| 85 | [Expert QEC II](85.md) | Thresholds, resource estimation |
+| 86 | [Expert Simulation II](86.md) | Hamiltonian simulation |
+| 87 | [Expert Computing III](87.md) | Architectures, hardware, software |
+| 88 | [Expert Algorithms II](88.md) | Design principles, speedups |
+| 89 | [Expert Complexity](89.md) | Classes, bounds, advantage |
+| 90 | [Expert Info Theory II](90.md) | Capacity, Shannon theory |
+
 ---
 
 ## Learning Path
@@ -129,7 +143,7 @@ Continue with tutorials 11-30 for algorithms and machine learning.
 ### Advanced (31-50)
 Complete tutorials 31-50 for chemistry, error correction, and networking.
 
-### Expert (51-80)
+### Expert (51-90)
 Master expert-level topics in quantum computing.
 
 ---
@@ -143,4 +157,4 @@ Master expert-level topics in quantum computing.
 
 ---
 
-*80 tutorials covering quantum computing from basics to expert level.*
+*90 tutorials covering quantum computing from basics to expert level.*
