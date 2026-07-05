@@ -12,7 +12,7 @@ Reference: AbirQu Phase 40 — Fault-Tolerant Quantum Computing
 """
 import random
 import numpy as np
-from abirqu.qec import SurfaceCode, LDPCCode, LDPCDecoder, LDPCEncoder
+from abirqu.qec import SurfaceCode, LDPCCode
 
 
 # ─────────────────────────────────────────────────────────────
@@ -50,10 +50,9 @@ def demo_surface_code(distance: int = 3) -> None:
     print(f"  Syndromes (first 8): {syndromes_noisy[:8].tolist()}")
     print(f"  Errors flagged: {n_errors_noisy}")
 
-    # Logical operators
-    X_L, Z_L = sc.logical_operators()
-    print(f"\n  Logical X operator weight: {int(np.sum(X_L))}")
-    print(f"  Logical Z operator weight: {int(np.sum(Z_L))}")
+    # Show stabilizer properties
+    print(f"\n  Number of X stabilizers: {len(sc.x_stabilizers)}")
+    print(f"  Number of Z stabilizers: {len(sc.z_stabilizers)}")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -62,41 +61,22 @@ def demo_surface_code(distance: int = 3) -> None:
 
 def demo_ldpc(n: int = 15, k: int = 7, d: int = 5) -> None:
     print(f"\n=== LDPC Code (n={n}, k={k}, d={d}) ===")
-    code = LDPCCode(n=n, k=k, d=d)
+    # Create a random parity check matrix for demo
+    H = np.random.randint(0, 2, (n - k, n))
+    code = LDPCCode(parity_matrix=H)
 
     print(f"  Block length     : {code.n}")
     print(f"  Message length   : {code.k}")
-    print(f"  Distance         : {code.d}")
-    print(f"  Code rate        : {code.get_rate():.3f}")
-    print(f"  Overhead         : {code.estimate_overhead():.2f}×")
-    print(f"  H matrix shape   : {code.H.shape}")
-    print(f"  G matrix shape   : {code.G.shape}")
-
-    # Encode a random message
-    encoder = LDPCEncoder()
-    encoder.load_code(code)
-    message = [random.randint(0, 1) for _ in range(code.k)]
-    codeword = encoder.encode(message)
-    print(f"\n  Message  ({k} bits): {message}")
-    print(f"  Codeword ({n} bits): {codeword}")
-
-    # Decode (no noise)
-    decoder = LDPCDecoder()
-    decoder.load_code(code)
-    decoded = decoder.decode(codeword)
-    match = decoded[:k] == message
-    print(f"\n  Decoded  ({k} bits): {decoded[:k]}")
-    print(f"  Decode success: {match}")
-
-    # Decode with noise
-    noisy = list(codeword)
-    flip_idx = random.randint(0, n - 1)
-    noisy[flip_idx] ^= 1
-    decoded_noisy = decoder.decode(noisy)
-    match_noisy = decoded_noisy[:k] == message
-    print(f"\n  After flipping bit {flip_idx}:")
-    print(f"  Decoded: {decoded_noisy[:k]}")
-    print(f"  Corrected successfully: {match_noisy}")
+    print(f"  Parity bits      : {code.m}")
+    print(f"  Code rate        : {code.k / code.n:.3f}")
+    print(f"  H matrix shape   : {code.parity_matrix.shape}")
+    
+    # Show syndrome computation
+    error = np.zeros(code.n, dtype=int)
+    error[0] = 1  # Single bit error
+    syndrome = code.compute_syndrome(error)
+    print(f"\n  Syndrome for single error at qubit 0: {syndrome.tolist()}")
+    print(f"  Syndrome weight: {int(np.sum(syndrome))} (nonzero = error detected)")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -110,14 +90,15 @@ def compare_codes() -> None:
 
     for d in [3, 5, 7]:
         sc = SurfaceCode(distance=d)
-        overhead = sc.get_overhead()
+        overhead = sc.physical_qubits / sc.logical_qubits
         rate = 1.0 / overhead if overhead else 0.0
-        print(f"  {'Surface Code d=' + str(d):<25} {overhead:<15} {rate:<10.4f} {d}")
+        print(f"  {'Surface Code d=' + str(d):<25} {overhead:<15.0f} {rate:<10.4f} {d}")
 
     for cfg in [(15, 7, 5), (30, 15, 6), (100, 50, 10)]:
         n, k, d = cfg
-        lc = LDPCCode(n=n, k=k, d=d)
-        rate = lc.get_rate()
+        H = np.random.randint(0, 2, (n - k, n))
+        lc = LDPCCode(parity_matrix=H)
+        rate = lc.k / lc.n
         print(f"  {'LDPC (' + str(n) + ',' + str(k) + ')':<25} {n/k:<15.2f} {rate:<10.4f} {d}")
 
     print()

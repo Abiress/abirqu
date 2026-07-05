@@ -18,7 +18,7 @@ import argparse
 import json
 
 from abirqu.circuit import Circuit
-from abirqu.phases import HardwareExecutionManager
+from abirqu.backends.hardware import HardwareExecutionManager
 
 
 def bell() -> Circuit:

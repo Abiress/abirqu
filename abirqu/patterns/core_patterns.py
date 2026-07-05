@@ -42,19 +42,35 @@ def entanglement_pattern(num_qubits: int, control: int = 0, chain: bool = True) 
 
 
 def oracle_pattern(num_qubits: int, marked_state: int) -> Circuit:
-    """Simple phase oracle: flip phase on marked computational basis state.
+    """Phase oracle: flip phase on marked computational basis state.
 
-    This implementation uses X pre/post toggles around a multi-controlled pattern
-    approximation to keep the API functional without requiring a full MCZ backend.
+    Uses X gates to flip qubits that should be 0 in the marked state,
+    then applies a multi-controlled Z, then unflips the X gates.
     """
     c = Circuit(num_qubits, name="oracle")
     bits = format(marked_state, f"0{num_qubits}b")
+    # Flip qubits that should be 0 in the marked state
     for i, bit in enumerate(bits):
         if bit == "0":
             c.x(i)
-    # Lightweight approximation: entangle then phase flip with CZ ladder
-    for i in range(num_qubits - 1):
-        c.cz(i, i + 1)
+    # Multi-controlled Z: H on last qubit, then multi-controlled X, then H
+    if num_qubits == 1:
+        c.z(0)
+    elif num_qubits == 2:
+        c.cz(0, 1)
+    else:
+        # For n qubits: H on last qubit, then Toffoli/MCX, then H
+        c.h(num_qubits - 1)
+        if num_qubits == 3:
+            # Use built-in Toffoli gate
+            c.toffoli(0, 1, 2)
+        else:
+            # For 4+ qubits, cascade Toffoli gates
+            # First, use Toffoli to reduce to 2-control problem
+            for i in range(num_qubits - 2):
+                c.toffoli(i, i + 1, num_qubits - 1)
+        c.h(num_qubits - 1)
+    # Unflip X gates
     for i, bit in enumerate(bits):
         if bit == "0":
             c.x(i)

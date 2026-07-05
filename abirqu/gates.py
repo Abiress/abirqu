@@ -61,15 +61,18 @@ SWAP = np.array([
 ], dtype=complex)
 
 # Toffoli (CCNOT) gate
+# Controls: q0, q1; Target: q2
+# Flips q2 when q0=1 AND q1=1
+# Swaps |011> (index 3) and |111> (index 7)
 TOFFOLI = np.array([
     [1, 0, 0, 0, 0, 0, 0, 0],
     [0, 1, 0, 0, 0, 0, 0, 0],
     [0, 0, 1, 0, 0, 0, 0, 0],
-    [0, 0, 0, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1],
     [0, 0, 0, 0, 1, 0, 0, 0],
     [0, 0, 0, 0, 0, 1, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 1],
-    [0, 0, 0, 0, 0, 0, 1, 0]
+    [0, 0, 0, 0, 0, 0, 1, 0],
+    [0, 0, 0, 1, 0, 0, 0, 0]
 ], dtype=complex)
 
 # Fredkin (CSWAP) gate

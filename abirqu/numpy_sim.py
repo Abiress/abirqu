@@ -94,6 +94,22 @@ class NumPySimulator:
             if ((i >> control) & 1) and ((i >> target) & 1):
                 self.state[i] *= -1
     
+    def toffoli(self, c1: int, c2: int, target: int):
+        """Toffoli: if both controls are 1, flip target."""
+        new_state = np.zeros_like(self.state)
+        c1_mask = 1 << c1
+        c2_mask = 1 << c2
+        t_mask = 1 << target
+        
+        for i in range(2**self.n):
+            if (i & c1_mask) and (i & c2_mask):
+                # Both controls are 1, flip target
+                new_state[i ^ t_mask] = self.state[i]
+            else:
+                new_state[i] = self.state[i]
+        
+        self.state = new_state
+    
     def swap(self, q0: int, q1: int):
         """SWAP: exchange q0 and q1."""
         if q0 == q1:
@@ -149,6 +165,9 @@ class NumPySimulator:
                     self.cz(c, t)
                 elif name == 'SWAP':
                     self.swap(c, t)
+            elif len(qubits) == 3:
+                if name == 'TOFFOLI':
+                    self.toffoli(qubits[0], qubits[1], qubits[2])
         
         probs = np.abs(self.state) ** 2
         return {

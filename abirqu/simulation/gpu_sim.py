@@ -117,10 +117,11 @@ class GPUSimulator:
             ], dtype=complex)
         elif name == "TOFFOLI":
             mat = np.eye(8, dtype=complex)
-            mat[6, 6] = 0
+            # Toffoli swaps |011> (index 3) and |111> (index 7)
+            mat[3, 3] = 0
             mat[7, 7] = 0
-            mat[6, 7] = 1
-            mat[7, 6] = 1
+            mat[3, 7] = 1
+            mat[7, 3] = 1
             return mat
         else:
             return np.eye(2, dtype=complex)
@@ -206,14 +207,49 @@ class GPUSimulator:
         self._statevector = result.reshape(self.n_states)
 
     def _apply_three_qubit_gate(self, qubits: tuple, matrix: np.ndarray):
-        """Apply three-qubit gate (Toffoli, Fredkin)."""
-        # Decompose into 1- and 2-qubit gates for simplicity
-        if matrix.shape == (8, 8):
-            # Use two CNOTs and controlled operations
-            q0, q1, q2 = qubits
-            # Simplified: apply as sequence of two-qubit operations
-            self._apply_two_qubit_gate(q0, q2, np.eye(4, dtype=complex))
-            self._apply_two_qubit_gate(q1, q2, np.eye(4, dtype=complex))
+        """Apply three-qubit gate (Toffoli, Fredkin) using tensor contraction."""
+        q0, q1, q2 = qubits
+        n = self.n_qubits
+        
+        # Build the full 8x8 matrix for the 3-qubit subsystem
+        # Then apply it using index manipulation
+        new_state = self._xp.zeros_like(self._statevector)
+        
+        for i in range(2**n):
+            # Extract bits for the 3 qubits
+            b0 = (i >> q0) & 1
+            b1 = (i >> q1) & 1
+            b2 = (i >> q2) & 1
+            
+            # Compute the 3-bit index
+            idx3 = b0 + 2*b1 + 4*b2
+            
+            # Apply the 8x8 matrix to get new 3-bit index
+            new_idx3 = 0
+            for j in range(8):
+                if abs(matrix[j, idx3]) > 1e-10:
+                    new_idx3 = j
+                    break
+            
+            # Extract new bits
+            new_b0 = new_idx3 & 1
+            new_b1 = (new_idx3 >> 1) & 1
+            new_b2 = (new_idx3 >> 2) & 1
+            
+            # Compute new full index
+            new_i = i
+            # Clear old bits
+            new_i &= ~(1 << q0)
+            new_i &= ~(1 << q1)
+            new_i &= ~(1 << q2)
+            # Set new bits
+            new_i |= (new_b0 << q0)
+            new_i |= (new_b1 << q1)
+            new_i |= (new_b2 << q2)
+            
+            new_state[new_i] += self._statevector[i]
+        
+        self._statevector = new_state
 
     def run_circuit(self, circuit: Circuit, shots: int = 1000) -> Dict[str, Any]:
         """Execute a circuit and return measurement results."""
