@@ -158,6 +158,20 @@ Complete learning path from beginner to advanced quantum computing.
 | 109 | [Expert Software II](109.md) | Engineering, testing, deployment |
 | 110 | [Expert Software III](110.md) | Architecture, optimization |
 
+## Cutting-Edge Topics (111-120)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 111 | [Quantum ML Applications](111.md) | NLP, computer vision, time series |
+| 112 | [Quantum Optimization Applications](112.md) | Portfolio, supply chain, resources |
+| 113 | [Quantum Chemistry Applications](113.md) | Drug discovery, materials, proteins |
+| 114 | [QEC Applications](114.md) | Fault tolerance, logical operations |
+| 115 | [Quantum Simulation Applications](115.md) | Many-body, lattice gauge, QFT |
+| 116 | [Quantum ML Cutting Edge](116.md) | Transformers, diffusion, RL |
+| 117 | [Quantum Optimization Cutting Edge](117.md) | VQE, QAOA, annealing |
+| 118 | [Quantum Chemistry Cutting Edge](118.md) | QPE, VQE molecules, FCI |
+| 119 | [QEC Cutting Edge](119.md) | Toric code, color code, decoders |
+| 120 | [Quantum Simulation Cutting Edge](120.md) | Hamiltonian, Lindblad, thermo |
+
 ---
 
 ## Learning Path
@@ -174,6 +188,9 @@ Complete tutorials 31-50 for chemistry, error correction, and networking.
 ### Expert (51-110)
 Master expert-level topics in quantum computing.
 
+### Cutting-Edge (111-120)
+Explore cutting-edge applications and research topics.
+
 ---
 
 ## Additional Resources
@@ -185,4 +202,4 @@ Master expert-level topics in quantum computing.
 
 ---
 
-*110 tutorials covering quantum computing from basics to expert level.*
+*120 tutorials covering quantum computing from basics to cutting-edge topics.*
