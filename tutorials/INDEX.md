@@ -228,6 +228,20 @@ Complete learning path from beginner to advanced quantum computing.
 | 159 | [Publishing](159.md) | Recommendation, editorial, distribution |
 | 160 | [Advertising](160.md) | Campaigns, targeting, ROI |
 
+## Business Functions (161-170)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 161 | [Insurance](161.md) | Risk, claims, policies |
+| 162 | [Banking](162.md) | Credit, fraud, risk |
+| 163 | [Tax & Accounting](163.md) | Optimization, audit, automation |
+| 164 | [Human Resources](164.md) | Talent, performance, workforce |
+| 165 | [Supply Chain Mgmt](165.md) | Suppliers, logistics, risk |
+| 166 | [Quality Management](166.md) | Control, improvement, compliance |
+| 167 | [Project Management](167.md) | Resources, risk, schedule |
+| 168 | [Change Management](168.md) | Assessment, impact, transition |
+| 169 | [Knowledge Mgmt](169.md) | Capture, retrieval, sharing |
+| 170 | [Customer Service](170.md) | Support, satisfaction, optimization |
+
 ---
 
 ## Learning Path
@@ -247,8 +261,8 @@ Master expert-level topics in quantum computing.
 ### Cutting-Edge (111-120)
 Explore cutting-edge applications and research topics.
 
-### Domain Applications (121-160)
-Apply quantum computing to real-world domains.
+### Domain Applications (121-170)
+Apply quantum computing to real-world domains and business functions.
 
 ---
 
@@ -261,4 +275,4 @@ Apply quantum computing to real-world domains.
 
 ---
 
-*160 tutorials covering quantum computing from basics to industry applications.*
+*170 tutorials covering quantum computing from basics to business applications.*
