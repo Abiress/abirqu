@@ -59,7 +59,6 @@ def test_noise_adaptive_compiler():
     assert len(compiled.gates) <= len(circuit.gates), "Compilation should not increase gates"
 
     print("PASS: Noise-adaptive compiler works correctly")
-    return True
 
 
 def test_spae_qnlp():
@@ -98,7 +97,6 @@ def test_spae_qnlp():
     assert encoding.circuits[0].num_qubits >= 4, "SPAEEncoder should use at least 4 qubits"
 
     print("PASS: SPAE encoding works correctly")
-    return True
 
 
 def test_entanglement_cutting():
@@ -143,7 +141,6 @@ def test_entanglement_cutting():
     print(f"Total qubits across subcircuits: {total_qubits}")
 
     print("PASS: Entanglement-aware cutting works correctly")
-    return True
 
 
 def test_hybrid_simulator():
@@ -217,7 +214,6 @@ def test_hybrid_simulator():
     print(f"  Stats: {stats}")
 
     print("\nPASS: Hybrid simulator works correctly")
-    return True
 
 
 def test_integration():
@@ -253,6 +249,8 @@ def test_integration():
     compiler = NoiseAdaptiveCompiler()
     compiled = compiler.compile(circuit, noise_model=noise)
     print(f"  Compiled: {len(compiled.gates)} gates")
+    assert compiled.num_qubits == 6, "Qubit count mismatch"
+    assert len(compiled.gates) > 0, "Compiled circuit is empty"
 
     # Phase 2: SPAE encoding
     print("\nPhase 2: SPAE Encoding")
@@ -260,23 +258,25 @@ def test_integration():
     spae = SPAEEncoder(n_qubits=5, rng=rng)
     encoding = spae.encode_text("quantum computing")
     print(f"  SPAE encoding: {len(encoding.circuits)} circuits")
+    assert len(encoding.circuits) > 0, "SPAEEncoder should generate circuits"
 
     # Phase 3: Entanglement cutting
     print("\nPhase 3: Entanglement Cutting")
     cutter = EntanglementCutter(max_subcircuit_qubits=4)
     cut_result = cutter.cut(compiled)
     print(f"  Subcircuits: {len(cut_result.sub_circuits)}, Overhead: {cut_result.overhead_estimate}")
+    assert len(cut_result.sub_circuits) > 0, "Should produce subcircuits"
 
     # Phase 4: Hybrid simulation
     print("\nPhase 4: Hybrid Simulation")
     sim = HybridSimulator(n_qubits=6)
     result = sim.run_circuit(compiled, shots=500)
     print(f"  Simulation: {sum(result['counts'].values())} shots, {len(result['counts'])} outcomes")
+    assert sum(result['counts'].values()) == 500, "Shot count mismatch"
 
     elapsed = time.time() - start_time
     print(f"\nTotal time: {elapsed:.3f}s")
     print("\nPASS: All 4 phases work together")
-    return True
 
 
 def run_all_tests():
