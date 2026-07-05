@@ -11,6 +11,7 @@ phase angles, creating a native bridge between analog voice data and
 quantum superposition.
 """
 
+from __future__ import annotations
 import numpy as np
 from typing import List, Dict, Tuple, Optional
 from abirqu.circuit import Circuit

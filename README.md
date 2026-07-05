@@ -128,7 +128,9 @@ AbirQu's main differentiator is **scope and hardware independence** — it bring
 
 ### The Vision
 
-AbirQu aims to make quantum computing algorithms accessible through a single, hardware-independent SDK. It scales from a single laptop (simulating 100+ qubits via MPS tensor networks) to hardware execution across 12 quantum computing backends.
+AbirQu aims to make quantum computing algorithms accessible through a single, hardware-independent SDK. It provides simulation backends (GPU, Clifford, MPS, Monte Carlo, NumPy) and hardware execution across 12 quantum computing backends.
+
+**Note on qubit capacity:** MPS tensor networks can theoretically represent states with many qubits if entanglement is limited, but actual simulation capability depends on circuit entanglement and bond dimension, not just qubit count.
 
 With modules for **quantum chemistry**, **intelligence analytics**, **post-quantum cryptography**, **space applications**, **quantum PDE solvers**, **agentic orchestration**, **quantum communication** (7 protocols), **fault-tolerant QEC** (stabilizer/surface/color codes), **hardware calibration & control**, and a **full quantum IDE**, AbirQu is a comprehensive quantum SDK.
 

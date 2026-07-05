@@ -18,7 +18,7 @@ References:
 """
 
 import math
-from typing import List, Tuple, Dict, Optional, Callable
+from typing import Any, List, Tuple, Dict, Optional, Callable
 from dataclasses import dataclass
 from enum import Enum
 

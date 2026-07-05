@@ -1,9 +1,9 @@
 """
 Variational Quantum Eigensolver (VQE) — H₂ Molecule
-======================================================
+=====================================================
 VQE is a hybrid quantum-classical algorithm to find the ground-state energy
 of a quantum Hamiltonian. Here we simulate a simplified H₂ (hydrogen molecule)
-energy landscape using a hardware-efficient ansatz.
+energy landscape using a parameterised ansatz.
 
 The true FCI ground state energy of H₂ at equilibrium is ≈ −1.137 Ha.
 This demo uses a parameterised ansatz and gradient-free optimisation.
@@ -11,15 +11,15 @@ This demo uses a parameterised ansatz and gradient-free optimisation.
 import math
 import random
 from typing import List, Tuple
-from abirqu import Circuit, NumPySimulator
-from abirqu.algorithms import vqe_ansatz_template
+from abirqu import Circuit
+from abirqu.primitives import QuantumRun
 
 
 # ─────────────────────────────────────────────────────────────
 # Simplified H₂ Hamiltonian expectation value
 # ─────────────────────────────────────────────────────────────
 
-def h2_energy(probs: dict) -> float:
+def h2_energy(circuit: Circuit) -> float:
     """
     Approximate the H₂ ground state energy using a simplified 2-qubit mapping.
 
@@ -33,6 +33,10 @@ def h2_energy(probs: dict) -> float:
     g3 = +0.5716
     g4 = +0.0910
     g5 = +0.0910
+
+    # Run the circuit to get probabilities
+    result = QuantumRun(circuit, shots=4096)
+    probs = result.probabilities
 
     # Extract diagonal terms from probabilities
     p00 = probs.get("00", 0.0)
@@ -53,34 +57,45 @@ def h2_energy(probs: dict) -> float:
 
 
 # ─────────────────────────────────────────────────────────────
+# Parameterised ansatz
+# ─────────────────────────────────────────────────────────────
+
+def make_vqe_circuit(params: List[float], n_qubits: int = 2) -> Circuit:
+    """Build a parameterised VQE circuit with RY rotations and CNOT entanglement."""
+    c = Circuit(n_qubits, name="vqe_ansatz")
+    idx = 0
+    for layer in range(2):
+        for q in range(n_qubits):
+            if idx < len(params):
+                c.ry(q, params[idx])
+                idx += 1
+        for q in range(n_qubits - 1):
+            c.cnot(q, q + 1)
+    c.measure_all()
+    return c
+
+
+# ─────────────────────────────────────────────────────────────
 # Variational optimisation (Nelder-Mead style, parameter sweep)
 # ─────────────────────────────────────────────────────────────
 
-def run_vqe(n_qubits: int = 2, depth: int = 2, iterations: int = 30) -> Tuple[float, List[float]]:
+def run_vqe(n_qubits: int = 2, iterations: int = 30) -> Tuple[float, List[float]]:
     """Run VQE with random parameter initialisation and gradient-free search."""
 
-    # Count parameterised gates in the ansatz
-    template = vqe_ansatz_template(n_qubits, depth)
-    n_params = sum(1 for g in template.gates if g.name in ("RX", "RY", "RZ"))
-
-    # Initialise parameters randomly
+    n_params = 4  # 2 layers × 2 qubits
     params = [random.uniform(0, 2 * math.pi) for _ in range(n_params)]
     best_energy = float("inf")
     best_params = params[:]
 
-    print(f"  Ansatz: {n_qubits} qubits, depth={depth}, {n_params} parameters")
+    print(f"  Ansatz: {n_qubits} qubits, 2 layers, {n_params} parameters")
     print(f"  Running {iterations} VQE iterations...\n")
 
     energy_history = []
 
     for it in range(iterations):
-        # Evaluate energy at current params
-        c = vqe_ansatz_template(n_qubits, depth)
-        sim = NumPySimulator(n_qubits)
-        sim.run_circuit(c)
-        probs = sim.get_probabilities()
-
-        energy = h2_energy(probs)
+        # Build circuit with current parameters
+        c = make_vqe_circuit(params, n_qubits)
+        energy = h2_energy(c)
         energy_history.append(energy)
 
         if energy < best_energy:
@@ -107,16 +122,13 @@ if __name__ == "__main__":
     print("\nH₂ ground state FCI energy ≈ −1.137 Hartree (reference)\n")
 
     random.seed(42)
-    best_e, history = run_vqe(n_qubits=2, depth=3, iterations=30)
+    best_e, history = run_vqe(n_qubits=2, iterations=30)
 
     print(f"\n{'─'*45}")
     print(f"  Best VQE energy  : {best_e:.6f} Ha")
     print(f"  FCI reference    : -1.137270 Ha")
     print(f"  Energy error     : {abs(best_e - (-1.137270)):.6f} Ha")
     print(f"{'─'*45}")
-    print("\nConvergence trace (every iteration):")
-    for i, e in enumerate(history):
-        bar = "█" * max(0, round((e + 1.2) * 30))
-        print(f"  Iter {i+1:3d}  {e:+.5f} Ha  |{bar:<30}|")
-
+    print("\nNote: This is a simplified 2-qubit VQE demo. A production VQE")
+    print("would use a larger basis set, more qubits, and a better optimizer.")
     print("\nDone! Try examples/qaoa_maxcut.py next.")

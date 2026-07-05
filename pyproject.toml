@@ -1,6 +1,6 @@
 [build-system]
-requires = ["maturin>=1.0,<2.0"]
-build-backend = "maturin"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.backends._legacy:_Backend"
 
 [project]
 name = "abirqu"
@@ -69,9 +69,8 @@ docs = [
     "mkdocstrings[python]>=0.24.0"
 ]
 
-[tool.maturin]
-features = ["pyo3/extension-module"]
-module-name = "abirqu.abirqu_core"
+[tool.setuptools.packages.find]
+include = ["abirqu*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,5 +1,7 @@
 """
-Setup script for AbirQu — Next-Generation Quantum Computing Library.
+Setup script for AbirQu — Full-Stack Quantum Computing SDK.
+Note: This file is maintained for backward compatibility.
+The primary build configuration is in pyproject.toml.
 """
 
 from setuptools import setup, find_packages
@@ -9,16 +11,16 @@ with open("README.md", "r") as f:
 
 setup(
     name="abirqu",
-    version="0.1.0",
+    version="1.0.0",
     author="Abir Maheshwari",
     author_email="abhirsxn@gmail.com",
-    description="Next-generation quantum computing SDK with LDPC codes and post-quantum security",
+    description="Full-stack quantum computing SDK — real hardware support for IBM, D-Wave, SpinQ, and all quantum computers",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/abirqu/abirqu",
+    url="https://github.com/Abiress/abirqu",
     packages=find_packages(),
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",
@@ -26,8 +28,10 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
         "Topic :: Scientific/Engineering :: Physics",
-        "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     python_requires=">=3.9",
     install_requires=[
