@@ -144,6 +144,20 @@ Complete learning path from beginner to advanced quantum computing.
 | 99 | [Expert Cryptography II](99.md) | Signatures, sharing, OT |
 | 100 | [Expert Final](100.md) | Overview, future, advantage |
 
+## Expert Topics V (101-110)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 101 | [Expert Error Mitigation](101.md) | ZNE, PEC, readout mitigation |
+| 102 | [Expert Benchmarking](102.md) | RB, GST, XEB |
+| 103 | [Expert Control](103.md) | GRAPE, pulse shaping, DD |
+| 104 | [Expert Compilers](104.md) | Decomposition, optimization |
+| 105 | [Expert Compilation II](105.md) | Synthesis, strategies |
+| 106 | [Expert Hardware](106.md) | Platforms, noise, benchmarking |
+| 107 | [Expert Hardware II](107.md) | Engineering, scalability |
+| 108 | [Expert Software](108.md) | Languages, compilers, stacks |
+| 109 | [Expert Software II](109.md) | Engineering, testing, deployment |
+| 110 | [Expert Software III](110.md) | Architecture, optimization |
+
 ---
 
 ## Learning Path
@@ -157,7 +171,7 @@ Continue with tutorials 11-30 for algorithms and machine learning.
 ### Advanced (31-50)
 Complete tutorials 31-50 for chemistry, error correction, and networking.
 
-### Expert (51-100)
+### Expert (51-110)
 Master expert-level topics in quantum computing.
 
 ---
@@ -171,4 +185,4 @@ Master expert-level topics in quantum computing.
 
 ---
 
-*100 tutorials covering quantum computing from basics to expert level.*
+*110 tutorials covering quantum computing from basics to expert level.*
