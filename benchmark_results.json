@@ -1,0 +1,468 @@
+{
+  "metadata": {
+    "backend": "local",
+    "timestamp": "2026-07-05T07:48:47.388604",
+    "total_benchmarks": 44,
+    "max_qubits": 12,
+    "total_gates": 2561,
+    "total_time_ms": 3556.7
+  },
+  "results": {
+    "qft": [
+      {
+        "circuit": "QFT-2",
+        "qubits": 2,
+        "gates": 6,
+        "depth": 6,
+        "time_ms": 12.08,
+        "peak_memory_kb": 1651.3,
+        "unique_states": 4,
+        "shots": 1024
+      },
+      {
+        "circuit": "QFT-4",
+        "qubits": 4,
+        "gates": 24,
+        "depth": 18,
+        "time_ms": 1.39,
+        "peak_memory_kb": 27.3,
+        "unique_states": 16,
+        "shots": 1024
+      },
+      {
+        "circuit": "QFT-6",
+        "qubits": 6,
+        "gates": 54,
+        "depth": 30,
+        "time_ms": 6.96,
+        "peak_memory_kb": 33.5,
+        "unique_states": 64,
+        "shots": 1024
+      },
+      {
+        "circuit": "QFT-8",
+        "qubits": 8,
+        "gates": 96,
+        "depth": 42,
+        "time_ms": 43.34,
+        "peak_memory_kb": 59.4,
+        "unique_states": 254,
+        "shots": 1024
+      },
+      {
+        "circuit": "QFT-10",
+        "qubits": 10,
+        "gates": 150,
+        "depth": 54,
+        "time_ms": 257.51,
+        "peak_memory_kb": 169.8,
+        "unique_states": 650,
+        "shots": 1024
+      },
+      {
+        "circuit": "QFT-12",
+        "qubits": 12,
+        "gates": 216,
+        "depth": 66,
+        "time_ms": 1447.31,
+        "peak_memory_kb": 596.9,
+        "unique_states": 902,
+        "shots": 1024
+      }
+    ],
+    "random": [
+      {
+        "circuit": "Random-3q-5d",
+        "qubits": 3,
+        "gates": 20,
+        "depth": 10,
+        "time_ms": 1.02,
+        "peak_memory_kb": 25.6,
+        "unique_states": 4,
+        "shots": 1024
+      },
+      {
+        "circuit": "Random-3q-10d",
+        "qubits": 3,
+        "gates": 40,
+        "depth": 20,
+        "time_ms": 1.46,
+        "peak_memory_kb": 26.1,
+        "unique_states": 8,
+        "shots": 1024
+      },
+      {
+        "circuit": "Random-3q-20d",
+        "qubits": 3,
+        "gates": 80,
+        "depth": 40,
+        "time_ms": 2.58,
+        "peak_memory_kb": 26.0,
+        "unique_states": 8,
+        "shots": 1024
+      },
+      {
+        "circuit": "Random-5q-5d",
+        "qubits": 5,
+        "gates": 35,
+        "depth": 12,
+        "time_ms": 3.9,
+        "peak_memory_kb": 28.6,
+        "unique_states": 32,
+        "shots": 1024
+      },
+      {
+        "circuit": "Random-5q-10d",
+        "qubits": 5,
+        "gates": 70,
+        "depth": 24,
+        "time_ms": 7.09,
+        "peak_memory_kb": 28.6,
+        "unique_states": 31,
+        "shots": 1024
+      },
+      {
+        "circuit": "Random-5q-20d",
+        "qubits": 5,
+        "gates": 140,
+        "depth": 48,
+        "time_ms": 13.13,
+        "peak_memory_kb": 28.7,
+        "unique_states": 30,
+        "shots": 1024
+      },
+      {
+        "circuit": "Random-7q-5d",
+        "qubits": 7,
+        "gates": 50,
+        "depth": 13,
+        "time_ms": 17.19,
+        "peak_memory_kb": 28.6,
+        "unique_states": 13,
+        "shots": 1024
+      },
+      {
+        "circuit": "Random-7q-10d",
+        "qubits": 7,
+        "gates": 100,
+        "depth": 26,
+        "time_ms": 34.52,
+        "peak_memory_kb": 33.2,
+        "unique_states": 45,
+        "shots": 1024
+      },
+      {
+        "circuit": "Random-7q-20d",
+        "qubits": 7,
+        "gates": 200,
+        "depth": 56,
+        "time_ms": 69.64,
+        "peak_memory_kb": 41.8,
+        "unique_states": 112,
+        "shots": 1024
+      },
+      {
+        "circuit": "Random-10q-5d",
+        "qubits": 10,
+        "gates": 75,
+        "depth": 15,
+        "time_ms": 195.64,
+        "peak_memory_kb": 54.9,
+        "unique_states": 53,
+        "shots": 1024
+      },
+      {
+        "circuit": "Random-10q-10d",
+        "qubits": 10,
+        "gates": 150,
+        "depth": 36,
+        "time_ms": 395.78,
+        "peak_memory_kb": 163.6,
+        "unique_states": 290,
+        "shots": 1024
+      },
+      {
+        "circuit": "Random-10q-20d",
+        "qubits": 10,
+        "gates": 300,
+        "depth": 67,
+        "time_ms": 775.39,
+        "peak_memory_kb": 167.4,
+        "unique_states": 484,
+        "shots": 1024
+      }
+    ],
+    "vqe": [
+      {
+        "circuit": "VQE-2q-r1",
+        "qubits": 2,
+        "gates": 5,
+        "depth": 3,
+        "time_ms": 0.41,
+        "peak_memory_kb": 25.3,
+        "unique_states": 2,
+        "shots": 1024
+      },
+      {
+        "circuit": "VQE-2q-r2",
+        "qubits": 2,
+        "gates": 10,
+        "depth": 6,
+        "time_ms": 0.49,
+        "peak_memory_kb": 25.5,
+        "unique_states": 4,
+        "shots": 1024
+      },
+      {
+        "circuit": "VQE-2q-r3",
+        "qubits": 2,
+        "gates": 15,
+        "depth": 9,
+        "time_ms": 0.57,
+        "peak_memory_kb": 25.4,
+        "unique_states": 4,
+        "shots": 1024
+      },
+      {
+        "circuit": "VQE-4q-r1",
+        "qubits": 4,
+        "gates": 11,
+        "depth": 5,
+        "time_ms": 0.9,
+        "peak_memory_kb": 26.0,
+        "unique_states": 7,
+        "shots": 1024
+      },
+      {
+        "circuit": "VQE-4q-r2",
+        "qubits": 4,
+        "gates": 22,
+        "depth": 9,
+        "time_ms": 1.52,
+        "peak_memory_kb": 26.8,
+        "unique_states": 16,
+        "shots": 1024
+      },
+      {
+        "circuit": "VQE-4q-r3",
+        "qubits": 4,
+        "gates": 33,
+        "depth": 13,
+        "time_ms": 2.09,
+        "peak_memory_kb": 26.8,
+        "unique_states": 16,
+        "shots": 1024
+      },
+      {
+        "circuit": "VQE-6q-r1",
+        "qubits": 6,
+        "gates": 17,
+        "depth": 7,
+        "time_ms": 3.56,
+        "peak_memory_kb": 29.0,
+        "unique_states": 24,
+        "shots": 1024
+      },
+      {
+        "circuit": "VQE-6q-r2",
+        "qubits": 6,
+        "gates": 34,
+        "depth": 11,
+        "time_ms": 6.77,
+        "peak_memory_kb": 32.6,
+        "unique_states": 52,
+        "shots": 1024
+      },
+      {
+        "circuit": "VQE-6q-r3",
+        "qubits": 6,
+        "gates": 51,
+        "depth": 15,
+        "time_ms": 9.87,
+        "peak_memory_kb": 32.9,
+        "unique_states": 60,
+        "shots": 1024
+      },
+      {
+        "circuit": "VQE-8q-r1",
+        "qubits": 8,
+        "gates": 23,
+        "depth": 9,
+        "time_ms": 17.03,
+        "peak_memory_kb": 42.5,
+        "unique_states": 62,
+        "shots": 1024
+      },
+      {
+        "circuit": "VQE-8q-r2",
+        "qubits": 8,
+        "gates": 46,
+        "depth": 13,
+        "time_ms": 33.41,
+        "peak_memory_kb": 57.7,
+        "unique_states": 107,
+        "shots": 1024
+      },
+      {
+        "circuit": "VQE-8q-r3",
+        "qubits": 8,
+        "gates": 69,
+        "depth": 17,
+        "time_ms": 49.89,
+        "peak_memory_kb": 58.6,
+        "unique_states": 155,
+        "shots": 1024
+      }
+    ],
+    "grover": [
+      {
+        "circuit": "Grover-2q",
+        "qubits": 2,
+        "gates": 15,
+        "depth": 9,
+        "time_ms": 0.52,
+        "peak_memory_kb": 25.2,
+        "success_probability": 0.49,
+        "target_state": "10",
+        "shots": 1024
+      },
+      {
+        "circuit": "Grover-3q",
+        "qubits": 3,
+        "gates": 45,
+        "depth": 21,
+        "time_ms": 1.5,
+        "peak_memory_kb": 25.9,
+        "success_probability": 0.117,
+        "target_state": "100",
+        "shots": 1024
+      },
+      {
+        "circuit": "Grover-4q",
+        "qubits": 4,
+        "gates": 91,
+        "depth": 37,
+        "time_ms": 4.8,
+        "peak_memory_kb": 26.0,
+        "success_probability": 0.112,
+        "target_state": "1000",
+        "shots": 1024
+      },
+      {
+        "circuit": "Grover-5q",
+        "qubits": 5,
+        "gates": 153,
+        "depth": 57,
+        "time_ms": 14.78,
+        "peak_memory_kb": 28.4,
+        "success_probability": 0.025,
+        "target_state": "10000",
+        "shots": 1024
+      }
+    ],
+    "ghz": [
+      {
+        "circuit": "GHZ-2q",
+        "qubits": 2,
+        "gates": 2,
+        "depth": 2,
+        "time_ms": 0.27,
+        "peak_memory_kb": 25.2,
+        "ghz_fidelity": 1.0,
+        "shots": 1024
+      },
+      {
+        "circuit": "GHZ-4q",
+        "qubits": 4,
+        "gates": 4,
+        "depth": 4,
+        "time_ms": 0.34,
+        "peak_memory_kb": 25.5,
+        "ghz_fidelity": 1.0,
+        "shots": 1024
+      },
+      {
+        "circuit": "GHZ-6q",
+        "qubits": 6,
+        "gates": 6,
+        "depth": 6,
+        "time_ms": 0.7,
+        "peak_memory_kb": 26.2,
+        "ghz_fidelity": 1.0,
+        "shots": 1024
+      },
+      {
+        "circuit": "GHZ-8q",
+        "qubits": 8,
+        "gates": 8,
+        "depth": 8,
+        "time_ms": 2.35,
+        "peak_memory_kb": 29.2,
+        "ghz_fidelity": 1.0,
+        "shots": 1024
+      },
+      {
+        "circuit": "GHZ-10q",
+        "qubits": 10,
+        "gates": 10,
+        "depth": 10,
+        "time_ms": 9.77,
+        "peak_memory_kb": 41.2,
+        "ghz_fidelity": 1.0,
+        "shots": 1024
+      }
+    ],
+    "pipeline": [
+      {
+        "circuit": "Pipeline-2q",
+        "qubits": 2,
+        "gates": 5,
+        "depth": 3,
+        "time_ms": 0.37,
+        "peak_memory_kb": 25.3,
+        "unique_states": 4,
+        "shots": 1024
+      },
+      {
+        "circuit": "Pipeline-4q",
+        "qubits": 4,
+        "gates": 11,
+        "depth": 5,
+        "time_ms": 0.92,
+        "peak_memory_kb": 26.8,
+        "unique_states": 15,
+        "shots": 1024
+      },
+      {
+        "circuit": "Pipeline-6q",
+        "qubits": 6,
+        "gates": 17,
+        "depth": 7,
+        "time_ms": 3.79,
+        "peak_memory_kb": 32.4,
+        "unique_states": 42,
+        "shots": 1024
+      },
+      {
+        "circuit": "Pipeline-8q",
+        "qubits": 8,
+        "gates": 23,
+        "depth": 9,
+        "time_ms": 17.98,
+        "peak_memory_kb": 58.9,
+        "unique_states": 88,
+        "shots": 1024
+      },
+      {
+        "circuit": "Pipeline-10q",
+        "qubits": 10,
+        "gates": 29,
+        "depth": 11,
+        "time_ms": 86.17,
+        "peak_memory_kb": 164.3,
+        "unique_states": 181,
+        "shots": 1024
+      }
+    ]
+  }
+}

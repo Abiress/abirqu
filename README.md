@@ -28,16 +28,44 @@ AbirQu focuses on **breadth and hardware independence**. Qiskit/Cirq/Braket focu
 |-----------|--------|--------|------|--------|
 | Primary goal | Learning + breadth | Hardware execution | Hardware execution | Multi-hardware access |
 | Hardware backends | 12 (2 verified) | 5 (all verified) | 3 (all verified) | 6 (all verified) |
-| Quantum communication | 7 protocols | — | — | — |
-| Fault-tolerant QEC | Surface/Color/Stabilizer | Basic | — | — |
-| Hardware calibration | Full (T1/T2/RB/Tomography) | Basic | — | — |
-| Domain modules | 6 (Chemistry/OSINT/Crypto/Space/QPINN/Agentic) | Via plugins (qiskit-nature etc.) | — | — |
-| Simulation engines | 5 (GPU/Clifford/MPS/MonteCarlo/NumPy) | 3 | 2 | — |
+| Quantum communication | 7 protocols | N/A (different scope) | N/A (different scope) | N/A (different scope) |
+| Fault-tolerant QEC | Surface/Color/Stabilizer | Basic | N/A | N/A |
+| Hardware calibration | Full (T1/T2/RB/Tomography) | Basic | N/A | N/A |
+| Domain modules | 6 (Chemistry/OSINT/Crypto/Space/QPINN/Agentic) | Via plugins (qiskit-nature etc.) | Via plugins | N/A |
+| Simulation engines | 5 (GPU/Clifford/MPS/MonteCarlo/NumPy) | 3 | 2 | N/A |
 | Pure NumPy (no vendor SDK required) | Yes | No (needs qiskit) | No (needs cirq) | No (needs braket) |
-| Real hardware validation | No | Yes | Yes | Yes |
-| Production-grade algorithms | No | Yes | Yes | Yes |
+| Real hardware validation | IBM backend wired | Yes | Yes | Yes |
+| Production-grade algorithms | Simplified demos | Yes | Yes | Yes |
 
-**Key tradeoff:** AbirQu has broader scope (communication, QEC, domain modules, IDE) but less depth (simplified implementations, no real hardware validation). Qiskit/Cirq/Braket have narrower scope but production-grade, validated implementations.
+**Key tradeoff:** AbirQu has broader scope (communication, QEC, domain modules, IDE) but less depth (simplified implementations, IBM backend not yet validated). Qiskit/Cirq/Braket focus on production-grade, validated hardware execution — they do fewer things but do them well. The domains where competitors show "N/A" are areas AbirQu chose to cover that other SDKs don't attempt.
+
+### Benchmarks
+
+Real, reproducible benchmarks measured on local NumPy simulator (Intel, 64 threads):
+
+| Circuit | Qubits | Gates | Depth | Time |
+|---------|--------|-------|-------|------|
+| QFT | 8 | 96 | 42 | 43 ms |
+| QFT | 12 | 216 | 66 | 1.4 s |
+| Random | 10q × 20d | 300 | — | 775 ms |
+| VQE | 8q × 3 reps | 69 | — | 50 ms |
+| GHZ | 10 | 9 | 10 | 10 ms |
+| Full pipeline | 10 | 29 | — | 86 ms |
+
+Run benchmarks yourself: `python benchmarks/run_benchmarks.py`
+
+### Hardware Execution
+
+IBM Quantum backend is wired (real `qiskit-ibm-runtime` integration):
+
+```bash
+# Dry run (no credentials needed)
+python examples/real_hardware_execution.py --dry-run
+
+# Real hardware
+export IBM_QUANTUM_TOKEN="your_token"
+python examples/real_hardware_execution.py --backend ibm_brisbane
+```
 
 ### Created By
 
