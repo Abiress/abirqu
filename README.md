@@ -1051,34 +1051,279 @@ TOTAL:           39/39 PASS — ALL MODULES VERIFIED
 
 ## Installation
 
-```bash
-# From PyPI (once published)
-pip install abirqu
+### System Requirements
 
-# From source
-git clone https://github.com/abirqu/abirqu.git
+| Requirement | Minimum | Recommended |
+|------------|---------|-------------|
+| **Python** | 3.8+ | 3.10+ |
+| **NumPy** | 1.20+ | 1.24+ |
+| **RAM** | 4 GB | 16 GB+ |
+| **Disk** | 100 MB | 500 MB |
+| **OS** | Linux, macOS, Windows | Linux (best OpenBLAS support) |
+
+Optional for GPU acceleration:
+- **CUDA** 11.0+ with CuPy
+- **NVIDIA GPU** with compute capability 3.5+
+
+### Quick Install
+
+```bash
+pip install abirqu
+```
+
+### Install from Source (Recommended for Development)
+
+```bash
+git clone https://github.com/Abiress/abirqu.git
 cd abirqu
 pip install -e .
-
-# With GPU support
-pip install abirqu[gpu]
-
-# With visualization
-pip install abirqu[visualization]
 ```
 
-### Provider API Key Setup
+### Install with Optional Features
 
 ```bash
-cp .env.example .env
+# GPU acceleration (requires CUDA + CuPy)
+pip install abirqu[gpu]
+
+# Visualization (matplotlib, pillow)
+pip install abirqu[visualization]
+
+# All optional features
+pip install abirqu[gpu,visualization]
+
+# Development (pytest, black, mypy)
+pip install abirqu[dev]
 ```
 
-Minimum keys by provider:
-- IBM: `IBM_QUANTUM_TOKEN`
-- AWS Braket: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
-- Azure Quantum: `AZURE_QUANTUM_RESOURCE_ID`
-- IonQ: `IONQ_API_KEY`
-- Google Quantum: `GOOGLE_CLOUD_PROJECT`
+### GPU Acceleration Setup
+
+```bash
+# Install CuPy for your CUDA version
+pip install cupy-cuda11x   # For CUDA 11.x
+pip install cupy-cuda12x   # For CUDA 12.x
+
+# Verify GPU detection
+python -c "import abirqu; print(abirqu.simulation.GPUSimulator().is_available)"
+```
+
+AbirQu automatically falls back to CPU (NumPy) when GPU is not available.
+
+### Verify Installation
+
+```python
+import abirqu
+print(f"AbirQu version: {abirqu.__version__}")
+
+# Run a quick test
+from abirqu import Circuit, H, CNOT
+bell = Circuit(2)
+bell.h(0)
+bell.cnot(0, 1)
+
+from abirqu.primitives import QuantumRun
+result = QuantumRun(bell, shots=1000)
+print(f"Bell state counts: {result.counts}")
+# Expected: {'00': ~500, '11': ~500}
+```
+
+### Provider API Keys (Optional — for Real Hardware)
+
+Set environment variables or create a `.env` file:
+
+```bash
+# IBM Quantum
+export IBM_QUANTUM_TOKEN="your_token_here"
+
+# AWS Braket
+export AWS_ACCESS_KEY_ID="your_key"
+export AWS_SECRET_ACCESS_KEY="your_secret"
+
+# Azure Quantum
+export AZURE_QUANTUM_RESOURCE_ID="your_resource_id"
+
+# IonQ
+export IONQ_API_KEY="your_key"
+
+# Google Quantum
+export GOOGLE_CLOUD_PROJECT="your_project_id"
+```
+
+AbirQu auto-discovers credentials from environment variables via `CloudManager`.
+
+### IDE Setup
+
+**VS Code:**
+```bash
+code --install-extension ms-python.python
+code --install-extension ms-python.vscode-pylance
+```
+
+**Jupyter Notebook:**
+```bash
+pip install jupyter
+jupyter notebook
+```
+
+```python
+# In a Jupyter cell
+import abirqu
+from abirqu import Circuit, H, CNOT
+bell = Circuit(2)
+bell.h(0)
+bell.cnot(0, 1)
+from abirqu.visualization import draw
+draw(bell, output="html")  # Renders inline in Jupyter
+```
+
+### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| `ModuleNotFoundError: No module named 'abirqu'` | Run `pip install -e .` from the repo root |
+| `OpenBLAS warning` | Set `OPENBLAS_NUM_THREADS=1` or install `libopenblas-dev` |
+| `numpy.linalg.LinAlgError` | Update NumPy: `pip install --upgrade numpy` |
+| GPU not detected | Verify CuPy matches your CUDA version: `python -c "import cupy; print(cupy.cuda.runtimeGetVersion())"` |
+| Import error on Python 3.14 | Use Python 3.10-3.12 for best compatibility |
+
+### Docker
+
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+RUN git clone https://github.com/Abiress/abirqu.git .
+RUN pip install -e .
+CMD ["python", "-c", "import abirqu; print(abirqu.__version__)"]
+```
+
+```bash
+docker build -t abirqu .
+docker run abirqu
+```
+
+---
+
+## Beginner Guide
+
+### What is Quantum Computing?
+
+Classical computers use **bits** (0 or 1). Quantum computers use **qubits** which can be in **superposition** — both 0 and 1 simultaneously. When you measure a qubit, it collapses to 0 or 1, but before measurement it exists in a probabilistic state.
+
+```
+Classical bit:     0  OR  1
+Qubit:             α|0⟩ + β|1⟩   (where |α|² + |β|² = 1)
+```
+
+**Key quantum phenomena:**
+- **Superposition** — a qubit exists in multiple states at once
+- **Entanglement** — two qubits can be correlated in ways impossible classically
+- **Interference** — quantum states can amplify or cancel each other
+
+### Your First Quantum Circuit
+
+```python
+from abirqu import Circuit, H, CNOT, Measure
+
+# Create a 2-qubit circuit
+circuit = Circuit(2)
+
+# Apply Hadamard gate to qubit 0 (creates superposition)
+circuit.h(0)
+
+# Apply CNOT gate (entangles qubit 0 with qubit 1)
+circuit.cnot(0, 1)
+
+# Measure both qubits
+circuit.measure([0, 1])
+
+# Run the circuit
+from abirqu.primitives import QuantumRun
+result = QuantumRun(circuit, shots=1000)
+
+# View results
+print(result.counts)
+# Output: {'00': ~500, '11': ~500}
+```
+
+**What happened?**
+1. `H` put qubit 0 into superposition: |0⟩ → (|0⟩ + |1⟩)/√2
+2. `CNOT` entangled qubit 1 with qubit 0: (|00⟩ + |11⟩)/√2
+3. Measurement always gives 00 or 11, never 01 or 10
+
+### Common Quantum Gates
+
+| Gate | Matrix | Effect | AbirQu |
+|------|--------|--------|--------|
+| **H (Hadamard)** | 1/√2 [[1,1],[1,-1]] | Creates superposition | `circuit.h(q)` |
+| **X (Pauli-X)** | [[0,1],[1,0]] | Bit flip (NOT gate) | `circuit.x(q)` |
+| **Y (Pauli-Y)** | [[0,-i],[i,0]] | Bit + phase flip | `circuit.y(q)` |
+| **Z (Pauli-Z)** | [[1,0],[0,-1]] | Phase flip | `circuit.z(q)` |
+| **CNOT** | 4×4 matrix | Entangles two qubits | `circuit.cnot(ctrl, tgt)` |
+| **S** | [[1,0],[0,i]] | π/2 phase rotation | `circuit.s(q)` |
+| **T** | [[1,0],[0,e^(iπ/4)]] | π/4 phase rotation | `circuit.t(q)` |
+| **Rx(θ)** | Rotation around X | Parameterized rotation | `circuit.rx(q, θ)` |
+| **Ry(θ)** | Rotation around Y | Parameterized rotation | `circuit.ry(q, θ)` |
+| **Rz(θ)** | Rotation around Z | Parameterized rotation | `circuit.rz(q, θ)` |
+
+### Understanding Results
+
+```python
+result = QuantumRun(circuit, shots=1000)
+
+# Raw counts
+print(result.counts)  # {'00': 498, '11': 502}
+
+# Probabilities
+print(result.probabilities)  # {'00': 0.498, '11': 0.502}
+
+# State vector (if using simulator)
+print(result.statevector)  # [0.707+0j, 0+0j, 0+0j, 0.707+0j]
+```
+
+### Visualizing Circuits
+
+```python
+from abirqu.visualization import draw
+
+# Text output
+print(draw(circuit, output="text"))
+
+# SVG output (for web/notebooks)
+svg = draw(circuit, output="svg")
+
+# ASCII art
+print(draw(circuit, output="ascii"))
+```
+
+### Next Steps
+
+Once you're comfortable with the basics:
+
+1. **[Tutorials Folder](tutorials/)** — 200+ step-by-step guides
+2. **[Tutorial Index](tutorials/INDEX.md)** — Browse all tutorials by category
+3. **[Quick Start Examples](#quick-start)** — More code examples below
+
+---
+
+## Tutorials
+
+**200+ step-by-step tutorials** with working code, organized by category:
+
+| Category | Tutorials | Topics |
+|----------|-----------|--------|
+| **[Fundamentals](tutorials/INDEX.md#a-fundamentals)** | 001-020 | Qubits, gates, measurement, circuits, noise basics |
+| **[Quantum Algorithms](tutorials/INDEX.md#b-quantum-algorithms)** | 021-045 | Grover, Shor, QFT, VQE, QAOA, HHL |
+| **[Quantum Chemistry](tutorials/INDEX.md#c-quantum-chemistry)** | 046-065 | Molecular simulation, VQE, fermion mappers |
+| **[Quantum Machine Learning](tutorials/INDEX.md#d-quantum-machine-learning)** | 066-085 | QNN, quantum kernels, QSVM, quantum GAN |
+| **[Quantum Error Correction](tutorials/INDEX.md#e-quantum-error-correction)** | 086-105 | Surface codes, decoders, magic states |
+| **[Quantum Communication](tutorials/INDEX.md#f-quantum-communication)** | 106-125 | QKD, E91, satellite, repeaters |
+| **[Hardware Control](tutorials/INDEX.md#g-hardware-control)** | 126-140 | Calibration, RB, noise profiling |
+| **[Medicine & Pharma](tutorials/INDEX.md#h-medicine--pharma)** | 141-165 | Drug discovery, protein folding, vaccines |
+| **[Communication & Security](tutorials/INDEX.md#i-communication--security)** | 166-180 | QKD deployment, post-quantum crypto |
+| **[Computing & AI](tutorials/INDEX.md#j-computing--ai)** | 181-195 | Optimization, hybrid ML, finance |
+| **[Defense & Aerospace](tutorials/INDEX.md#k-defense--aerospace)** | 196-205 | Radar, satellite, secure comms |
+| **[Advanced Topics](tutorials/INDEX.md#l-advanced-topics)** | 206-220 | Topological, benchmarks, tensor networks |
+
+**[→ Browse All Tutorials](tutorials/INDEX.md)**
 
 ---
 
@@ -1412,6 +1657,51 @@ AbirQu uses pure NumPy with OpenBLAS — works on any architecture:
 
 ---
 
+## Getting Started
+
+**New to quantum computing?** Start with our [Beginner Guide](abirqu/docs/beginner_guide.md) — explains qubits, gates, superposition, entanglement, and your first circuit step by step.
+
+### Quick Start (30 seconds)
+
+```python
+pip install abirqu
+```
+
+```python
+from abirqu import Circuit
+from abirqu.primitives import QuantumRun
+
+# Create a Bell state
+circuit = Circuit(2)
+circuit.h(0)
+circuit.cnot(0, 1)
+circuit.measure([0, 1])
+
+result = QuantumRun(circuit, shots=1000)
+print(result.counts)  # {'00': ~500, '11': ~500}
+```
+
+### 200 Tutorials
+
+AbirQu includes **200 tutorials** covering quantum computing from basics to advanced applications:
+
+| Category | Tutorials | Topics |
+|----------|-----------|--------|
+| Fundamentals | 1-10 | Superposition, entanglement, QFT, QPE, Grover, Shor, VQE |
+| Algorithms | 11-20 | QAOA, HHL, quantum walk, amplitude estimation, QNN |
+| Machine Learning | 21-30 | Quantum RL, GANs, PCA, clustering, anomaly detection |
+| Chemistry & Info | 31-40 | Error mitigation, benchmarking, QRAM, molecular simulation |
+| Advanced | 41-50 | Surface codes, fault-tolerant circuits, compilers, sensing |
+| Expert | 51-100 | Spin chains, chaos, advanced optimization, QML |
+| Cutting-Edge | 111-120 | Novel algorithms, research frontiers |
+| Domain Apps | 121-150 | Medical, defense, finance, supply chain, agriculture |
+| Industry | 151-170 | Manufacturing, retail, aerospace, telecom, energy |
+| Business | 171-200 | R&D, IP, M&A, Web3, DevOps, ML Ops |
+
+**Full index:** [tutorials/INDEX.md](tutorials/INDEX.md)
+
+---
+
 ## Version History
 
 | Version | Date | Key Additions |
@@ -1431,6 +1721,8 @@ AbirQu uses pure NumPy with OpenBLAS — works on any architecture:
 
 ## Support
 
+- **Beginner Guide**: [abirqu/docs/beginner_guide.md](abirqu/docs/beginner_guide.md)
+- **200 Tutorials**: [tutorials/INDEX.md](tutorials/INDEX.md)
 - Documentation: [DEPENDENCIES.md](DEPENDENCIES.md)
 - Contributions: [CONTRIBUTING.md](CONTRIBUTING.md)
 - Security: [SECURITY.md](SECURITY.md)
