@@ -710,7 +710,7 @@ print(result.counts)
 ### Quantum Chemistry
 
 ```python
-from abirqu.chemistry import MolecularData, JWMapper
+from abirqu.chemistry import MolecularData, JordanWignerMapper
 
 # Create a simple H2 molecule representation
 mol = MolecularData(
@@ -722,7 +722,7 @@ mol = MolecularData(
 )
 
 # Map to qubit Hamiltonian using Jordan-Wigner
-mapper = JWMapper(mol)
+mapper = JordanWignerMapper(mol)
 qubit_hamiltonian = mapper.map()
 print(f"Qubit Hamiltonian terms: {len(qubit_hamiltonian.terms)}")
 ```
