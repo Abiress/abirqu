@@ -130,6 +130,20 @@ Complete learning path from beginner to advanced quantum computing.
 | 89 | [Expert Complexity](89.md) | Classes, bounds, advantage |
 | 90 | [Expert Info Theory II](90.md) | Capacity, Shannon theory |
 
+## Expert Topics IV (91-100)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 91 | [Expert Sensing](91.md) | Metrology, entanglement sensing |
+| 92 | [Expert Communication II](92.md) | Repeaters, distillation |
+| 93 | [Expert Networks II](93.md) | Protocols, security |
+| 94 | [Expert Internet II](94.md) | EaaS, applications |
+| 95 | [Expert Computing IV](95.md) | Models, hardware, software |
+| 96 | [Expert Algorithms III](96.md) | Design, speedups, primitives |
+| 97 | [Expert Complexity II](97.md) | Classes, bounds |
+| 98 | [Expert Info Theory III](98.md) | Capacity, Shannon theory |
+| 99 | [Expert Cryptography II](99.md) | Signatures, sharing, OT |
+| 100 | [Expert Final](100.md) | Overview, future, advantage |
+
 ---
 
 ## Learning Path
@@ -143,7 +157,7 @@ Continue with tutorials 11-30 for algorithms and machine learning.
 ### Advanced (31-50)
 Complete tutorials 31-50 for chemistry, error correction, and networking.
 
-### Expert (51-90)
+### Expert (51-100)
 Master expert-level topics in quantum computing.
 
 ---
@@ -157,4 +171,4 @@ Master expert-level topics in quantum computing.
 
 ---
 
-*90 tutorials covering quantum computing from basics to expert level.*
+*100 tutorials covering quantum computing from basics to expert level.*
