@@ -730,10 +730,10 @@ print(f"Qubit Hamiltonian terms: {len(qubit_hamiltonian.terms)}")
 ### Quantum Communication
 
 ```python
-from abirqu.quantum_communication import BB84
+from abirqu.quantum_communication import BB84Protocol
 
 # Run BB84 key exchange
-bb84 = BB84(num_qubits=10)
+bb84 = BB84Protocol(num_qubits=10)
 result = bb84.run()
 print(f"Key bits: {result.key_bits}")
 print(f"QBER: {result.qber:.3f}")
