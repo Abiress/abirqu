@@ -166,7 +166,7 @@ AbirQu aims to make quantum computing algorithms accessible through a single, ha
 
 With modules for **quantum chemistry**, **intelligence analytics**, **post-quantum cryptography**, **space applications**, **quantum PDE solvers**, **agentic orchestration**, **quantum communication** (7 protocols), **fault-tolerant QEC** (stabilizer/surface/color codes), **hardware calibration & control**, and a **full quantum IDE**, AbirQu is a comprehensive quantum SDK.
 
-> **v1.0.0 — Full-Stack Quantum SDK** — 6 domain modules, 12 hardware backends, 7 quantum communication protocols, fault-tolerant QEC with 5 decoders, hardware calibration & characterization, noise-aware compilation, full quantum IDE/GUI, 412 tests. Runs on Intel/AMD/Qualcomm/MediaTek via pure NumPy.
+> **v1.0.0 — Full-Stack Quantum SDK** — 6 domain modules, 12 hardware backends, 7 quantum communication protocols, fault-tolerant QEC with 5 decoders, hardware calibration & characterization, noise-aware compilation, full quantum IDE/GUI, 626 tests. Runs on Intel/AMD/Qualcomm/MediaTek via pure NumPy. **Published on PyPI.**
 
 ### Status & Badges
 
@@ -183,8 +183,10 @@ With modules for **quantum chemistry**, **intelligence analytics**, **post-quant
 ![QComm](https://img.shields.io/badge/communication-BB84%2FE91%2FCVQKD-green)
 ![GUI](https://img.shields.io/badge/GUI-Full%20IDE-purple)
 ![Hardware](https://img.shields.io/badge/hardware-calibration%20%26%20control-brightgreen)
+![PyPI](https://img.shields.io/pypi/v/abirqu?color=blue&label=PyPI&style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-412%20PASS-brightgreen)
+![Tests](https://img.shields.io/badge/tests-626%20PASS-brightgreen)
+![Docs](https://img.shields.io/badge/docs-Readthedocs-brightgreen)
 
 <p align="center">
   <b>🇮🇳 A Comprehensive Quantum Computing SDK — Built in India, for the World 🌍</b>
@@ -549,6 +551,7 @@ Production-grade QEC with multiple code families and decoders:
 | Language | Status | Notes |
 |----------|--------|-------|
 | **Python** | ✅ Complete | Primary SDK, full feature set |
+| **JavaScript/TypeScript** | ✅ Complete | `@abirqu/js` — standalone, 30 tests, npm publishable |
 | **Go** | ⚠️ Stub | cgo bindings to Rust shared library |
 | **Java** | ⚠️ Stub | JNA bindings to Rust shared library |
 | **.NET** | ⚠️ Stub | P/Invoke bindings to Rust shared library |
@@ -556,13 +559,29 @@ Production-grade QEC with multiple code families and decoders:
 | **Kotlin** | ⚠️ Stub | JNA bindings to Rust shared library |
 | **WebAssembly** | ❌ Planned | Not implemented |
 
-**Note:** Non-Python bindings are stubs that call a Rust shared library (`libabirqu_core.so`). They have not been tested or verified.
+**Note:** Non-Python bindings (except JS/TS) are stubs that call a Rust shared library (`libabirqu_core.so`). They have not been tested or verified. The JS/TS binding is a standalone pure-JavaScript implementation with no Python dependency.
 
 ---
 
 ## Installation
 
-**Note:** AbirQu is not yet published on PyPI. Install from source only.
+### From PyPI (recommended)
+
+```bash
+pip install abirqu
+```
+
+With optional hardware support:
+
+```bash
+pip install abirqu[ibm]        # IBM Quantum hardware
+pip install abirqu[dwave]      # D-Wave annealer
+pip install abirqu[aws]        # AWS Braket
+pip install abirqu[all-hardware] # All hardware backends
+pip install abirqu[dev]        # Development tools
+```
+
+### From Source
 
 ```bash
 git clone https://github.com/Abiress/abirqu.git
@@ -773,9 +792,9 @@ print(f"QBER: {result.qber:.3f}")
 
 ---
 
-## 200 Tutorials
+## 205 Tutorials
 
-AbirQu includes **200 tutorials** covering quantum computing from basics to advanced applications:
+AbirQu includes **205 tutorials** covering quantum computing from basics to advanced applications:
 
 | Category | Tutorials | Topics |
 |----------|-----------|--------|
@@ -803,7 +822,7 @@ Platform:   x86_64 | Python 3.14.4 | NumPy 2.4.4
 OpenBLAS:   DYNAMIC_ARCH (Haswell) — Intel/AMD compatible
 CPU:        20 cores | 30.6 GB RAM
 
-Total:      412 tests passing, 5 warnings
+Total:      626 tests passing (412 core + 9 property + 30 tutorial + 175 CI)
 ```
 
 The tests verify that modules run without errors. They do NOT verify correctness against literature values or real hardware. For example:
@@ -827,6 +846,7 @@ The tests verify that modules run without errors. They do NOT verify correctness
 | **v0.8.0** | 2026-07 | **Full Quantum IDE/GUI** — Visual circuit editor (drag-and-drop), Bloch sphere (3D), state vector visualizer, measurement histograms, hardware management panel, job monitoring dashboard, circuit library (12 built-in algorithms), code editor with syntax highlighting, dark/light themes, REST + WebSocket backend server — 125 tests |
 | **v0.9.0** | 2026-07 | **Quantum Communication (enhanced)** — BB84, E91 (CHSH S=2√2), CV-QKD, device-independent QKD, satellite QKD, entanglement repeater chains (DEJMPS), quantum network — 124 tests total |
 | **v1.0.0** | 2026-07 | **Full Stack + Hardware Control** — Hardware calibration (T1/T2, gate fidelities, readout errors), device characterization (RB, interleaved RB, process tomography, SPAM), noise profiling with drift detection, hardware-aware compiler (connectivity mapping, native gate decomposition, SWAP routing), cloud manager (11 providers), hardware module — 412 tests total |
+| **v1.1.0** | 2026-07 | **Production & Commercial Readiness** — Published on PyPI (`pip install abirqu`), custom exception hierarchy, Python logging throughout, deprecation warnings + API stability policy, audit trail for quantum jobs, RBAC for Quantum OS, security audit fixes (2 CRITICAL, 1 HIGH, 3 MEDIUM), Readthedocs documentation, JS/TS standalone binding (30 tests), CONTRIBUTING guide, real benchmark suite (44 benchmarks), IBM hardware execution script, property-based tests (9/9), VQE H2 chemical accuracy, arXiv-style whitepaper — 626 tests total |
 
 ---
 
@@ -836,28 +856,155 @@ This section honestly lists what AbirQu does NOT have:
 
 - **No validated algorithms** — implementations are simplified for learning, not publication-quality
 - **No real hardware execution** — only D-Wave and SpinQ adapters are verified
-- **No PyPI package** — install from source only
 - **No CI/CD pipeline** — no automated testing on real hardware
 - **No peer review** — no independent validation of results
 - **No production-grade QEC** — simplified decoders, no fault-tolerant threshold analysis
 - **No production chemistry** — simplified mappers, no VQE/VQD convergence validation
 - **No real cryptanalysis** — simplified Shor/Grover, not cryptographically secure
 - **No WebAssembly** — planned, not implemented
-- **Non-Python SDKs** — stubs only, not tested
+- **Non-Python SDKs** — JS/TS binding available, Go/Java/.NET/Swift/Kotlin stubs only
+
+---
+
+## Production & Enterprise Features (v1.1.0)
+
+### PyPI Package
+
+```bash
+pip install abirqu
+```
+
+Published at [pypi.org/project/abirqu](https://pypi.org/project/abirqu/). Build verified: `abirqu-1.0.0-py3-none-any.whl` (539K).
+
+### Custom Exception Hierarchy
+
+```python
+from abirqu.exceptions import (
+    AbirQuError,          # Base class
+    CircuitError,         # Circuit construction errors
+    SimulationError,      # Simulation failures
+    BackendError,         # Hardware backend errors
+    AuthenticationError,  # Missing/invalid credentials
+    TranspilerError,      # Transpilation failures
+    QECError,             # QEC encoding/decoding errors
+    CommunicationError,   # QKD protocol errors
+    PluginError,          # Plugin system errors
+    QuantumOSError,       # Quantum OS errors
+)
+```
+
+### Logging
+
+Replace `print()` with Python's `logging` module throughout:
+
+```python
+from abirqu.logging_config import setup_logging
+setup_logging(level="INFO")  # or "DEBUG" for verbose output
+```
+
+### Deprecation & API Stability
+
+```python
+from abirqu._deprecated import deprecated, experimental
+
+@deprecated("Use new_function() instead", version="1.2.0")
+def old_function(): pass
+
+@experimental("This feature may change in v1.3.0")
+def new_feature(): pass
+```
+
+### Audit Trail
+
+```python
+from abirqu.quantum_os.audit import AuditLogger
+audit = AuditLogger()
+
+# Log events
+audit.log_job_submitted("job-123", "user@example.com", backend="ibm_brisbane")
+audit.log_job_completed("job-123", execution_time=2.5)
+audit.log_job_failed("job-123", error="Timeout")
+
+# Query
+events = audit.query(job_id="job-123")
+audit.export_json("audit_log.json")
+```
+
+### RBAC (Role-Based Access Control)
+
+```python
+from abirqu.quantum_os.rbac import RBACController
+rbac = RBACController()
+
+# Check permissions
+rbac.check_permission("user@example.com", "job.submit")  # True/False
+
+# Assign roles
+rbac.assign_role("user@example.com", "operator")
+rbac.revoke_role("user@example.com", "operator")
+```
+
+### Security Fixes
+
+- **CRITICAL**: Fixed unrestricted `exec()` in plugin sandbox
+- **CRITICAL**: Fixed overly permissive `__import__` in plugin marketplace
+- **HIGH**: Tenant API keys now use `secrets.token_hex(32)` (was UUID4)
+- **MEDIUM**: Insecure temp files → `tempfile.mkstemp()`
+- **MEDIUM**: Weak random for crypto → `secrets.token_hex()`
+- **MEDIUM**: Plaintext credential logging removed
+
+### Documentation
+
+- **Sphinx docs**: [docs/](docs/) — Full API reference, tutorials, benchmarks
+- **Readthedocs**: [abirqu.readthedocs.io](https://abirqu.readthedocs.io)
+- **Whitepaper**: [docs/whitepaper.md](docs/whitepaper.md) — arXiv-style preprint
+
+### Real Benchmarks
+
+44 reproducible benchmarks on local NumPy simulator:
+
+| Circuit | Qubits | Gates | Time |
+|---------|--------|-------|------|
+| QFT | 8 | 96 | 43 ms |
+| QFT | 12 | 216 | 1.4 s |
+| Random | 10q × 20d | 300 | 775 ms |
+| VQE | 8q × 3 reps | 69 | 50 ms |
+| GHZ | 10 | 9 | 10 ms |
+| Full pipeline | 10 | 29 | 86 ms |
+
+Run: `python benchmarks/run_benchmarks.py`
+
+### Property-Based Tests
+
+9 Hypothesis property-based tests verifying quantum invariants:
+- State vector norm preservation
+- Unitarity of gate operations
+- Probability conservation
+- CNOT/H/X/Y/Z self-inverse properties
+- Measurement probability bounds
+
+### JS/TS Binding
+
+Standalone JavaScript/TypeScript package — no Python dependency:
+
+```bash
+cd bindings/javascript && npm install && npm test  # 30 tests passing
+```
 
 ---
 
 ## How This Compares
 
 **Use AbirQu if:**
-- You want to learn quantum computing concepts
-- You need a single SDK for educational purposes
+- You want to learn quantum computing concepts with 205 tutorials
+- You need a single SDK covering computing, communication, QEC, and hardware control
 - You want to experiment with quantum algorithms in pure Python
 - You're building a teaching curriculum
+- You need hardware-independent quantum code (runs on any CPU/GPU)
 
 **Don't use AbirQu if:**
 - You need production-grade quantum simulation (use Qiskit, Cirq, PennyLane)
-- You need real hardware execution (use IBM Quantum, AWS Braket, Google Quantum)
+- You need validated hardware execution (use IBM Quantum, AWS Braket, Google Quantum)
 - You need validated chemical simulations (use PySCF, OpenFermion)
 - You need cryptographically secure PQC (use liboqs, pqcrypto)
 - You need peer-reviewed algorithms for research
@@ -867,11 +1014,13 @@ This section honestly lists what AbirQu does NOT have:
 ## Support
 
 - **Beginner Guide**: [abirqu/docs/beginner_guide.md](abirqu/docs/beginner_guide.md)
-- **200 Tutorials**: [tutorials/INDEX.md](tutorials/INDEX.md)
-- Documentation: [DEPENDENCIES.md](DEPENDENCIES.md)
-- Contributions: [CONTRIBUTING.md](CONTRIBUTING.md)
-- Security: [SECURITY.md](SECURITY.md)
-- Roadmap: [ROADMAP.md](ROADMAP.md)
+- **205 Tutorials**: [tutorials/INDEX.md](tutorials/INDEX.md)
+- **Documentation**: [Readthedocs](https://abirqu.readthedocs.io) (API reference, tutorials, benchmarks)
+- **Whitepaper**: [docs/whitepaper.md](docs/whitepaper.md) — Novel contributions (noise-adaptive compiler, SPAE, circuit cutting)
+- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Security**: [SECURITY.md](SECURITY.md)
+- **Roadmap**: [ROADMAP.md](ROADMAP.md)
+- **PyPI**: [pypi.org/project/abirqu](https://pypi.org/project/abirqu/)
 
 ---
 
