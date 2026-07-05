@@ -242,6 +242,20 @@ Complete learning path from beginner to advanced quantum computing.
 | 169 | [Knowledge Mgmt](169.md) | Capture, retrieval, sharing |
 | 170 | [Customer Service](170.md) | Support, satisfaction, optimization |
 
+## Advanced Business (171-180)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 171 | [R&D](171.md) | Research, innovation, tech transfer |
+| 172 | [Intellectual Property](172.md) | Patents, portfolio, infringement |
+| 173 | [Legal Analytics](173.md) | Cases, contracts, research |
+| 174 | [Real Estate Analytics](174.md) | Market, valuation, investment |
+| 175 | [M&A](175.md) | Valuation, synergies, deals |
+| 176 | [Venture Capital](176.md) | Startups, portfolio, exits |
+| 177 | [Private Equity](177.md) | Deals, value, exits |
+| 178 | [Corporate Finance](178.md) | Capital, dividends, working capital |
+| 179 | [Enterprise Risk](179.md) | Assessment, mitigation, compliance |
+| 180 | [Strategic Planning](180.md) | Strategy, competition, growth |
+
 ---
 
 ## Learning Path
@@ -261,7 +275,7 @@ Master expert-level topics in quantum computing.
 ### Cutting-Edge (111-120)
 Explore cutting-edge applications and research topics.
 
-### Domain Applications (121-170)
+### Domain Applications (121-180)
 Apply quantum computing to real-world domains and business functions.
 
 ---
@@ -275,4 +289,4 @@ Apply quantum computing to real-world domains and business functions.
 
 ---
 
-*170 tutorials covering quantum computing from basics to business applications.*
+*180 tutorials covering quantum computing from basics to advanced business.*
