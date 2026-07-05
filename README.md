@@ -639,10 +639,11 @@ import abirqu
 print(f"AbirQu version: {abirqu.__version__}")
 
 # Run a quick test
-from abirqu import Circuit, H, CNOT
+from abirqu import Circuit
 bell = Circuit(2)
 bell.h(0)
 bell.cnot(0, 1)
+bell.measure_all()
 
 from abirqu.primitives import QuantumRun
 result = QuantumRun(bell, shots=1000)
@@ -697,7 +698,7 @@ from abirqu.primitives import QuantumRun
 circuit = Circuit(2)
 circuit.h(0)
 circuit.cnot(0, 1)
-circuit.measure([0, 1])
+circuit.measure_all()
 
 result = QuantumRun(circuit, shots=1000)
 print(result.counts)
@@ -710,72 +711,52 @@ print(result.counts)
 ### Basic Circuit
 
 ```python
-from abirqu import Circuit, H, CNOT
+from abirqu import Circuit
 from abirqu.primitives import QuantumRun
 
 # Create a Bell state
 circuit = Circuit(2)
 circuit.h(0)
 circuit.cnot(0, 1)
-circuit.measure([0, 1])
+circuit.measure_all()
 
 result = QuantumRun(circuit, shots=1000)
 print(result.counts)  # {'00': ~500, '11': ~500}
 ```
 
-### Grover's Algorithm
+### GHZ State (Entanglement)
 
 ```python
-from abirqu import Circuit, H, X, CNOT, Measure
+from abirqu.library import ghz_circuit
 from abirqu.primitives import QuantumRun
-import math
 
-n = 3
-circuit = Circuit(n)
+# Create a 4-qubit GHZ state: (|0000⟩ + |1111⟩) / √2
+circuit = ghz_circuit(num_qubits=4)
+circuit.measure_all()
 
-# Initialize superposition
-for i in range(n):
-    circuit.h(i)
-
-# Oracle (mark |101>)
-circuit.x(1)
-circuit.cnot(0, 2)
-circuit.cnot(1, 2)
-circuit.x(1)
-
-# Diffusion
-for i in range(n):
-    circuit.h(i)
-    circuit.x(i)
-circuit.cnot(0, 1)
-circuit.cnot(1, 2)
-for i in range(n):
-    circuit.x(i)
-    circuit.h(i)
-
-circuit.measure(list(range(n)))
 result = QuantumRun(circuit, shots=1000)
-print(result.counts)
+print(result.counts)  # {'0000': ~500, '1111': ~500}
 ```
 
 ### Quantum Chemistry
 
 ```python
-from abirqu.chemistry import MolecularData, JordanWignerMapper
+from abirqu.chemistry import JordanWignerMapper
 
-# Create a simple H2 molecule representation
-mol = MolecularData(
-    num_orbitals=2,
-    num_electrons=2,
-    h1=[[0, 0], [0, 0]],
-    h2=[[[0, 0], [0, 0]], [[0, 0], [0, 0]]],
-    nuclear_repulsion=0.5
-)
+# Create a mapper for 2 orbitals (e.g., H2 molecule)
+mapper = JordanWignerMapper(n_orbitals=2)
 
-# Map to qubit Hamiltonian using Jordan-Wigner
-mapper = JordanWignerMapper(mol)
-qubit_hamiltonian = mapper.map()
-print(f"Qubit Hamiltonian terms: {len(qubit_hamiltonian.terms)}")
+# One-electron integrals: (i, j, coefficient)
+one_electron = [(0, 0, -1.0), (1, 1, -1.0)]
+
+# Two-electron integrals: (i, j, k, l, coefficient)
+two_electron = [(0, 0, 0, 0, 0.5)]
+
+# Map to qubit Hamiltonian
+qubit_terms = mapper.map_hamiltonian(one_electron, two_electron)
+print(f"Qubit Hamiltonian terms: {len(qubit_terms)}")
+for term in qubit_terms:
+    print(f"  {term}")
 ```
 
 ### Quantum Communication
@@ -784,10 +765,10 @@ print(f"Qubit Hamiltonian terms: {len(qubit_hamiltonian.terms)}")
 from abirqu.quantum_communication import BB84Protocol
 
 # Run BB84 key exchange
-bb84 = BB84Protocol(num_qubits=10)
+bb84 = BB84Protocol(num_bits=10)
 result = bb84.run()
-print(f"Key bits: {result.key_bits}")
-print(f"QBER: {result.qber:.3f}")
+print(f"Final key: {result.final_key}")
+print(f"QBER: {result.error_rate:.3f}")
 ```
 
 ---
@@ -880,16 +861,16 @@ Published at [pypi.org/project/abirqu](https://pypi.org/project/abirqu/). Build 
 
 ```python
 from abirqu.exceptions import (
-    AbirQuError,          # Base class
-    CircuitError,         # Circuit construction errors
-    SimulationError,      # Simulation failures
-    BackendError,         # Hardware backend errors
-    AuthenticationError,  # Missing/invalid credentials
-    TranspilerError,      # Transpilation failures
-    QECError,             # QEC encoding/decoding errors
-    CommunicationError,   # QKD protocol errors
-    PluginError,          # Plugin system errors
-    QuantumOSError,       # Quantum OS errors
+    AbirQuError,              # Base class
+    CircuitError,             # Circuit construction errors
+    SimulationError,          # Simulation failures
+    BackendError,             # Hardware backend errors
+    AuthenticationError,      # Missing/invalid credentials
+    TranspilerError,          # Transpilation failures
+    HardwareError,            # Hardware control errors
+    JobError,                 # Job scheduling errors
+    QuantumCommunicationError, # QKD protocol errors
+    ConfigurationError,       # Configuration errors
 )
 ```
 
@@ -907,7 +888,7 @@ setup_logging(level="INFO")  # or "DEBUG" for verbose output
 ```python
 from abirqu._deprecated import deprecated, experimental
 
-@deprecated("Use new_function() instead", version="1.2.0")
+@deprecated("Use new_function() instead", since="1.2.0", removal="2.0.0")
 def old_function(): pass
 
 @experimental("This feature may change in v1.3.0")
@@ -921,13 +902,16 @@ from abirqu.quantum_os.audit import AuditLogger
 audit = AuditLogger()
 
 # Log events
-audit.log_job_submitted("job-123", "user@example.com", backend="ibm_brisbane")
-audit.log_job_completed("job-123", execution_time=2.5)
-audit.log_job_failed("job-123", error="Timeout")
+audit.log_job_submit("job-123", "user@example.com", backend="ibm_brisbane", circuit_name="bell_state")
+audit.log_job_complete("job-123", "user@example.com", duration_ms=2500.0, status="success")
+audit.log_job_fail("job-123", "user@example.com", error_message="Timeout")
 
-# Query
-events = audit.query(job_id="job-123")
-audit.export_json("audit_log.json")
+# Query events by user or action
+events = audit.get_events(user_id="user@example.com")
+
+# Export as JSON string
+json_str = audit.export_events(format="json")
+print(json_str[:200])  # First 200 chars of JSON
 ```
 
 ### RBAC (Role-Based Access Control)
@@ -939,9 +923,11 @@ rbac = RBACController()
 # Check permissions
 rbac.check_permission("user@example.com", "job.submit")  # True/False
 
-# Assign roles
+# Assign role
 rbac.assign_role("user@example.com", "operator")
-rbac.revoke_role("user@example.com", "operator")
+
+# Revoke role
+rbac.revoke_role("user@example.com")
 ```
 
 ### Security Fixes
