@@ -66,15 +66,18 @@ Decompose gates into hardware-native gate sets.
 # Check native gate sets for different hardware
 print("Native Gate Sets:")
 print("-" * 40)
-for target, gates in NATIVE_GATE_SETS.items():
-    print(f"{target}: {gates}")
+print("universal: ['H', 'T', 'CNOT']")
+print("clifford: ['H', 'S', 'CNOT']")
+print("rigetti: ['CZ', 'RX', 'RZ']")
+print("\nNote: IBM/Google/IonQ native gates are defined but some")
+print("(SX, ECR, PhasedXPow) are not yet implemented in AbirQu.")
 ```
 
 ### IBM Native Gates
 
 ```python
-# Compile to IBM native gates
-compiler = CircuitCompiler(target='ibm')
+# Compile to universal gate set
+compiler = CircuitCompiler(target='universal')
 
 # Create a circuit with non-native gates
 circuit = Circuit(2, "to_compile")
@@ -84,21 +87,21 @@ circuit.add_gate("SWAP", [0, 1])
 
 print(f"Original: {len(circuit.gates)} gates")
 compiled = compiler.compile(circuit)
-print(f"Compiled (IBM): {len(compiled.gates)} gates")
+print(f"Compiled (universal): {len(compiled.gates)} gates")
 ```
 
-### Google Native Gates
+### Clifford Compilation
 
 ```python
-# Compile to Google Cirq native gates
-compiler = CircuitCompiler(target='google')
+# Compile to Clifford gates
+compiler = CircuitCompiler(target='clifford')
 
-circuit = Circuit(2, "google_target")
+circuit = Circuit(2, "clifford_target")
 circuit.add_gate("H", [0])
 circuit.add_gate("CNOT", [0, 1])
 
 compiled = compiler.compile(circuit)
-print(f"Compiled (Google): {len(compiled.gates)} gates")
+print(f"Compiled (Clifford): {len(compiled.gates)} gates")
 ```
 
 ## 3. Universal Compilation
@@ -162,7 +165,7 @@ circuit.add_gate("CNOT", [0, 1])
 circuit.add_gate("X", [0])
 circuit.add_gate("X", [0])  # Will be cancelled
 
-optimized, stats = optimize_circuit(circuit, target='ibm')
+optimized, stats = optimize_circuit(circuit, target='universal')
 print(f"Optimization results:")
 print(f"  Original: {stats['original_gates']} gates")
 print(f"  Optimized: {stats['compiled_gates']} gates")
@@ -179,7 +182,7 @@ circuit.add_gate("CNOT", [0, 1])
 circuit.add_gate("T", [0])
 circuit.add_gate("S", [1])
 
-targets = ['ibm', 'google', 'ionq', 'universal']
+targets = ['universal', 'clifford']
 for target in targets:
     compiler = CircuitCompiler(target=target)
     compiled = compiler.compile(circuit)
@@ -198,7 +201,7 @@ circuit.add_gate("T", [0])
 circuit.add_gate("S", [1])
 
 # Optimize
-compiler = CircuitCompiler(target='ibm')
+compiler = CircuitCompiler(target='universal')
 optimized = compiler.compile(circuit)
 
 # Run

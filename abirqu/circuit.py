@@ -131,7 +131,7 @@ class Circuit:
             )
         for meas in self.measurements:
             new_circuit.measurements.append(
-                Measurement(list(meas.qubits), list(meas.classical_bits))
+                Measurement(meas.qubit, meas.cbit)
             )
         new_circuit.classical_bits = self.classical_bits
         return new_circuit
