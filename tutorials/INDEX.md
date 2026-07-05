@@ -200,6 +200,20 @@ Complete learning path from beginner to advanced quantum computing.
 | 139 | [Cybersecurity](139.md) | Threats, vulnerabilities, security |
 | 140 | [Smart Cities](140.md) | Urban, resources, infrastructure |
 
+## Industry Applications (141-150)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 141 | [Space Technology](141.md) | Satellites, communication, orbits |
+| 142 | [Education](142.md) | Learning, assessment, curriculum |
+| 143 | [Legal Tech](143.md) | Contracts, research, compliance |
+| 144 | [Real Estate](144.md) | Valuation, market, investment |
+| 145 | [Manufacturing](145.md) | Process, quality, supply chain |
+| 146 | [Retail](146.md) | Demand, inventory, customers |
+| 147 | [Hospitality](147.md) | Revenue, guests, operations |
+| 148 | [Sports Analytics](148.md) | Performance, strategy, injuries |
+| 149 | [Entertainment](149.md) | Recommendations, creativity, audience |
+| 150 | [Fashion Tech](150.md) | Trends, sizes, supply chain |
+
 ---
 
 ## Learning Path
@@ -219,7 +233,7 @@ Master expert-level topics in quantum computing.
 ### Cutting-Edge (111-120)
 Explore cutting-edge applications and research topics.
 
-### Domain Applications (121-140)
+### Domain Applications (121-150)
 Apply quantum computing to real-world domains.
 
 ---
@@ -233,4 +247,4 @@ Apply quantum computing to real-world domains.
 
 ---
 
-*140 tutorials covering quantum computing from basics to advanced domains.*
+*150 tutorials covering quantum computing from basics to industry applications.*
