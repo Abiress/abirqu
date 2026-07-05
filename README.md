@@ -22,18 +22,22 @@ The quantum computing landscape is fragmented. IBM has Qiskit, Google has Cirq, 
 
 ### What Makes AbirQu Different
 
+AbirQu focuses on **breadth and hardware independence**. Qiskit/Cirq/Braket focus on **production hardware execution**. These are different goals — the table below compares scope, not quality.
+
 | Capability | AbirQu | Qiskit | Cirq | Braket |
 |-----------|--------|--------|------|--------|
-| Hardware backends | **12** | 5 | 3 | 6 |
-| Quantum communication | **7 protocols** | — | — | — |
-| Fault-tolerant QEC | **Surface/Color/Stabilizer** | Basic | — | — |
-| Hardware calibration | **Full (T1/T2/RB/Tomography)** | Basic | — | — |
-| Quantum IDE/GUI | **Full visual IDE** | — | — | — |
-| Domain modules | **6 (Chemistry/OSINT/Crypto/Space/QPINN/Agentic)** | — | — | — |
-| Simulation engines | **5 (GPU/Clifford/MPS/MonteCarlo/NumPy)** | 3 | 2 | — |
-| Pure NumPy (no Rust/C++ required) | **Yes** | No | No | No |
-| Processor support | **Intel/AMD/Qualcomm/MediaTek/Apple** | Intel/AMD | Intel/AMD | Intel/AMD |
-| Novel contributions | **4 (Noise-Adaptive/SPAE/Cutting/Hybrid-Sim)** | — | — | — |
+| Primary goal | Learning + breadth | Hardware execution | Hardware execution | Multi-hardware access |
+| Hardware backends | 12 (2 verified) | 5 (all verified) | 3 (all verified) | 6 (all verified) |
+| Quantum communication | 7 protocols | — | — | — |
+| Fault-tolerant QEC | Surface/Color/Stabilizer | Basic | — | — |
+| Hardware calibration | Full (T1/T2/RB/Tomography) | Basic | — | — |
+| Domain modules | 6 (Chemistry/OSINT/Crypto/Space/QPINN/Agentic) | Via plugins (qiskit-nature etc.) | — | — |
+| Simulation engines | 5 (GPU/Clifford/MPS/MonteCarlo/NumPy) | 3 | 2 | — |
+| Pure NumPy (no vendor SDK required) | Yes | No (needs qiskit) | No (needs cirq) | No (needs braket) |
+| Real hardware validation | No | Yes | Yes | Yes |
+| Production-grade algorithms | No | Yes | Yes | Yes |
+
+**Key tradeoff:** AbirQu has broader scope (communication, QEC, domain modules, IDE) but less depth (simplified implementations, no real hardware validation). Qiskit/Cirq/Braket have narrower scope but production-grade, validated implementations.
 
 ### Created By
 
