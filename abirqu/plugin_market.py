@@ -39,7 +39,12 @@ class SandboxedNamespace:
                 "print": print,
             }
             if "filesystem" in self.permissions:
-                safe_builtins["__import__"] = __import__
+                _ALLOWED_IMPORTS = {"json", "math", "datetime", "collections", "itertools", "functools", "re", "hashlib", "uuid"}
+                def _restricted_import(name, *args, **kwargs):
+                    if name.split(".")[0] not in _ALLOWED_IMPORTS:
+                        raise ImportError(f"import '{name}' is not allowed in sandbox")
+                    return __import__(name, *args, **kwargs)
+                safe_builtins["__import__"] = _restricted_import
             exec(compile(tree, "<sandbox>", "exec"), {"__builtins__": safe_builtins}, self._locals)
             return {"success": True}
         except Exception as exc:

@@ -27,7 +27,7 @@ from abirqu.hardware.hw_compiler import (
 )
 from abirqu.hardware.cloud_manager import (
     CloudManager, CloudProvider, CloudCredentials,
-    ProviderStatus, ProviderConnection,
+    ProviderStatus, ProviderConnection, AuthenticationError,
 )
 
 
@@ -499,8 +499,8 @@ class TestCloudManager:
 
     def test_connect_no_credentials(self):
         cm = CloudManager()
-        result = cm.connect(CloudProvider.QUANTINUUM)
-        assert result is False
+        with pytest.raises(AuthenticationError):
+            cm.connect(CloudProvider.QUANTINUUM)
 
     def test_disconnect(self):
         cm = CloudManager()

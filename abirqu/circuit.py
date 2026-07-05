@@ -2,11 +2,16 @@
 Quantum Circuit Representation for AbirQu
 Copyright 2026 Abir Maheshwari
 """
+import logging
 import numpy as np
 from typing import List, Dict, Optional, Union, Tuple, Any
 from enum import Enum
 import json
 import uuid
+
+from .exceptions import CircuitError
+
+logger = logging.getLogger(__name__)
 
 # Import gates from our gates module
 from .gates import (
@@ -322,7 +327,7 @@ class Circuit:
         The other circuit is appended after this one.
         """
         if self.num_qubits != other.num_qubits:
-            raise ValueError("Circuits must have same number of qubits to compose")
+            raise CircuitError("Circuits must have same number of qubits to compose")
         
         new_circuit = Circuit(self.num_qubits, f"{self.name}_plus_{other.name}")
         new_circuit.gates = self.gates + other.gates

@@ -4,11 +4,16 @@ Copyright 2026 Abir Maheshwari
 
 Unified cloud provider management for quantum hardware access.
 """
+import logging
 import os
 import time
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
+
+from ..exceptions import AuthenticationError
+
+logger = logging.getLogger(__name__)
 
 
 class CloudProvider(Enum):
@@ -168,6 +173,7 @@ class CloudManager:
             if creds.api_key or creds.token:
                 self.credentials[provider] = creds
                 self.connections[provider] = ProviderConnection(provider=provider)
+                logger.debug("Discovered credentials for %s", provider.value)
 
     def on(self, event: str, callback):
         self._callbacks.append((event, callback))
@@ -189,6 +195,7 @@ class CloudManager:
         self.credentials[provider] = creds
         self.connections[provider] = ProviderConnection(provider=provider)
         self._emit('credentials_added', {'provider': provider.value})
+        logger.info("Credentials added for %s", provider.value)
 
     def connect(self, provider: CloudProvider) -> bool:
         if provider not in self.credentials:
@@ -196,19 +203,24 @@ class CloudManager:
                 provider=provider, status=ProviderStatus.CREDENTIALS_MISSING,
                 error_message='No credentials found',
             )
-            return False
+            raise AuthenticationError(
+                f"No credentials found for {provider.value}. "
+                "Set the appropriate environment variables or call add_credentials()."
+            )
 
         conn = self.connections.get(provider, ProviderConnection(provider=provider))
         conn.status = ProviderStatus.CONNECTED
         conn.last_connected = time.time()
         self.connections[provider] = conn
         self._emit('connected', {'provider': provider.value})
+        logger.info("Connected to %s", provider.value)
         return True
 
     def disconnect(self, provider: CloudProvider):
         if provider in self.connections:
             self.connections[provider].status = ProviderStatus.DISCONNECTED
             self._emit('disconnected', {'provider': provider.value})
+            logger.info("Disconnected from %s", provider.value)
 
     def get_status(self, provider: CloudProvider) -> ProviderStatus:
         conn = self.connections.get(provider)

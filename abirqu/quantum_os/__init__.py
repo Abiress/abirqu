@@ -1,6 +1,10 @@
 """
 Quantum OS
 ==========
+
+**EXPERIMENTAL** — The Quantum OS module is experimental.  Its API may
+change or be removed without following the standard deprecation timeline.
+
 Quantum job scheduling, resource management, and virtualization layer.
 """
 
@@ -17,6 +21,10 @@ from .environment import VirtualEnvironment, ResourceQuota
 from .monitor import JobMonitor, JobSnapshot
 from .tenant import TenantManager, Tenant, TenantTier
 from .access import AccessController, Permission, Role
+from .audit import AuditEvent, AuditLogger
+from .rbac import RBACController
+from .rbac import Role as RBACRole
+from .rbac import Permission as RBACPermission
 
 __all__ = [
     "QuantumJob", "JobState",
@@ -32,4 +40,6 @@ __all__ = [
     "JobMonitor", "JobSnapshot",
     "TenantManager", "Tenant", "TenantTier",
     "AccessController", "Permission", "Role",
+    "AuditEvent", "AuditLogger",
+    "RBACController", "RBACRole", "RBACPermission",
 ]

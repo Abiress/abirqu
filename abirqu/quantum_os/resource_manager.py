@@ -6,9 +6,12 @@ Track QPU availability and manage resource allocation.
 
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -87,7 +90,9 @@ class ResourceManager:
                 if pool.current_usage < pool.max_concurrent:
                     pool.current_usage += 1
                     self._allocations[job_id] = pool_name
+                    logger.debug("Allocated pool %s for job %s", pool_name, job_id)
                     return pool_name
+        logger.warning("No available pool for backend %s (job %s)", backend_name, job_id)
         return None
 
     def release(self, job_id: str):
@@ -97,6 +102,7 @@ class ResourceManager:
             pool = self._pools[pool_name]
             pool.current_usage = max(0, pool.current_usage - 1)
             pool.total_jobs += 1
+            logger.debug("Released pool %s for job %s", pool_name, job_id)
 
     def get_pool_status(self) -> Dict[str, Any]:
         """Get status of all resource pools."""

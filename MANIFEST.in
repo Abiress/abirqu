@@ -1,0 +1,7 @@
+include README.md
+include LICENSE
+include SECURITY.md
+include CONTRIBUTING.md
+include pyproject.toml
+recursive-include abirqu *.py *.typed
+recursive-include tests *.py

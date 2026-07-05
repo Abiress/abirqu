@@ -42,6 +42,7 @@ from typing import Any, Dict, List, Optional, Type
 import numpy as np
 
 from .circuit import Circuit
+from .exceptions import BackendError, JobError
 from .simulator import SimulatorBackend, RustSimulator, _serialize_circuit, HAS_RUST_CORE
 
 logger = logging.getLogger(__name__)
@@ -92,7 +93,10 @@ class JobHandle:
         """Cancel the job.  Returns True if cancellation was requested."""
         try:
             return self.backend.cancel_job(self.job_id)
-        except Exception:
+        except BackendError:
+            return False
+        except Exception as exc:
+            logger.warning("Unexpected error cancelling job %s: %s", self.job_id, exc)
             return False
 
     def result(self, timeout: Optional[float] = None) -> Dict[str, Any]:
@@ -113,10 +117,10 @@ class JobHandle:
                 self._result = self.backend.fetch_result(self.job_id)
                 return self._result
             elif status == JobStatus.FAILED:
-                self._error = RuntimeError(f"Job {self.job_id} failed")
+                self._error = JobError(f"Job {self.job_id} failed")
                 raise self._error
             elif status == JobStatus.CANCELED:
-                self._error = RuntimeError(f"Job {self.job_id} was canceled")
+                self._error = JobError(f"Job {self.job_id} was canceled")
                 raise self._error
 
             time.sleep(self.poll_interval)
@@ -278,8 +282,8 @@ class FastBackend(QuantumBackend):
             if noise_model is not None:
                 try:
                     probs_arr = noise_model.apply_to_probs_array(probs_arr, n)
-                except Exception:
-                    pass
+                except (AttributeError, ValueError) as exc:
+                    logger.warning("Noise model application failed: %s", exc)
 
             total = probs_arr.sum()
             if total > 0:
@@ -304,7 +308,8 @@ class FastBackend(QuantumBackend):
             if shots == 0:
                 try:
                     statevector = list(sim.get_statevector())
-                except Exception:
+                except (RuntimeError, AttributeError) as exc:
+                    logger.debug("Statevector retrieval failed: %s", exc)
                     statevector = None
 
             return {
@@ -401,10 +406,11 @@ class BackendRegistry:
                     if inspect.isclass(cls) and issubclass(cls, QuantumBackend):
                         key = getattr(cls, "name", ep.name).lower().replace("-", "").replace("_", "")
                         BackendRegistry._registry[key] = cls
-                except Exception as exc:
+                        logger.debug("Loaded backend plugin: %s", ep.name)
+                except (ImportError, AttributeError) as exc:
                     logger.warning("Failed to load backend plugin %s: %s", ep.name, exc)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Entry point discovery skipped: %s", exc)
 
     # ── Public API ────────────────────────────────────────────────────────
 
@@ -423,7 +429,7 @@ class BackendRegistry:
 
         cls = BackendRegistry._registry.get(key)
         if cls is None:
-            raise KeyError(
+            raise BackendError(
                 f"Unknown backend '{name}'. Available: {list(BackendRegistry._registry.keys())}"
             )
 

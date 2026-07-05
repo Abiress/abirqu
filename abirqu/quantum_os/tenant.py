@@ -6,6 +6,7 @@ Multi-tenant isolation for quantum computing resources.
 
 from __future__ import annotations
 
+import secrets
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -66,7 +67,7 @@ class Tenant:
     tier: TenantTier = TenantTier.FREE
     quotas: ResourceQuota = field(default_factory=ResourceQuota)
     environments: List[str] = field(default_factory=list)
-    api_key: str = field(default_factory=lambda: str(uuid.uuid4()).replace("-", ""))
+    api_key: str = field(default_factory=lambda: secrets.token_hex(32))
     created_at: float = field(default_factory=time.time)
     metadata: Dict = field(default_factory=dict)
     enabled: bool = True

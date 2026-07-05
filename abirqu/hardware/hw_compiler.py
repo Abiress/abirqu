@@ -5,9 +5,12 @@ Copyright 2026 Abir Maheshwari
 Compiles circuits optimized for specific hardware constraints:
 connectivity, native gate sets, noise characteristics.
 """
+import logging
 import time
 from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, field
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -107,6 +110,11 @@ class HardwareAwareCompiler:
             if g.get('name', '').upper() in ('CNOT', 'CX', 'CZ')
         )
 
+        logger.debug(
+            "Compiling %d gates for %d-qubit target '%s'",
+            len(gates), num_qubits, self.target.name,
+        )
+
         optimized = self._optimize(gates, num_qubits)
         mapped = self._map_to_connectivity(optimized, num_qubits)
         decomposed = self._decompose_to_native(mapped)
@@ -124,6 +132,13 @@ class HardwareAwareCompiler:
         self.report.compilation_time_ms = (time.time() - start_time) * 1000
 
         self._check_constraints(final, num_qubits)
+
+        logger.info(
+            "Compilation complete: %d→%d gates, depth %d→%d, %.1fms",
+            self.report.original_gates, self.report.compiled_gates,
+            self.report.original_depth, self.report.compiled_depth,
+            self.report.compilation_time_ms,
+        )
 
         return final, self.report
 
@@ -246,11 +261,13 @@ class HardwareAwareCompiler:
 
     def _check_constraints(self, gates: List[Dict], num_qubits: int):
         if self.report.compiled_depth > self.target.max_depth:
-            self.report.warnings.append(
-                f"Depth {self.report.compiled_depth} exceeds max {self.target.max_depth}")
+            msg = f"Depth {self.report.compiled_depth} exceeds max {self.target.max_depth}"
+            self.report.warnings.append(msg)
+            logger.warning(msg)
         if self.report.compiled_cnots > self.target.max_cnots:
-            self.report.warnings.append(
-                f"CNOTs {self.report.compiled_cnots} exceeds max {self.target.max_cnots}")
+            msg = f"CNOTs {self.report.compiled_cnots} exceeds max {self.target.max_cnots}"
+            self.report.warnings.append(msg)
+            logger.warning(msg)
 
     def get_render_data(self) -> Dict:
         return {

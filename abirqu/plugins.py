@@ -492,10 +492,23 @@ class SandboxedNamespace:
         self.permissions = permissions
         self.globals_dict = {}
     def execute(self, code):
-        if "import os" in code and "filesystem" not in self.permissions:
-            return {"success": False, "error": "ImportError"}
-        exec(code, self.globals_dict)
-        return {"success": True}
+        try:
+            import ast as _ast
+            tree = _ast.parse(code)
+            for node in _ast.walk(tree):
+                if isinstance(node, (_ast.Import, _ast.ImportFrom)) and "filesystem" not in self.permissions:
+                    return {"success": False, "error": "imports blocked in sandbox"}
+            safe_builtins = {
+                "len": len, "range": range, "min": min, "max": max,
+                "sum": sum, "abs": abs, "print": print,
+                "True": True, "False": False, "None": None,
+            }
+            if "filesystem" in self.permissions:
+                safe_builtins["__import__"] = __import__
+            exec(compile(tree, "<sandbox>", "exec"), {"__builtins__": safe_builtins}, self.globals_dict)
+            return {"success": True}
+        except Exception as exc:
+            return {"success": False, "error": str(exc)}
     def get(self, key):
         return self.globals_dict.get(key)
 

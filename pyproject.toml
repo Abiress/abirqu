@@ -1,11 +1,11 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "abirqu"
 version = "1.0.0"
-description = "Full-stack quantum computing SDK — real hardware support for IBM, D-Wave, SpinQ, and all quantum computers"
+description = "Full-stack quantum computing SDK"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
@@ -32,7 +32,8 @@ dependencies = [
     "numpy>=1.21.0",
     "scipy>=1.7.0",
     "networkx>=2.6",
-    "requests>=2.31.0"
+    "requests>=2.31.0",
+    "packaging>=21.0"
 ]
 
 [project.urls]
@@ -41,8 +42,10 @@ Documentation = "https://github.com/Abiress/abirqu#readme"
 Repository = "https://github.com/Abiress/abirqu"
 Issues = "https://github.com/Abiress/abirqu/issues"
 
+[project.scripts]
+abirqu = "abirqu.__main__:main"
+
 [project.optional-dependencies]
-# Hardware backends
 ibm = ["qiskit>=1.0", "qiskit-ibm-runtime>=0.20"]
 dwave = ["dimod>=0.12", "dwave-ocean-sdk>=6.0"]
 aws = ["amazon-braket-sdk>=1.56", "boto3>=1.28"]
@@ -54,14 +57,15 @@ quantinuum = ["pytket>=1.25", "pytket-quantinuum>=0.19"]
 pasqal = ["pulser-core>=0.12"]
 spinq = ["requests>=2.31"]
 all-hardware = ["abirqu[ibm,dwave,aws,azure,cirq]"]
-# Other
 gpu = ["cupy>=12.0.0"]
 visualization = ["matplotlib>=3.5.0"]
 crypto = ["cryptography>=3.4.0"]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
-    "hypothesis>=6.0.0"
+    "hypothesis>=6.0.0",
+    "mypy>=1.0",
+    "ruff>=0.1.0"
 ]
 docs = [
     "mkdocs>=1.5.0",
@@ -85,3 +89,9 @@ target-version = "py39"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
 ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true

@@ -39,6 +39,7 @@ setup(
         "scipy>=1.7.0",
         "networkx>=2.6",
         "requests>=2.31.0",
+        "packaging>=21.0",
     ],
     extras_require={
         "gpu": ["cupy>=12.0.0"],

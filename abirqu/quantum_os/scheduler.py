@@ -7,10 +7,13 @@ Job scheduling with FIFO, priority, and fair-share policies.
 from __future__ import annotations
 
 import heapq
+import logging
 from enum import Enum
 from typing import Callable, Dict, List, Optional
 
 from .job import QuantumJob, JobState
+
+logger = logging.getLogger(__name__)
 
 
 class SchedulingPolicy(str, Enum):
@@ -49,6 +52,7 @@ class QuantumScheduler:
 
         Returns the job ID.
         """
+        logger.debug("Submitting job %s (policy=%s)", job.job_id, self.policy.value)
         job.state = JobState.QUEUED
         if self.policy == SchedulingPolicy.PRIORITY:
             heapq.heappush(self._queue, (-job.priority, job.created_at, job))
@@ -65,6 +69,7 @@ class QuantumScheduler:
         Returns the job to execute, or None if no jobs are ready.
         """
         if not self._queue:
+            logger.debug("No jobs in queue")
             return None
 
         # Check backend capacity
@@ -87,6 +92,7 @@ class QuantumScheduler:
                 job.start()
                 self._running[job.job_id] = job
                 self._backends[backend] = running + 1
+                logger.info("Scheduled job %s on backend %s", job.job_id, backend)
                 return job
 
         return None
@@ -99,6 +105,7 @@ class QuantumScheduler:
             backend = job.backend_name
             self._backends[backend] = max(0, self._backends.get(backend, 1) - 1)
             self._completed.append(job)
+            logger.info("Completed job %s on backend %s", job_id, backend)
 
     def fail_job(self, job_id: str, error: str):
         """Mark a job as failed."""
@@ -108,9 +115,11 @@ class QuantumScheduler:
             backend = job.backend_name
             self._backends[backend] = max(0, self._backends.get(backend, 1) - 1)
             self._completed.append(job)
+            logger.warning("Failed job %s on backend %s: %s", job_id, backend, error)
 
     def cancel_job(self, job_id: str) -> bool:
         """Cancel a job."""
+        logger.debug("Attempting to cancel job %s", job_id)
         # Check queue
         for i, entry in enumerate(self._queue):
             if isinstance(entry, tuple):

@@ -1,12 +1,31 @@
 """AbirQu — next-generation quantum computing library."""
 
+from packaging.version import Version as _Version
+
 __version__ = "1.0.0"
 __author__ = "Abir Maheshwari"
 __email__ = "abhirsxn@gmail.com"
 __url__ = "https://github.com/abirqu/abirqu"
 
+# Experimental markers — hardware backends beyond IBM are experimental
+# and may change or be removed without following the standard deprecation
+# timeline.
+
 # Core exports
 from .circuit import Circuit, Gate, Measurement
+from .exceptions import (
+    AbirQuError,
+    CircuitError,
+    SimulationError,
+    BackendError,
+    TranspilerError,
+    HardwareError,
+    QuantumCommunicationError,
+    ConfigurationError,
+    AuthenticationError,
+    JobError,
+)
+from .logging_config import setup_logging
 from .gates import X, Y, Z, H, S, S_dag, T, T_dag, CNOT, CZ, SWAP, rx, ry, rz
 from .backend import (
     QuantumBackend,
@@ -155,6 +174,36 @@ def cli_main(argv=None):
     return main(argv)
 
 
+def check_version_compatibility(required_version: str) -> bool:
+    """Check if the installed AbirQu version satisfies a minimum requirement.
+
+    Args:
+        required_version: Minimum version string (e.g. "1.2.0").
+
+    Returns:
+        True if the current version >= required_version, False otherwise.
+
+    Raises:
+        ValueError: If *required_version* is not a valid version string.
+
+    Example:
+        >>> check_version_compatibility("1.0.0")
+        True
+        >>> check_version_compatibility("2.0.0")
+        False
+    """
+    current = _Version(__version__)
+    required = _Version(required_version)
+    return current >= required
+
+
+# ─── Experimental API markers ────────────────────────────────────────
+# Hardware backends beyond IBM are considered experimental and may
+# change or be removed without following the standard deprecation
+# timeline.  The following lazy-imported backends carry the experimental
+# tag: Braket, Azure, Google, IonQ, Rigetti, Quantinuum, Pasqal, OQC,
+# QuEra, DWave, and SpinQ.
+
 def __getattr__(name):
     # Plugin exports
     plugin_exports = {
@@ -189,15 +238,39 @@ def __getattr__(name):
         "DWaveBackend": (".backends.dwave", "DWaveBackend"),
         "SpinQBackend": (".backends.spinq", "SpinQBackend"),
     }
+    _experimental_backends = {
+        "BraketBackend", "AzureQuantumBackend", "GoogleQuantumBackend",
+        "IonQBackend", "RigettiBackend", "QuantinuumBackend", "PasqalBackend",
+        "OQCBackend", "QuEraBackend", "DWaveBackend", "SpinQBackend",
+    }
     if name in backend_imports:
         module_path, attr_name = backend_imports[name]
         import importlib
         mod = importlib.import_module(module_path, package="abirqu")
-        return getattr(mod, attr_name)
+        obj = getattr(mod, attr_name)
+        if name in _experimental_backends:
+            import warnings
+            warnings.warn(
+                f"{name} is an experimental backend. "
+                "Its API may change or be removed without notice.",
+                UserWarning,
+                stacklevel=2,
+            )
+        return obj
 
     if name == "AbirQuSDK":
         from .sdk import AbirQuSDK as _AbirQuSDK
         return _AbirQuSDK
+
+    if name == "quantum_os":
+        import warnings
+        warnings.warn(
+            "abirqu.quantum_os is experimental and its API may change without notice.",
+            UserWarning,
+            stacklevel=2,
+        )
+        from . import quantum_os as _qos
+        return _qos
 
     # Hardware module imports (lazy)
     hardware_imports = {
@@ -220,9 +293,15 @@ def __getattr__(name):
 
 
 __all__ = [
-    # Core
-    "Circuit", "Gate", "Measurement",
-    "X", "Y", "Z", "H", "S", "S_dag", "T", "T_dag", "CNOT", "CZ", "SWAP", "rx", "ry", "rz",
+	# Core
+	"Circuit", "Gate", "Measurement",
+	# Exceptions
+	"AbirQuError", "CircuitError", "SimulationError", "BackendError",
+	"TranspilerError", "HardwareError", "QuantumCommunicationError",
+	"ConfigurationError", "AuthenticationError", "JobError",
+	# Logging
+	"setup_logging",
+	"X", "Y", "Z", "H", "S", "S_dag", "T", "T_dag", "CNOT", "CZ", "SWAP", "rx", "ry", "rz",
     # Backend framework
     "QuantumBackend", "FastBackend", "BackendRegistry", "JobStatus", "JobHandle",
     "get_best_backend",
@@ -311,4 +390,6 @@ __all__ = [
     "HardwareCalibration", "QubitProperties", "GateProperties",
     "DeviceCharacterizer", "NoiseProfiler", "HardwareAwareCompiler",
     "CloudManager", "CloudProvider",
+    # Version utilities
+    "check_version_compatibility",
 ]
