@@ -172,6 +172,20 @@ Complete learning path from beginner to advanced quantum computing.
 | 119 | [QEC Cutting Edge](119.md) | Toric code, color code, decoders |
 | 120 | [Quantum Simulation Cutting Edge](120.md) | Hamiltonian, Lindblad, thermo |
 
+## Domain Applications (121-130)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 121 | [Medical Imaging](121.md) | MRI, CT, PET |
+| 122 | [Drug Discovery](122.md) | Docking, screening, ADMET |
+| 123 | [Genomics](123.md) | DNA alignment, gene expression |
+| 124 | [Clinical Trials](124.md) | Stratification, endpoints, adaptive |
+| 125 | [Epidemiology](125.md) | SIR model, contact tracing |
+| 126 | [Defense](126.md) | Cryptanalysis, secure comms |
+| 127 | [Finance](127.md) | Portfolio, risk, trading |
+| 128 | [Supply Chain](128.md) | Routing, inventory, forecasting |
+| 129 | [Energy](129.md) | Grid, renewables, storage |
+| 130 | [Transportation](130.md) | Traffic, fleet, autonomous |
+
 ---
 
 ## Learning Path
@@ -191,6 +205,9 @@ Master expert-level topics in quantum computing.
 ### Cutting-Edge (111-120)
 Explore cutting-edge applications and research topics.
 
+### Domain Applications (121-130)
+Apply quantum computing to real-world domains.
+
 ---
 
 ## Additional Resources
@@ -202,4 +219,4 @@ Explore cutting-edge applications and research topics.
 
 ---
 
-*120 tutorials covering quantum computing from basics to cutting-edge topics.*
+*130 tutorials covering quantum computing from basics to domain applications.*
