@@ -102,6 +102,20 @@ Complete learning path from beginner to advanced quantum computing.
 | 69 | [Expert Optimization](69.md) | Annealing, adiabatic QC |
 | 70 | [Expert Computing](70.md) | Paradigms, quantum advantage |
 
+## Expert Topics II (71-80)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 71 | [QRNG](71.md) | Quantum random number generation |
+| 72 | [Advanced QKD](72.md) | CV-QKD, MDI-QKD, DI-QKD |
+| 73 | [Advanced Sensing](73.md) | Heisenberg-limited sensing |
+| 74 | [Advanced Communication](74.md) | Repeaters, distillation |
+| 75 | [Advanced Networks](75.md) | Routing, entanglement management |
+| 76 | [Advanced Internet](76.md) | EaaS, quantum applications |
+| 77 | [Expert Computing II](77.md) | Models, complexity theory |
+| 78 | [Expert Algorithms](78.md) | Query complexity, primitives |
+| 79 | [Complexity Theory](79.md) | BQP, QMA, lower bounds |
+| 80 | [Expert Info Theory](80.md) | Capacity, Shannon theory |
+
 ---
 
 ## Learning Path
@@ -115,7 +129,7 @@ Continue with tutorials 11-30 for algorithms and machine learning.
 ### Advanced (31-50)
 Complete tutorials 31-50 for chemistry, error correction, and networking.
 
-### Expert (51-70)
+### Expert (51-80)
 Master expert-level topics in quantum computing.
 
 ---
@@ -129,4 +143,4 @@ Master expert-level topics in quantum computing.
 
 ---
 
-*70 tutorials covering quantum computing from basics to expert level.*
+*80 tutorials covering quantum computing from basics to expert level.*
