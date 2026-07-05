@@ -2,11 +2,15 @@
 
 Welcome to AbirQu! This guide will take you from zero to building your first quantum circuits.
 
+**What is AbirQu?** A pedagogical quantum computing SDK written in pure NumPy. It's a learning tool for understanding quantum computing concepts, not a production quantum platform.
+
 ---
 
 ## 1. What is Quantum Computing?
 
 Classical computers use **bits** (0 or 1). Quantum computers use **qubits** which can be in a **superposition** of both states simultaneously, and can be **entangled** with other qubits.
+
+**Important:** AbirQu *simulates* quantum computing on classical hardware. It does not run on real quantum computers.
 
 ### Key Concepts
 
@@ -21,11 +25,8 @@ Classical computers use **bits** (0 or 1). Quantum computers use **qubits** whic
 
 ## 2. Installation
 
-```bash
-pip install abirqu
-```
+AbirQu is not published on PyPI. Install from source:
 
-Or from source:
 ```bash
 git clone https://github.com/Abiress/abirqu.git
 cd abirqu
@@ -119,13 +120,11 @@ print(result.counts)  # Only '00' and '11' (never '01' or '10')
 - `result.counts` — Dictionary of measurement outcomes and their counts
 - `result.probabilities` — Dictionary of outcome probabilities
 - `result.mean` — Average measurement value
-- `result.expectation` — Expectation value of an observable
 
 ```python
 result = QuantumRun(circuit, shots=1000)
 print(result.counts)         # {'00': 500, '11': 500}
 print(result.probabilities)  # {'00': 0.5, '11': 0.5}
-print(result.mean)           # Average outcome
 ```
 
 ---
@@ -174,9 +173,9 @@ print(result.counts)
 
 ## 7. Using Different Backends
 
-AbirQu supports 12 hardware backends. Here's how to use them:
+AbirQu supports 12 hardware backends. Most are adapter stubs that call vendor SDKs.
 
-### D-Wave (Quantum Annealing)
+### D-Wave (Verified Locally)
 ```python
 from abirqu.dwave import DWave
 from abirqu.optimization import QUBO
@@ -187,7 +186,7 @@ result = backend.sample_qubo(qubo, num_reads=100)
 print(result.best_sample)
 ```
 
-### IBM Quantum
+### IBM Quantum (SDK-wired, not tested against real hardware)
 ```python
 from abirqu import Circuit
 from abirqu.backends import IBMBackend
@@ -197,29 +196,30 @@ circuit.h(0)
 circuit.cnot(0, 1)
 circuit.measure([0, 1])
 
-backend = IBMBackend(token="your_token", backend_name="ibmq_manila")
-result = backend.run(circuit, shots=1024)
-print(result.counts)
+# Note: Requires IBM Quantum token and qiskit-ibm-runtime
+# backend = IBMBackend(token="your_token", backend_name="ibmq_manila")
+# result = backend.run(circuit, shots=1024)
 ```
 
-### IonQ
-```python
-from abirqu import Circuit
-from abirqu.backends import IonQBackend
-
-circuit = Circuit(2)
-circuit.h(0)
-circuit.cnot(0, 1)
-circuit.measure([0, 1])
-
-backend = IonQBackend(api_key="your_key")
-result = backend.run(circuit, shots=1024)
-print(result.counts)
-```
+**Important:** Most hardware backends are SDK-wired adapters. They have NOT been tested against real quantum hardware.
 
 ---
 
-## 8. Next Steps
+## 8. What AbirQu Is NOT
+
+Be clear about limitations:
+
+| AbirQu | Real Production Tools |
+|--------|----------------------|
+| NumPy simulator | IBM Qiskit, Google Cirq |
+| Educational chemistry | PySCF, OpenFermion |
+| Simplified PQC | liboqs, pqcrypto |
+| Toy-scale QEC | Qiskit Qiskit Experiments |
+| Learning tool | Production quantum platform |
+
+---
+
+## 9. Next Steps
 
 Now that you know the basics, explore these topics:
 
@@ -239,11 +239,10 @@ See [tutorials/INDEX.md](../tutorials/INDEX.md) for the complete list of 200 tut
 
 ---
 
-## 9. Getting Help
+## 10. Getting Help
 
 - **GitHub**: [github.com/Abiress/abirqu](https://github.com/Abiress/abirqu)
 - **Issues**: [github.com/Abiress/abirqu/issues](https://github.com/Abiress/abirqu/issues)
-- **PyPI**: [pypi.org/project/abirqu](https://pypi.org/project/abirqu/)
 - **Author**: Abir Maheshwari — abhirsxn@gmail.com
 
 ---
