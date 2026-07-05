@@ -214,6 +214,20 @@ Complete learning path from beginner to advanced quantum computing.
 | 149 | [Entertainment](149.md) | Recommendations, creativity, audience |
 | 150 | [Fashion Tech](150.md) | Trends, sizes, supply chain |
 
+## More Industries (151-160)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 151 | [Automotive](151.md) | Autonomous driving, diagnostics, fleet |
+| 152 | [Aerospace](152.md) | Aircraft design, flight, maintenance |
+| 153 | [Maritime](153.md) | Routes, ports, cargo |
+| 154 | [Mining](154.md) | Exploration, extraction, safety |
+| 155 | [Oil & Gas](155.md) | Reservoir, drilling, production |
+| 156 | [Utilities](156.md) | Power, water, waste |
+| 157 | [Telecom](157.md) | Network, signals, resources |
+| 158 | [Media](158.md) | Delivery, audience, ads |
+| 159 | [Publishing](159.md) | Recommendation, editorial, distribution |
+| 160 | [Advertising](160.md) | Campaigns, targeting, ROI |
+
 ---
 
 ## Learning Path
@@ -233,7 +247,7 @@ Master expert-level topics in quantum computing.
 ### Cutting-Edge (111-120)
 Explore cutting-edge applications and research topics.
 
-### Domain Applications (121-150)
+### Domain Applications (121-160)
 Apply quantum computing to real-world domains.
 
 ---
@@ -247,4 +261,4 @@ Apply quantum computing to real-world domains.
 
 ---
 
-*150 tutorials covering quantum computing from basics to industry applications.*
+*160 tutorials covering quantum computing from basics to industry applications.*
