@@ -186,6 +186,20 @@ Complete learning path from beginner to advanced quantum computing.
 | 129 | [Energy](129.md) | Grid, renewables, storage |
 | 130 | [Transportation](130.md) | Traffic, fleet, autonomous |
 
+## Advanced Domains (131-140)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 131 | [Climate Modeling](131.md) | Climate, weather, carbon |
+| 132 | [Agriculture](132.md) | Crop, pest, yield |
+| 133 | [Materials Science](133.md) | Properties, crystals, alloys |
+| 134 | [Nanotechnology](134.md) | Nanoparticles, assembly, characterization |
+| 135 | [Photonics](135.md) | Photonic circuits, light-matter, optical |
+| 136 | [Biotechnology](136.md) | Proteins, enzymes, bioprocess |
+| 137 | [Neuroscience](137.md) | Brain, neural coding, cognition |
+| 138 | [Robotics](138.md) | Path, sensors, motion |
+| 139 | [Cybersecurity](139.md) | Threats, vulnerabilities, security |
+| 140 | [Smart Cities](140.md) | Urban, resources, infrastructure |
+
 ---
 
 ## Learning Path
@@ -205,7 +219,7 @@ Master expert-level topics in quantum computing.
 ### Cutting-Edge (111-120)
 Explore cutting-edge applications and research topics.
 
-### Domain Applications (121-130)
+### Domain Applications (121-140)
 Apply quantum computing to real-world domains.
 
 ---
@@ -219,4 +233,4 @@ Apply quantum computing to real-world domains.
 
 ---
 
-*130 tutorials covering quantum computing from basics to domain applications.*
+*140 tutorials covering quantum computing from basics to advanced domains.*
