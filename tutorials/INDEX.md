@@ -74,21 +74,49 @@ Complete learning path from beginner to advanced quantum computing.
 | 49 | [Quantum Internet](49.md) | Global quantum networks |
 | 50 | [Hardware](50.md) | Computing platforms |
 
+## Advanced Topics (51-60)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 51 | [Spin Chains](51.md) | Quantum spin chain simulation |
+| 52 | [Lattice Gas](52.md) | Quantum lattice gas automata |
+| 53 | [Advanced Optimization](53.md) | Multi-objective optimization |
+| 54 | [Advanced QML](54.md) | Kernel methods, generative models |
+| 55 | [Advanced QRL](55.md) | Policy gradients, value functions |
+| 56 | [Advanced Chemistry](56.md) | Active space, energy decomposition |
+| 57 | [Advanced QEC](57.md) | Toric codes, LDPC codes |
+| 58 | [Advanced Simulation](58.md) | Trotter-Suzuki, LCU |
+| 59 | [Expert QML](59.md) | NAS, meta-learning, federated |
+| 60 | [Expert Optimization](60.md) | SDP, portfolio optimization |
+
+## Expert Topics (61-70)
+| # | Tutorial | Description |
+|---|----------|-------------|
+| 61 | [Expert NLP](61.md) | Quantum transformers, attention |
+| 62 | [Expert CV](62.md) | Quantum CNN, object detection |
+| 63 | [Expert Time Series](63.md) | Quantum RNN, seq2seq |
+| 64 | [Expert QRL](64.md) | Model-based, hierarchical RL |
+| 65 | [Expert Chemistry](65.md) | QMC, density matrix estimation |
+| 66 | [Expert QEC](66.md) | Fault-tolerant computing |
+| 67 | [Expert Simulation](67.md) | Digital, analog, hybrid |
+| 68 | [Expert QML](68.md) | GANs, VAEs, Boltzmann machines |
+| 69 | [Expert Optimization](69.md) | Annealing, adiabatic QC |
+| 70 | [Expert Computing](70.md) | Paradigms, quantum advantage |
+
 ---
 
 ## Learning Path
 
-### Beginner
+### Beginner (1-10)
 Start with tutorials 1-10 to understand quantum computing basics.
 
-### Intermediate
+### Intermediate (11-30)
 Continue with tutorials 11-30 for algorithms and machine learning.
 
-### Advanced
+### Advanced (31-50)
 Complete tutorials 31-50 for chemistry, error correction, and networking.
 
-### Expert
-Explore the [AbirQu library](../abirqu/) for production-grade implementations.
+### Expert (51-70)
+Master expert-level topics in quantum computing.
 
 ---
 
@@ -101,4 +129,4 @@ Explore the [AbirQu library](../abirqu/) for production-grade implementations.
 
 ---
 
-*50 tutorials covering quantum computing from basics to advanced topics.*
+*70 tutorials covering quantum computing from basics to expert level.*
