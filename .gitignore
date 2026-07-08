@@ -86,3 +86,8 @@ swift/.build/
 # .NET build artifacts
 dotnet/**/bin/
 dotnet/**/obj/
+
+# Gradle build artifacts
+kotlin/.gradle/
+kotlin/build/
+.gradle/

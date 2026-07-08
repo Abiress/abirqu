@@ -581,12 +581,12 @@ Production-grade QEC with multiple code families and decoders:
 | Language | Status | Notes |
 |----------|--------|-------|
 | **Python** | ✅ Complete | Primary SDK, full feature set (627 tests) |
-| **JavaScript/TypeScript** | ✅ Complete | `@abirqu/js` — standalone pure-JS, 17 tests passing, npm publishable |
+| **JavaScript/TypeScript** | ✅ Complete | `@abirqu/js` — standalone pure-JS, **30 tests** (bindings/javascript/), npm publishable |
 | **Go** | ✅ Complete | cgo bindings to Rust `libabirqu_core.so` — `go test` passes |
-| **Java** | ✅ Complete | JNA bindings to Rust `libabirqu_core.so` — 13 tests passing |
-| **.NET** | ✅ Complete | P/Invoke bindings to Rust `libabirqu_core.so` — 6 tests passing |
-| **Swift** | ✅ Complete | CInterop bindings to Rust `libabirqu_core.so` — 4 tests passing |
-| **Kotlin** | ✅ Complete | JNA bindings to Rust `libabirqu_core.so` — runtime-verified |
+| **Java** | ✅ Complete | JNA bindings to Rust `libabirqu_core.so` — **13 tests** (Maven: `mvn test`) |
+| **.NET** | ✅ Complete | P/Invoke bindings to Rust `libabirqu_core.so` — **6 tests** (`dotnet test`) |
+| **Swift** | ✅ Complete | CInterop bindings to Rust `libabirqu_core.so` — **4 tests** (`swift test`) |
+| **Kotlin** | ✅ Complete | JNA bindings to Rust `libabirqu_core.so` — runtime-verified (Gradle) |
 | **WebAssembly** | ✅ Complete | Pyodide-based browser/Node.js runtime (`bindings/wasm/`) |
 
 All bindings (except JS/TS which is pure-JS, and WASM which uses Pyodide) wrap the
@@ -600,17 +600,21 @@ export LD_LIBRARY_PATH=$PWD/target/release:$LD_LIBRARY_PATH
 
 **Run binding tests:**
 ```bash
-cd go/abirqu && go test ./...                    # Go
-javac -cp jna.jar -d out java/src/main/java/com/abirqu/*.java java/TestAbirQu.java && java -cp out:jna.jar -Djna.library.path=$PWD/target/release TestAbirQu   # Java
-dotnet test dotnet/tests/AbirQu.Tests.csproj     # .NET
-cd swift && swift test                           # Swift
+cd go/abirqu && go test ./...                              # Go
+cd java && mvn -q test                                     # Java (needs JNA on classpath)
+cd dotnet && dotnet test tests/AbirQu.Tests.csproj         # .NET
+cd swift && swift test                                      # Swift
+cd kotlin && ./gradlew test                                 # Kotlin
+cd bindings/javascript && npm test                          # JS/TS (@abirqu/js, 30 tests)
+cd js && node tests/run-tests.js                            # JS (alt, 17 tests)
 ```
 
-The JavaScript/TypeScript binding is a **standalone pure-JavaScript** implementation
-(no Rust/Python dependency) and runs in browsers and Node.js. WebAssembly runs the
-full Python SDK via Pyodide.
+The JavaScript/TypeScript binding (`@abirqu/js`) is a **standalone pure-JavaScript**
+implementation (no Rust/Python dependency) and runs in browsers and Node.js.
+WebAssembly runs the full Python SDK via Pyodide.
 
-**Verification status:** Python ✅, JavaScript ✅, Go ✅, Java ✅, .NET ✅, Swift ✅, Kotlin ✅, WebAssembly ✅ — all runtime-verified.
+**Verification status:** Python ✅, JavaScript ✅ (30 tests), Go ✅, Java ✅ (13),
+.NET ✅ (6), Swift ✅ (4), Kotlin ✅, WebAssembly ✅ — all runtime-verified in CI.
 
 ---
 

@@ -17,24 +17,29 @@ import numpy as np
 from datetime import datetime
 from typing import List, Dict, Tuple
 
-# Set IBM token (use environment variable or .env file)
-# Get token from env, or load from .env if present
-import os.path
-if not os.getenv('IBM_QUANTUM_TOKEN'):
+from abirqu import Circuit
+from abirqu.primitives import QuantumRun
+
+
+def _load_ibm_token() -> str:
+    """Load IBM Quantum token from environment or local .env file.
+
+    Returns the token string, or raises a clear error if not configured.
+    Only call this when actually submitting jobs to IBM hardware.
+    """
+    token = os.getenv('IBM_QUANTUM_TOKEN')
+    if token:
+        return token
     env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
     if os.path.exists(env_path):
         with open(env_path) as f:
             for line in f:
                 if line.strip().startswith('IBM_QUANTUM_TOKEN'):
-                    os.environ['IBM_QUANTUM_TOKEN'] = line.strip().split('=', 1)[1].strip().strip('"\'')
-    else:
-        raise RuntimeError(
-            "IBM_QUANTUM_TOKEN not set. Set the environment variable or create a .env file. "
-            "Get your token from https://quantum.cloud.ibm.com/"
-        )
-
-from abirqu import Circuit
-from abirqu.primitives import QuantumRun
+                    return line.strip().split('=', 1)[1].strip().strip('"\'')
+    raise RuntimeError(
+        "IBM_QUANTUM_TOKEN not set. Set the environment variable or create a .env file. "
+        "Get your token from https://quantum.cloud.ibm.com/"
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -293,10 +298,12 @@ def quantum_reason(graph: DynamicMemoryGraph, shots: int = 1000) -> Dict:
 
 def run_on_ibm硬件(graph: DynamicMemoryGraph, shots: int = 100) -> Dict:
     """Run the quantum reasoning circuit on real IBM hardware."""
-    from abirqu.backends.ibm import IBMQuantumBackend
+    from abirqu.backends.ibm import IBMQuantumBackend, IBMQuantumCredentials
 
+    token = _load_ibm_token()
+    creds = IBMQuantumCredentials(api_token=token)
     circuit = build_quantum_reasoning_circuit(graph)
-    backend = IBMQuantumBackend(backend_name='ibm_fez')
+    backend = IBMQuantumBackend(credentials=creds, backend_name='ibm_fez')
 
     print(f"\nRunning on IBM Quantum (ibm_fez)...")
     result = backend.run_circuit(circuit, shots=shots)
