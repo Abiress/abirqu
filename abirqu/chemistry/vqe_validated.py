@@ -1,234 +1,208 @@
 """
-Validated Chemistry: VQE convergence for H2 against literature values.
+VQE Convergence Validation — H₂ Molecule
+==========================================
 
-Implements a proper VQE with COBYLA optimizer and exact statevector evaluation,
-validated against the known H2 ground state energy (-1.137 Ha at equilibrium).
+Variational Quantum Eigensolver (VQE) convergence validation for the H₂
+hydrogen molecule ground state energy. Uses exact statevector evaluation
+(no sampling noise) with COBYLA optimizer and hardware-efficient ansatz.
+
+Reference: H₂ FCI ground state at 0.74 Å ≈ −1.137 Ha.
+Target: Chemical accuracy (< 0.0016 Ha error).
 """
-
+import math
 import numpy as np
-from typing import Optional
-from ..circuit import Circuit
-from ..primitives import QuantumRun
+from typing import List, Tuple, Optional
+
+from abirqu import Circuit
 
 
-# H2 molecular Hamiltonian at equilibrium (0.735 Å)
-# Literature value: -1.137 Hartree (FCI)
-H2_LITERATURE_ENERGY = -1.137
-H2_NUCLEAR_REPULSION = 0.7199689944
+# ─────────────────────────────────────────────────────────────
+# H₂ Hamiltonian in STO-3G with Jordan-Wigner mapping (2 qubits)
+# ─────────────────────────────────────────────────────────────
 
-# Pauli Hamiltonian terms for H2 (STO-3G, Jordan-Wigner)
-# Format: (coefficient, pauli_labels)
-H2_PAULI_TERMS = [
-    (-0.81054, "II"),
-    (-0.17120, "IZ"),
-    (0.17120, "ZI"),
-    (0.12062, "ZZ"),
-    (0.04543, "XX"),
-    (0.04543, "YY"),
-]
+# Nuclear repulsion energy at R = 0.74 Å (1.398 Bohr)
+_NUCLEAR_REPULSION = 1.0 / (0.74 / 0.52917721092)  # ≈ 0.7151 Ha
+
+# Electronic Hamiltonian coefficients (from OpenFermion / Qiskit textbook)
+# H_elec = g0_e*I + g1*Z0 + g2*Z1 + g3*Z0Z1 + g4*X0X1 + g5*Y0Y1
+_G0_ELECTRONIC = -0.4804
+_G1 = +0.3435
+_G2 = -0.4347
+_G3 = +0.5716
+_G4 = +0.0910
+_G5 = +0.0910
+
+# Total constant term includes nuclear repulsion
+_G0 = _G0_ELECTRONIC + _NUCLEAR_REPULSION
+
+# Build the full 4×4 Hamiltonian matrix
+_I2 = np.eye(2, dtype=complex)
+_Z = np.array([[1, 0], [0, -1]], dtype=complex)
+_X = np.array([[0, 1], [1, 0]], dtype=complex)
+_Y = np.array([[0, -1j], [1j, 0]], dtype=complex)
+
+HAMILTONIAN = (
+    _G0 * np.kron(_I2, _I2)
+    + _G1 * np.kron(_Z, _I2)
+    + _G2 * np.kron(_I2, _Z)
+    + _G3 * np.kron(_Z, _Z)
+    + _G4 * np.kron(_X, _X)
+    + _G5 * np.kron(_Y, _Y)
+)
+
+# FCI reference energy
+FCI_ENERGY = -1.137270
+
+# Chemical accuracy threshold (1 kcal/mol in Hartree)
+CHEMICAL_ACCURACY = 0.0016
 
 
-def _build_vqe_ansatz(num_qubits: int, params: np.ndarray) -> Circuit:
-    """Build a hardware-efficient VQE ansatz."""
-    c = Circuit(num_qubits, "VQE_Ansatz")
-    depth = len(params) // num_qubits
+# ─────────────────────────────────────────────────────────────
+# Statevector simulation
+# ─────────────────────────────────────────────────────────────
 
-    for layer in range(depth):
-        for q in range(num_qubits):
-            idx = layer * num_qubits + q
+def _get_statevector(circuit: Circuit) -> np.ndarray:
+    """Simulate circuit and return exact statevector (no sampling noise)."""
+    from abirqu.numpy_sim import NumPySimulator
+    sim = NumPySimulator(num_qubits=circuit.num_qubits)
+    sim.run_circuit(circuit)
+    return sim.get_state_vector().copy()
+
+
+def _energy_from_statevector(statevector: np.ndarray) -> float:
+    """Compute <ψ|H|ψ> exactly from a statevector."""
+    return float(np.real(statevector.conj() @ HAMILTONIAN @ statevector))
+
+
+# ─────────────────────────────────────────────────────────────
+# VQE ansatz
+# ─────────────────────────────────────────────────────────────
+
+def _make_vqe_circuit(params: List[float], n_qubits: int = 2) -> Circuit:
+    """Build parameterised VQE circuit with RY rotations and CNOT entanglement.
+
+    Uses 3 layers of [RY on each qubit, CNOT chain] for sufficient
+    expressiveness to reach chemical accuracy on the 2-qubit H₂ problem.
+    """
+    c = Circuit(n_qubits, name="vqe_ansatz")
+    idx = 0
+    for layer in range(3):
+        for q in range(n_qubits):
             if idx < len(params):
                 c.ry(q, params[idx])
-        for q in range(num_qubits - 1):
+                idx += 1
+        for q in range(n_qubits - 1):
             c.cnot(q, q + 1)
-
     return c
 
 
-def _evaluate_energy(params: np.ndarray, num_qubits: int = 2) -> float:
-    """Evaluate VQE energy expectation value using statevector simulation."""
-    from ..simulation import GPUSimulator
-
-    circuit = _build_vqe_ansatz(num_qubits, params)
-
-    # Get statevector
-    sim = GPUSimulator(num_qubits)
-    sim.run_circuit(circuit)
-    state = sim.get_statevector()
-
-    # Compute <ψ|H|ψ> using Pauli terms
-    energy = 0.0
-    for coeff, paulis in H2_PAULI_TERMS:
-        # Build Pauli matrix and compute expectation
-        pauli_matrix = _pauli_string_matrix(paulis, num_qubits)
-        expectation = np.real(np.conj(state) @ pauli_matrix @ state)
-        energy += coeff * expectation
-
-    return energy
-
-
-def _pauli_string_matrix(paulis: str, num_qubits: int) -> np.ndarray:
-    """Build the matrix for a tensor product of Pauli matrices."""
-    pauli_map = {
-        "I": np.eye(2),
-        "X": np.array([[0, 1], [1, 0]]),
-        "Y": np.array([[0, -1j], [1j, 0]]),
-        "Z": np.array([[1, 0], [0, -1]]),
-    }
-
-    result = np.array([[1.0]])
-    for i in range(num_qubits):
-        p = paulis[i] if i < len(paulis) else "I"
-        result = np.kron(result, pauli_map[p])
-    return result
-
-
-def _cobyla_optimize(
-    objective,
-    num_params: int,
-    max_iterations: int = 200,
-    tol: float = 1e-6,
-) -> tuple:
-    """COBYLA optimizer implementation."""
-    # Initial point
-    x = np.random.uniform(0, 2 * np.pi, num_params)
-    best_x = x.copy()
-    best_val = objective(x)
-
-    # COBYLA parameters
-    rho_0 = 0.25
-    rhobeg = rho_0
-    alpha = 0.25
-    beta = 0.5
-    gamma = 0.5
-
-    for iteration in range(max_iterations):
-        # Generate simplex
-        n = len(x)
-        simplex = np.zeros((n + 1, n))
-        simplex[0] = x
-        for i in range(n):
-            simplex[i + 1] = x.copy()
-            simplex[i + 1, i] += rhobeg
-
-        # Evaluate simplex
-        f_vals = np.array([objective(s) for s in simplex])
-
-        # Order by function value
-        order = np.argsort(f_vals)
-        simplex = simplex[order]
-        f_vals = f_vals[order]
-
-        # Check convergence
-        if f_vals[0] < best_val - tol:
-            best_val = f_vals[0]
-            best_x = simplex[0].copy()
-
-        if rhobeg < tol:
-            break
-
-        # Compute centroid (exclude worst)
-        centroid = np.mean(simplex[:-1], axis=0)
-
-        # Reflection
-        x_new = centroid + alpha * (centroid - simplex[-1])
-        f_new = objective(x_new)
-
-        if f_new < f_vals[-2]:
-            simplex[-1] = x_new
-            f_vals[-1] = f_new
-        else:
-            # Contraction
-            x_new = centroid + beta * (simplex[-1] - centroid)
-            f_new = objective(x_new)
-            if f_new < f_vals[-1]:
-                simplex[-1] = x_new
-                f_vals[-1] = f_new
-            else:
-                # Shrink
-                rhobeg *= gamma
-                for i in range(1, n + 1):
-                    simplex[i] = simplex[0] + gamma * (simplex[i] - simplex[0])
-
-        x = simplex[0].copy()
-
-    return best_x, best_val
-
+# ─────────────────────────────────────────────────────────────
+# VQE optimisation
+# ─────────────────────────────────────────────────────────────
 
 def run_vqe_h2(
-    max_iterations: int = 150,
-    num_restarts: int = 5,
+    n_qubits: int = 2,
+    maxiter: int = 500,
     seed: int = 42,
-) -> dict:
-    """Run VQE for H2 and validate against literature.
-
-    Returns:
-        Dict with energy, error, convergence history, and validation status
+    rhobeg: float = 0.5,
+) -> Tuple[float, List[float], List[float]]:
     """
+    Run VQE for H₂ molecule ground state energy.
+
+    Uses COBYLA optimizer for faster convergence to chemical accuracy.
+    Returns (best_energy, energy_history, param_history).
+
+    Parameters
+    ----------
+    n_qubits : int
+        Number of qubits (2 for STO-3G).
+    maxiter : int
+        Maximum optimizer iterations.
+    seed : int
+        Random seed for reproducibility.
+    rhobeg : float
+        Initial step size for COBYLA.
+
+    Returns
+    -------
+    Tuple[float, List[float], List[float]]
+        (best_energy, energy_history, parameter_history)
+    """
+    from scipy.optimize import minimize
+
+    n_params = 3 * n_qubits  # 3 layers × n_qubits
     np.random.seed(seed)
+    params = np.random.uniform(0, 2 * math.pi, n_params)
 
-    num_qubits = 2
-    num_params = 6  # 3 layers × 2 qubits
+    energy_history = []
+    param_history = []
 
-    best_energy = 0.0
-    best_params = None
-    convergence = []
+    def cost_function(p):
+        c = _make_vqe_circuit(list(p), n_qubits)
+        sv = _get_statevector(c)
+        energy = _energy_from_statevector(sv)
+        energy_history.append(energy)
+        param_history.append(list(p))
+        return energy
 
-    for restart in range(num_restarts):
-        x0 = np.random.uniform(0, 2 * np.pi, num_params)
+    result = minimize(
+        cost_function,
+        params,
+        method="COBYLA",
+        options={"maxiter": maxiter, "rhobeg": rhobeg},
+    )
 
-        def objective(params):
-            return _evaluate_energy(params, num_qubits)
-
-        # Track convergence
-        iteration_data = []
-
-        def tracked_objective(params):
-            val = objective(params)
-            iteration_data.append(val)
-            return val
-
-        params, energy = _cobyla_optimize(
-            tracked_objective, num_params, max_iterations=max_iterations
-        )
-
-        if best_params is None or energy < best_energy:
-            best_energy = energy
-            best_params = params.copy()
-            convergence = iteration_data
-
-    error = abs(best_energy - H2_LITERATURE_ENERGY)
-    validated = error < 0.05  # Within 0.05 Ha of literature
-
-    return {
-        "energy": best_energy,
-        "literature_energy": H2_LITERATURE_ENERGY,
-        "error_ha": error,
-        "error_pct": abs(error / H2_LITERATURE_ENERGY) * 100,
-        "validated": validated,
-        "convergence": convergence,
-        "num_iterations": len(convergence),
-        "params": best_params.tolist() if best_params is not None else [],
-    }
+    return result.fun, energy_history, param_history
 
 
-def print_vqe_report(result: dict):
-    """Print a formatted VQE validation report."""
-    print("=" * 60)
-    print("VQE VALIDATION — H2 Molecule (STO-3G)")
-    print("=" * 60)
-    print(f"Literature energy:   {result['literature_energy']:.6f} Ha")
-    print(f"VQE energy:          {result['energy']:.6f} Ha")
-    print(f"Error:               {result['error_ha']:.6f} Ha ({result['error_pct']:.2f}%)")
-    print(f"Iterations:          {result['num_iterations']}")
+def print_vqe_report(
+    best_energy: float,
+    energy_history: List[float],
+    param_history: Optional[List[List[float]]] = None,
+) -> bool:
+    """Print VQE convergence report and return True if chemical accuracy achieved."""
+    error = abs(best_energy - FCI_ENERGY)
+    achieved = error < CHEMICAL_ACCURACY
+
+    print(f"\n{'─'*50}")
+    print(f"  VQE Convergence Report")
+    print(f"{'─'*50}")
+    print(f"  Best VQE energy   : {best_energy:.6f} Ha")
+    print(f"  FCI reference     : {FCI_ENERGY:.6f} Ha")
+    print(f"  Energy error      : {error:.6f} Ha")
+    print(f"  Chemical accuracy : {'ACHIEVED ✓' if achieved else 'NOT achieved'}")
+    print(f"  Target error      : < {CHEMICAL_ACCURACY} Ha (1 kcal/mol)")
+    print(f"  Iterations        : {len(energy_history)}")
+    print(f"{'─'*50}")
+
+    if energy_history:
+        print(f"\n  Convergence trajectory:")
+        n = len(energy_history)
+        checkpoints = [0, n // 4, n // 2, 3 * n // 4, n - 1]
+        for i in checkpoints:
+            e = energy_history[i]
+            print(f"    Iter {i:4d}: {e:.6f} Ha (err: {abs(e - FCI_ENERGY):.6f})")
+
     print()
+    return achieved
 
-    if result["validated"]:
-        print(f"STATUS: VALIDATED — Error {result['error_ha']:.4f} Ha < 0.05 Ha threshold")
-    else:
-        print(f"STATUS: NOT VALIDATED — Error {result['error_ha']:.4f} Ha >= 0.05 Ha")
-    print("=" * 60)
 
+# ─────────────────────────────────────────────────────────────
+# Main
+# ─────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    result = run_vqe_h2()
-    print_vqe_report(result)
+    print("AbirQu — VQE Convergence Validation")
+    print("====================================")
+    print("\nH₂ ground state FCI energy ≈ −1.137 Hartree (reference)\n")
+
+    best_e, e_history, p_history = run_vqe_h2(n_qubits=2, maxiter=500)
+
+    achieved = print_vqe_report(best_e, e_history, p_history)
+
+    if achieved:
+        print("  RESULT: VQE achieves chemical accuracy for H₂ molecule")
+    else:
+        print("  RESULT: VQE did not reach chemical accuracy — needs tuning")
+
+    print("\nDone!")

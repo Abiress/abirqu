@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AbirQu — Quantum Computing in the Browser</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #00ff88, #00aaff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .subtitle { color: #888; margin-bottom: 30px; }
+        .panel {
+            background: #12121a;
+            border: 1px solid #2a2a3a;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .panel h2 {
+            color: #00ff88;
+            margin-bottom: 16px;
+            font-size: 1.3em;
+        }
+        textarea {
+            width: 100%;
+            background: #1a1a2a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            padding: 16px;
+            resize: vertical;
+            min-height: 200px;
+        }
+        textarea:focus { outline: none; border-color: #00ff88; }
+        .btn-row { display: flex; gap: 12px; margin-top: 16px; }
+        button {
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,255,136,0.3); }
+        button:disabled { background: #444; color: #888; cursor: not-allowed; transform: none; box-shadow: none; }
+        .secondary {
+            background: transparent;
+            border: 1px solid #444;
+            color: #aaa;
+        }
+        .secondary:hover { border-color: #00ff88; color: #00ff88; }
+        #output {
+            background: #0a0a12;
+            border: 1px solid #1a1a2a;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 16px;
+            line-height: 1.6;
+        }
+        .status { color: #888; font-size: 0.9em; margin-top: 8px; }
+        .status.loading { color: #ffaa00; }
+        .status.ready { color: #00ff88; }
+        .status.error { color: #ff4444; }
+        .examples { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .example-btn {
+            background: #1a1a2a;
+            border: 1px solid #333;
+            color: #aaa;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .example-btn:hover { border-color: #00ff88; color: #00ff88; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AbirQu WebAssembly</h1>
+        <p class="subtitle">Run quantum circuits directly in your browser — no server needed</p>
+
+        <div class="panel">
+            <h2>Quantum Circuit Editor</h2>
+            <div class="examples">
+                <button class="example-btn" onclick="loadExample('bell')">Bell State</button>
+                <button class="example-btn" onclick="loadExample('ghz')">GHZ State</button>
+                <button class="example-btn" onclick="loadExample('grover')">Grover Search</button>
+                <button class="example-btn" onclick="loadExample('shor')">Shor (15)</button>
+            </div>
+            <textarea id="code">from abirqu import Circuit
+from abirqu.primitives import QuantumRun
+
+# Create a Bell state
+circuit = Circuit(2)
+circuit.h(0)
+circuit.cnot(0, 1)
+circuit.measure_all()
+
+# Run 1000 shots
+result = QuantumRun(circuit, shots=1000)
+print("Bell state counts:", result.counts)
+print("Success:", "00" in result.counts and "11" in result.counts)</textarea>
+            <div class="btn-row">
+                <button id="runBtn" onclick="runCode()" disabled>Run Circuit</button>
+                <button class="secondary" onclick="clearOutput()">Clear Output</button>
+            </div>
+            <div id="status" class="status loading">Loading Pyodide runtime...</div>
+            <div id="output">Initializing quantum runtime...</div>
+        </div>
+
+        <div class="panel">
+            <h2>About</h2>
+            <p style="color: #aaa; line-height: 1.8;">
+                AbirQu WebAssembly runs the full Python SDK in your browser using
+                <a href="https://pyodide.org" style="color: #00aaff;">Pyodide</a>.
+                Circuits are simulated locally — no data leaves your machine.
+                Supports: Circuit construction, statevector simulation, pattern templates,
+                and the full API surface.
+            </p>
+        </div>
+    </div>
+
+    <script>
+    let pyodide = null;
+
+    async function initPyodide() {
+        const status = document.getElementById('status');
+        try {
+            pyodide = await loadPyodide();
+            status.textContent = 'Installing abirqu...';
+            await pyodide.loadPackage('micropip');
+            await pyodide.runPythonAsync(`
+                import micropip
+                await micropip.install('abirqu')
+            `);
+            status.textContent = 'Ready';
+            status.className = 'status ready';
+            document.getElementById('runBtn').disabled = false;
+        } catch (e) {
+            status.textContent = 'Error: ' + e.message;
+            status.className = 'status error';
+        }
+    }
+
+    const examples = {
+        bell: `from abirqu import Circuit
+from abirqu.primitives import QuantumRun
+
+circuit = Circuit(2)
+circuit.h(0)
+circuit.cnot(0, 1)
+circuit.measure_all()
+
+result = QuantumRun(circuit, shots=1000)
+print("Bell state counts:", result.counts)`,
+        ghz: `from abirqu.library import ghz_circuit
+from abirqu.primitives import QuantumRun
+
+circuit = ghz_circuit(num_qubits=4)
+circuit.measure_all()
+
+result = QuantumRun(circuit, shots=1000)
+print("GHZ-4 counts:", result.counts)`,
+        grover: `from abirqu.library import grover_circuit
+from abirqu.primitives import QuantumRun
+
+# Search for state |11⟩ (target=3)
+circuit = grover_circuit(num_qubits=2, target=3)
+circuit.measure_all()
+
+result = QuantumRun(circuit, shots=1000)
+print("Grover search for |11⟩:", result.counts)
+print("Found with", result.counts.get("11", 0), "out of 1000 shots")`,
+        shor: `from abirqu.algorithms.shor_quantum import shor_factor, print_shor_report
+
+# Factor 15 using Shor's algorithm
+p, q, attempts = shor_factor(15)
+print_shor_report(15, p, q, attempts)`
+    };
+
+    function loadExample(name) {
+        document.getElementById('code').value = examples[name];
+    }
+
+    function clearOutput() {
+        document.getElementById('output').textContent = '';
+    }
+
+    async function runCode() {
+        const code = document.getElementById('code').value;
+        const output = document.getElementById('output');
+        const btn = document.getElementById('runBtn');
+        const status = document.getElementById('status');
+
+        btn.disabled = true;
+        status.textContent = 'Running...';
+        status.className = 'status loading';
+        output.textContent = '';
+
+        // Capture stdout
+        pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+`);
+
+        try {
+            await pyodide.runPythonAsync(code);
+
+            const stdout = pyodide.runPython('sys.stdout.getvalue()');
+            output.textContent = stdout || '(no output)';
+
+            status.textContent = 'Completed successfully';
+            status.className = 'status ready';
+        } catch (e) {
+            output.textContent = 'Error:\n' + e.message;
+            status.textContent = 'Execution failed';
+            status.className = 'status error';
+        } finally {
+            pyodide.runPython('sys.stdout = sys.__stdout__');
+            btn.disabled = false;
+        }
+    }
+
+    initPyodide();
+    </script>
+</body>
+</html>
