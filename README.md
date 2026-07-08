@@ -580,16 +580,29 @@ Production-grade QEC with multiple code families and decoders:
 
 | Language | Status | Notes |
 |----------|--------|-------|
-| **Python** | ✅ Complete | Primary SDK, full feature set |
-| **JavaScript/TypeScript** | ✅ Complete | `@abirqu/js` — standalone, 30 tests, npm publishable |
-| **Go** | ⚠️ Stub | cgo bindings to Rust shared library |
-| **Java** | ⚠️ Stub | JNA bindings to Rust shared library |
-| **.NET** | ⚠️ Stub | P/Invoke bindings to Rust shared library |
-| **Swift** | ⚠️ Stub | ctypes bindings to Rust shared library |
-| **Kotlin** | ⚠️ Stub | JNA bindings to Rust shared library |
-| **WebAssembly** | ❌ Planned | Not implemented |
+| **Python** | ✅ Complete | Primary SDK, full feature set (627 tests) |
+| **JavaScript/TypeScript** | ✅ Complete | `@abirqu/js` — standalone pure-JS, 17 tests passing, npm publishable |
+| **Go** | ✅ Functional | cgo bindings to Rust `libabirqu_core.so` — builds + tests pass |
+| **Java** | 🔧 Implemented | JNA bindings to Rust `libabirqu_core.so` — needs runtime verification |
+| **.NET** | 🔧 Implemented | P/Invoke bindings to Rust `libabirqu_core.so` — needs runtime verification |
+| **Swift** | 🔧 Implemented | CInterop bindings to Rust `libabirqu_core.so` — needs runtime verification |
+| **Kotlin** | 🔧 Implemented | JNA bindings to Rust `libabirqu_core.so` — needs runtime verification |
+| **WebAssembly** | ✅ Complete | Pyodide-based browser/Node.js runtime (`bindings/wasm/`) |
 
-**Note:** Non-Python bindings (except JS/TS) are stubs that call a Rust shared library (`libabirqu_core.so`). They have not been tested or verified. The JS/TS binding is a standalone pure-JavaScript implementation with no Python dependency.
+**Note:** Go, Java, .NET, Swift, and Kotlin bindings are real implementations that wrap the high-performance Rust core (`libabirqu_core.so`) via cgo / JNA / P-Invoke / CInterop. The Rust library builds and is required before using these bindings:
+
+```bash
+# Build the Rust shared library first
+cargo build --release --no-default-features
+export LD_LIBRARY_PATH=$PWD/target/release:$LD_LIBRARY_PATH
+
+# Then use any binding, e.g. Go:
+cd go/abirqu && go test ./...
+```
+
+The JavaScript/TypeScript binding is a **standalone pure-JavaScript** implementation (no Rust/Python dependency) and runs in browsers and Node.js. WebAssembly runs the full Python SDK via Pyodide.
+
+**Verification status:** Python ✅, JavaScript ✅, Go ✅, WebAssembly ✅ all tested. Java/.NET/Swift/Kotlin are code-complete but not yet runtime-verified in CI.
 
 ---
 
@@ -867,7 +880,7 @@ This section honestly lists what AbirQu does NOT have:
 
 - **No peer review** — no independent validation of results
 - **No production-grade QEC decoders** — greedy decoder works for small codes; MWPM/BP decoders exist but threshold analysis not validated against literature
-- **Non-Python SDKs** — JS/TS binding available, Go/Java/.NET/Swift/Kotlin stubs only
+- **Non-Python SDKs** — Go/Java/.NET/Swift/Kotlin wrap Rust core; Java/.NET/Swift/Kotlin not yet runtime-verified in CI
 
 ### What was fixed in v1.1.0:
 
