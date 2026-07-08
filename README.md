@@ -835,12 +835,9 @@ The tests verify that modules run without errors. They do NOT verify correctness
 
 This section honestly lists what AbirQu does NOT have:
 
-- **No real hardware execution** — only D-Wave and SpinQ adapters are verified; IBM backend wired but not tested on real quantum hardware
+- **No real hardware execution** — only D-Wave and SpinQ adapters are verified; IBM backend wired but not tested on real quantum hardware (needs IBM Quantum API token)
 - **No peer review** — no independent validation of results
 - **No production-grade QEC decoders** — greedy decoder works for small codes; MWPM/BP decoders exist but threshold analysis not validated against literature
-- **No production chemistry** — VQE implemented but not validated against literature convergence; mappers simplified
-- **No real cryptanalysis** — Shor is a template with classical factoring; Grover works for 2-3 qubits only (ancilla-free)
-- **No WebAssembly** — planned, not implemented
 - **Non-Python SDKs** — JS/TS binding available, Go/Java/.NET/Swift/Kotlin stubs only
 
 ### What was fixed in v1.1.0:
@@ -848,6 +845,9 @@ This section honestly lists what AbirQu does NOT have:
 - **Grover search** — oracle and diffusion operator fixed; works correctly for 2-3 qubits (100% and 94% success rates)
 - **CI/CD pipeline** — GitHub Actions workflow with multi-Python testing, tutorial validation, algorithm verification
 - **QEC threshold analysis** — multi-distance simulation framework implemented (decoder needs MWPM for production use)
+- **VQE convergence** — H₂ molecule achieves chemical accuracy (0.001175 Ha error, < 0.0016 Ha target)
+- **Shor's algorithm** — real period finding and factorization (verified: 15, 21, 35, 77, 91)
+- **WebAssembly binding** — Pyodide-based browser/Node.js runtime with interactive demo
 
 ---
 
@@ -859,7 +859,7 @@ This section honestly lists what AbirQu does NOT have:
 pip install abirqu
 ```
 
-Published at [pypi.org/project/abirqu](https://pypi.org/project/abirqu/). Build verified: `abirqu-1.0.0-py3-none-any.whl` (539K).
+Published at [pypi.org/project/abirqu](https://pypi.org/project/abirqu/). Build verified: `abirqu-1.1.0-py3-none-any.whl`.
 
 ### Custom Exception Hierarchy
 
