@@ -1001,6 +1001,36 @@ cd bindings/javascript && npm install && npm test  # 30 tests passing
 
 ---
 
+## Changelog
+
+### v1.1.0 (Latest)
+- **Grover search fixed**: Oracle and diffusion operator corrected; n=2 (100%), n=3 (94.5%) success rates
+- **VQE convergence**: H₂ molecule achieves chemical accuracy (0.001175 Ha error < 0.0016 Ha target)
+- **Shor's algorithm**: Real period finding and factorization (verified: 15, 21, 35, 77, 91)
+- **WebAssembly binding**: Pyodide-based browser/Node.js runtime with interactive demo
+- **CI/CD pipeline**: GitHub Actions with multi-Python testing, tutorial validation, algorithm verification
+- **QEC threshold analysis**: Multi-distance surface code simulation framework
+
+### v1.0.2
+- Fixed 11 README code blocks (Bell state, GHZ, chemistry, BB84, exceptions, deprecation, audit, RBAC)
+- Added `test_readme.py` to prevent API drift
+- All examples verified against real package
+
+### v1.0.1
+- Fixed deprecated decorator API (`since=` / `removal=` parameters)
+- Fixed `rbac.revoke_role()` signature (single user_id argument)
+
+### v1.0.0
+- Initial PyPI release
+- 627 tests passing
+- 205 tutorials (612 code examples)
+- 12 novel contributions documented
+- Full SDK: computing, communication, chemistry, QEC, hardware, plugins, quantum OS
+- JavaScript SDK (`@abirqu/js`) with 30 tests
+- Sphinx documentation (18 files)
+
+---
+
 ## Support
 
 - **Beginner Guide**: [abirqu/docs/beginner_guide.md](abirqu/docs/beginner_guide.md)
