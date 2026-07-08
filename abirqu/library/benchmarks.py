@@ -61,31 +61,36 @@ def qft_circuit(num_qubits: int) -> Circuit:
 
 
 def grover_oracle(num_qubits: int, target: int) -> Circuit:
-    """Grover oracle for a specific target state."""
+    """Grover oracle: flip phase of marked computational basis state.
+
+    Uses X gates to flip qubits that should be 0 in the target state,
+    then applies multi-controlled Z, then unflips the X gates.
+    """
     c = Circuit(num_qubits, f"GroverOracle({num_qubits}, target={target})")
 
-    # Mark target state with X gates
-    for i in range(num_qubits):
-        if not (target >> i) & 1:
+    # Flip qubits that should be 0 in the target state
+    bits = format(target, f"0{num_qubits}b")
+    for i, bit in enumerate(bits):
+        if bit == "0":
             c.x(i)
 
-    # Multi-controlled Z
-    if num_qubits >= 2:
+    # Multi-controlled Z: H on last qubit, then MCX, then H
+    if num_qubits == 1:
+        c.z(0)
+    elif num_qubits == 2:
+        c.cz(0, 1)
+    else:
         c.h(num_qubits - 1)
-        # Decompose multi-controlled Z
-        if num_qubits == 2:
-            c.cz(0, 1)
+        if num_qubits == 3:
+            c.toffoli(0, 1, 2)
         else:
-            # V-chain decomposition
             for i in range(num_qubits - 2):
-                c.cnot(i, num_qubits - 2)
-            c.cz(num_qubits - 2, num_qubits - 1)
-            for i in range(num_qubits - 3, -1, -1):
-                c.cnot(i, num_qubits - 2)
+                c.toffoli(i, i + 1, num_qubits - 1)
+        c.h(num_qubits - 1)
 
-    # Unmark target state
-    for i in range(num_qubits):
-        if not (target >> i) & 1:
+    # Unflip X gates
+    for i, bit in enumerate(bits):
+        if bit == "0":
             c.x(i)
 
     return c
@@ -107,17 +112,25 @@ def grover_circuit(num_qubits: int, target: int, iterations: Optional[int] = Non
         oracle = grover_oracle(num_qubits, target)
         c.gates.extend(oracle.gates)
 
-        # Diffusion operator
+        # Diffusion: 2|s><s| - I
         for q in range(num_qubits):
             c.h(q)
-        for q in range(num_qubits):
             c.x(q)
-        # Multi-controlled Z
-        if num_qubits >= 2:
+        # Multi-controlled Z for diffusion
+        if num_qubits == 1:
+            c.z(0)
+        elif num_qubits == 2:
             c.cz(0, 1)
+        else:
+            c.h(num_qubits - 1)
+            if num_qubits == 3:
+                c.toffoli(0, 1, 2)
+            else:
+                for i in range(num_qubits - 2):
+                    c.toffoli(i, i + 1, num_qubits - 1)
+            c.h(num_qubits - 1)
         for q in range(num_qubits):
             c.x(q)
-        for q in range(num_qubits):
             c.h(q)
 
     return c

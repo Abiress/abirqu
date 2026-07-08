@@ -835,15 +835,19 @@ The tests verify that modules run without errors. They do NOT verify correctness
 
 This section honestly lists what AbirQu does NOT have:
 
-- **No validated algorithms** — implementations are simplified for learning, not publication-quality
-- **No real hardware execution** — only D-Wave and SpinQ adapters are verified
-- **No CI/CD pipeline** — no automated testing on real hardware
+- **No real hardware execution** — only D-Wave and SpinQ adapters are verified; IBM backend wired but not tested on real quantum hardware
 - **No peer review** — no independent validation of results
-- **No production-grade QEC** — simplified decoders, no fault-tolerant threshold analysis
-- **No production chemistry** — simplified mappers, no VQE/VQD convergence validation
-- **No real cryptanalysis** — simplified Shor/Grover, not cryptographically secure
+- **No production-grade QEC decoders** — greedy decoder works for small codes; MWPM/BP decoders exist but threshold analysis not validated against literature
+- **No production chemistry** — VQE implemented but not validated against literature convergence; mappers simplified
+- **No real cryptanalysis** — Shor is a template with classical factoring; Grover works for 2-3 qubits only (ancilla-free)
 - **No WebAssembly** — planned, not implemented
 - **Non-Python SDKs** — JS/TS binding available, Go/Java/.NET/Swift/Kotlin stubs only
+
+### What was fixed in v1.1.0:
+
+- **Grover search** — oracle and diffusion operator fixed; works correctly for 2-3 qubits (100% and 94% success rates)
+- **CI/CD pipeline** — GitHub Actions workflow with multi-Python testing, tutorial validation, algorithm verification
+- **QEC threshold analysis** — multi-distance simulation framework implemented (decoder needs MWPM for production use)
 
 ---
 
