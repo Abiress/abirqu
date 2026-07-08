@@ -8,39 +8,38 @@ import com.sun.jna.Pointer
  * Similar to Java wrapper but with Kotlin syntax
  */
 class AbirQuSimulator(numQubits: Int) {
-    // Load native library using JNA
-    private object Lib {
-        init {
-            Native.register("abirqu_core")
+    // Load native library using JNA (standard Library interface pattern)
+    private interface Lib : com.sun.jna.Library {
+        companion object {
+            val INSTANCE: Lib = Native.load("abirqu_core", Lib::class.java)
         }
-        
-        @JvmStatic external fun abirqu_simulator_create(numQubits: Int): Pointer?
-        @JvmStatic external fun abirqu_simulator_destroy(handle: Pointer?)
-        @JvmStatic external fun abirqu_simulator_reset(handle: Pointer?)
-        
-        @JvmStatic external fun abirqu_num_qubits(handle: Pointer?): Int
-        @JvmStatic external fun abirqu_hilbert_dim(handle: Pointer?): Long
-        
-        @JvmStatic external fun abirqu_h(handle: Pointer?, q: Int)
-        @JvmStatic external fun abirqu_x(handle: Pointer?, q: Int)
-        @JvmStatic external fun abirqu_y(handle: Pointer?, q: Int)
-        @JvmStatic external fun abirqu_z(handle: Pointer?, q: Int)
-        @JvmStatic external fun abirqu_s(handle: Pointer?, q: Int)
-        @JvmStatic external fun abirqu_t(handle: Pointer?, q: Int)
-        @JvmStatic external fun abirqu_rx(handle: Pointer?, q: Int, angle: Double)
-        @JvmStatic external fun abirqu_ry(handle: Pointer?, q: Int, angle: Double)
-        @JvmStatic external fun abirqu_rz(handle: Pointer?, q: Int, angle: Double)
-        @JvmStatic external fun abirqu_cnot(handle: Pointer?, ctrl: Int, target: Int)
-        @JvmStatic external fun abirqu_cz(handle: Pointer?, ctrl: Int, target: Int)
-        @JvmStatic external fun abirqu_swap(handle: Pointer?, q0: Int, q1: Int)
-        
-        @JvmStatic external fun abirqu_get_probabilities(handle: Pointer?, outProbs: DoubleArray): Long
-        @JvmStatic external fun abirqu_get_statevector(handle: Pointer?, outRe: DoubleArray, outIm: DoubleArray): Long
-        @JvmStatic external fun abirqu_run_circuit(handle: Pointer?, gates: Array<AbirQuGate>, nGates: Long)
+
+        fun abirqu_simulator_create(numQubits: Int): Pointer?
+        fun abirqu_simulator_destroy(handle: Pointer?)
+        fun abirqu_simulator_reset(handle: Pointer?)
+
+        fun abirqu_num_qubits(handle: Pointer?): Int
+        fun abirqu_hilbert_dim(handle: Pointer?): Long
+
+        fun abirqu_h(handle: Pointer?, q: Int)
+        fun abirqu_x(handle: Pointer?, q: Int)
+        fun abirqu_y(handle: Pointer?, q: Int)
+        fun abirqu_z(handle: Pointer?, q: Int)
+        fun abirqu_s(handle: Pointer?, q: Int)
+        fun abirqu_t(handle: Pointer?, q: Int)
+        fun abirqu_rx(handle: Pointer?, q: Int, angle: Double)
+        fun abirqu_ry(handle: Pointer?, q: Int, angle: Double)
+        fun abirqu_rz(handle: Pointer?, q: Int, angle: Double)
+        fun abirqu_cnot(handle: Pointer?, ctrl: Int, target: Int)
+        fun abirqu_cz(handle: Pointer?, ctrl: Int, target: Int)
+        fun abirqu_swap(handle: Pointer?, q0: Int, q1: Int)
+
+        fun abirqu_get_probabilities(handle: Pointer?, outProbs: DoubleArray): Long
+        fun abirqu_get_statevector(handle: Pointer?, outRe: DoubleArray, outIm: DoubleArray): Long
     }
 
     
-    private var nativeHandle: Pointer? = Lib.abirqu_simulator_create(numQubits)
+    private var nativeHandle: Pointer? = Lib.INSTANCE.abirqu_simulator_create(numQubits)
     
     init {
         if (nativeHandle == null) {
@@ -48,47 +47,49 @@ class AbirQuSimulator(numQubits: Int) {
         }
     }
     
-    val numQubits: Int get() = Lib.abirqu_num_qubits(nativeHandle)
-    val hilbertDim: Long get() = Lib.abirqu_hilbert_dim(nativeHandle)
+    val numQubits: Int get() = Lib.INSTANCE.abirqu_num_qubits(nativeHandle)
+    val hilbertDim: Long get() = Lib.INSTANCE.abirqu_hilbert_dim(nativeHandle)
     
     // Gate operations
-    fun h(q: Int) = Lib.abirqu_h(nativeHandle, q)
-    fun x(q: Int) = Lib.abirqu_x(nativeHandle, q)
-    fun y(q: Int) = Lib.abirqu_y(nativeHandle, q)
-    fun z(q: Int) = Lib.abirqu_z(nativeHandle, q)
-    fun s(q: Int) = Lib.abirqu_s(nativeHandle, q)
-    fun t(q: Int) = Lib.abirqu_t(nativeHandle, q)
-    fun rx(q: Int, angle: Double) = Lib.abirqu_rx(nativeHandle, q, angle)
-    fun ry(q: Int, angle: Double) = Lib.abirqu_ry(nativeHandle, q, angle)
-    fun rz(q: Int, angle: Double) = Lib.abirqu_rz(nativeHandle, q, angle)
-    fun cnot(ctrl: Int, target: Int) = Lib.abirqu_cnot(nativeHandle, ctrl, target)
-    fun cz(ctrl: Int, target: Int) = Lib.abirqu_cz(nativeHandle, ctrl, target)
-    fun swap(q0: Int, q1: Int) = Lib.abirqu_swap(nativeHandle, q0, q1)
+    fun h(q: Int) = Lib.INSTANCE.abirqu_h(nativeHandle, q)
+    fun x(q: Int) = Lib.INSTANCE.abirqu_x(nativeHandle, q)
+    fun y(q: Int) = Lib.INSTANCE.abirqu_y(nativeHandle, q)
+    fun z(q: Int) = Lib.INSTANCE.abirqu_z(nativeHandle, q)
+    fun s(q: Int) = Lib.INSTANCE.abirqu_s(nativeHandle, q)
+    fun t(q: Int) = Lib.INSTANCE.abirqu_t(nativeHandle, q)
+    fun rx(q: Int, angle: Double) = Lib.INSTANCE.abirqu_rx(nativeHandle, q, angle)
+    fun ry(q: Int, angle: Double) = Lib.INSTANCE.abirqu_ry(nativeHandle, q, angle)
+    fun rz(q: Int, angle: Double) = Lib.INSTANCE.abirqu_rz(nativeHandle, q, angle)
+    fun cnot(ctrl: Int, target: Int) = Lib.INSTANCE.abirqu_cnot(nativeHandle, ctrl, target)
+    fun cz(ctrl: Int, target: Int) = Lib.INSTANCE.abirqu_cz(nativeHandle, ctrl, target)
+    fun swap(q0: Int, q1: Int) = Lib.INSTANCE.abirqu_swap(nativeHandle, q0, q1)
     
     fun runCircuit(gates: Array<AbirQuGate>) {
         if (gates.isEmpty()) return
-        @Suppress("UNCHECKED_CAST")
-        val contiguousGates = AbirQuGate().toArray(gates.size) as Array<AbirQuGate>
-        for (i in gates.indices) {
-            contiguousGates[i].gateType = gates[i].gateType
-            contiguousGates[i].pad0 = gates[i].pad0
-            contiguousGates[i].pad1 = gates[i].pad1
-            contiguousGates[i].pad2 = gates[i].pad2
-            contiguousGates[i].ctrl = gates[i].ctrl
-            contiguousGates[i].target = gates[i].target
-            contiguousGates[i].param = gates[i].param
+        for (g in gates) {
+            when (g.gateType.toInt()) {
+                GATE_H -> h(g.target)
+                GATE_X -> x(g.target)
+                GATE_Y -> y(g.target)
+                GATE_Z -> z(g.target)
+                GATE_S -> s(g.target)
+                GATE_T -> t(g.target)
+                GATE_RX -> rx(g.target, g.param)
+                GATE_RY -> ry(g.target, g.param)
+                GATE_RZ -> rz(g.target, g.param)
+                GATE_CNOT -> cnot(g.ctrl, g.target)
+                GATE_CZ -> cz(g.ctrl, g.target)
+                GATE_SWAP -> swap(g.ctrl, g.target)
+                else -> { /* unknown gate ignored */ }
+            }
         }
-        for (g in contiguousGates) {
-            g.write()
-        }
-        Lib.abirqu_run_circuit(nativeHandle, contiguousGates, gates.size.toLong())
     }
     
     fun getProbabilities(): DoubleArray {
 
         val dim = hilbertDim.toInt()
         val probs = DoubleArray(dim)
-        Lib.abirqu_get_probabilities(nativeHandle, probs)
+        Lib.INSTANCE.abirqu_get_probabilities(nativeHandle, probs)
         return probs
     }
     
@@ -96,7 +97,7 @@ class AbirQuSimulator(numQubits: Int) {
         val dim = hilbertDim.toInt()
         val re = DoubleArray(dim)
         val im = DoubleArray(dim)
-        Lib.abirqu_get_statevector(nativeHandle, re, im)
+        Lib.INSTANCE.abirqu_get_statevector(nativeHandle, re, im)
         
         val state = DoubleArray(dim * 2)
         for (i in 0 until dim) {
@@ -106,11 +107,11 @@ class AbirQuSimulator(numQubits: Int) {
         return state
     }
     
-    fun reset() = Lib.abirqu_simulator_reset(nativeHandle)
+    fun reset() = Lib.INSTANCE.abirqu_simulator_reset(nativeHandle)
     
     fun close() {
         if (nativeHandle != null) {
-            Lib.abirqu_simulator_destroy(nativeHandle)
+            Lib.INSTANCE.abirqu_simulator_destroy(nativeHandle)
             nativeHandle = null
         }
     }

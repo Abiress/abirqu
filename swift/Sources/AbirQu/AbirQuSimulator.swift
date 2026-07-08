@@ -135,7 +135,9 @@ public class AbirQuSimulator {
     public func runCircuit(_ gates: [AbirQuGate]) {
         guard let h = handle else { return }
         if gates.isEmpty { return }
-        abirqu_run_circuit(h, gates, gates.count)
+        gates.withUnsafeBufferPointer { buf in
+            abirqu_run_circuit(h, buf.baseAddress!, gates.count)
+        }
     }
     
     /// Reset simulator to |0...0>
@@ -147,62 +149,62 @@ public class AbirQuSimulator {
 }
 
 // C function declarations
-@_silgen_name(abirqu_simulator_create)
+@_silgen_name("abirqu_simulator_create")
 func abirqu_simulator_create(_ num_qubits: UInt32) -> OpaquePointer?
 
-@_silgen_name(abirqu_simulator_destroy)
+@_silgen_name("abirqu_simulator_destroy")
 func abirqu_simulator_destroy(_ handle: OpaquePointer)
 
-@_silgen_name(abirqu_num_qubits)
+@_silgen_name("abirqu_num_qubits")
 func abirqu_num_qubits(_ handle: OpaquePointer) -> UInt32
 
-@_silgen_name(abirqu_hilbert_dim)
+@_silgen_name("abirqu_hilbert_dim")
 func abirqu_hilbert_dim(_ handle: OpaquePointer) -> UInt
 
-@_silgen_name(abirqu_h)
+@_silgen_name("abirqu_h")
 func abirqu_h(_ handle: OpaquePointer, _ q: UInt32)
 
-@_silgen_name(abirqu_x)
+@_silgen_name("abirqu_x")
 func abirqu_x(_ handle: OpaquePointer, _ q: UInt32)
 
-@_silgen_name(abirqu_y)
+@_silgen_name("abirqu_y")
 func abirqu_y(_ handle: OpaquePointer, _ q: UInt32)
 
-@_silgen_name(abirqu_z)
+@_silgen_name("abirqu_z")
 func abirqu_z(_ handle: OpaquePointer, _ q: UInt32)
 
-@_silgen_name(abirqu_s)
+@_silgen_name("abirqu_s")
 func abirqu_s(_ handle: OpaquePointer, _ q: UInt32)
 
-@_silgen_name(abirqu_t)
+@_silgen_name("abirqu_t")
 func abirqu_t(_ handle: OpaquePointer, _ q: UInt32)
 
-@_silgen_name(abirqu_rx)
+@_silgen_name("abirqu_rx")
 func abirqu_rx(_ handle: OpaquePointer, _ q: UInt32, _ angle: Double)
 
-@_silgen_name(abirqu_ry)
+@_silgen_name("abirqu_ry")
 func abirqu_ry(_ handle: OpaquePointer, _ q: UInt32, _ angle: Double)
 
-@_silgen_name(abirqu_rz)
+@_silgen_name("abirqu_rz")
 func abirqu_rz(_ handle: OpaquePointer, _ q: UInt32, _ angle: Double)
 
-@_silgen_name(abirqu_cnot)
+@_silgen_name("abirqu_cnot")
 func abirqu_cnot(_ handle: OpaquePointer, _ ctrl: UInt32, _ tgt: UInt32)
 
-@_silgen_name(abirqu_cz)
+@_silgen_name("abirqu_cz")
 func abirqu_cz(_ handle: OpaquePointer, _ ctrl: UInt32, _ tgt: UInt32)
 
-@_silgen_name(abirqu_swap)
+@_silgen_name("abirqu_swap")
 func abirqu_swap(_ handle: OpaquePointer, _ q0: UInt32, _ q1: UInt32)
 
-@_silgen_name(abirqu_get_probabilities)
+@_silgen_name("abirqu_get_probabilities")
 func abirqu_get_probabilities(_ handle: OpaquePointer, _ out_probs: UnsafeMutablePointer<Double>)
 
-@_silgen_name(abirqu_get_statevector)
+@_silgen_name("abirqu_get_statevector")
 func abirqu_get_statevector(_ handle: OpaquePointer, _ out_re: UnsafeMutablePointer<Double>, _ out_im: UnsafeMutablePointer<Double>)
 
-@_silgen_name(abirqu_simulator_reset)
+@_silgen_name("abirqu_simulator_reset")
 func abirqu_simulator_reset(_ handle: OpaquePointer)
 
-@_silgen_name(abirqu_run_circuit)
+@_silgen_name("abirqu_run_circuit")
 func abirqu_run_circuit(_ handle: OpaquePointer, _ gates: UnsafePointer<AbirQuGate>, _ n_gates: Int)

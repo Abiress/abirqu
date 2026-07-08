@@ -79,10 +79,10 @@ namespace AbirQu
         private static extern void abirqu_swap(IntPtr handle, uint q0, uint q1);
 
         [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
-        private static extern UIntPtr abirqu_get_probabilities(IntPtr handle, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] double[] outProbs);
+        private static extern UIntPtr abirqu_get_probabilities(IntPtr handle, [MarshalAs(UnmanagedType.LPArray)] double[] outProbs);
 
         [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
-        private static extern UIntPtr abirqu_get_statevector(IntPtr handle, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] double[] outRe, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] double[] outIm);
+        private static extern UIntPtr abirqu_get_statevector(IntPtr handle, [MarshalAs(UnmanagedType.LPArray)] double[] outRe, [MarshalAs(UnmanagedType.LPArray)] double[] outIm);
 
         [DllImport("abirqu_core", CallingConvention = CallingConvention.Cdecl)]
         private static extern void abirqu_run_circuit(IntPtr handle, [In] AbirQuGate[] gates, UIntPtr nGates);

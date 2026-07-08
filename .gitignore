@@ -79,3 +79,10 @@ example_cpp
 
 # Offline phases (not needed for SDK)
 abirqu/phases/
+
+# Swift build artifacts
+swift/.build/
+
+# .NET build artifacts
+dotnet/**/bin/
+dotnet/**/obj/

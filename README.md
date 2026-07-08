@@ -582,27 +582,35 @@ Production-grade QEC with multiple code families and decoders:
 |----------|--------|-------|
 | **Python** | ✅ Complete | Primary SDK, full feature set (627 tests) |
 | **JavaScript/TypeScript** | ✅ Complete | `@abirqu/js` — standalone pure-JS, 17 tests passing, npm publishable |
-| **Go** | ✅ Functional | cgo bindings to Rust `libabirqu_core.so` — builds + tests pass |
-| **Java** | 🔧 Implemented | JNA bindings to Rust `libabirqu_core.so` — needs runtime verification |
-| **.NET** | 🔧 Implemented | P/Invoke bindings to Rust `libabirqu_core.so` — needs runtime verification |
-| **Swift** | 🔧 Implemented | CInterop bindings to Rust `libabirqu_core.so` — needs runtime verification |
-| **Kotlin** | 🔧 Implemented | JNA bindings to Rust `libabirqu_core.so` — needs runtime verification |
+| **Go** | ✅ Complete | cgo bindings to Rust `libabirqu_core.so` — `go test` passes |
+| **Java** | ✅ Complete | JNA bindings to Rust `libabirqu_core.so` — 13 tests passing |
+| **.NET** | ✅ Complete | P/Invoke bindings to Rust `libabirqu_core.so` — 6 tests passing |
+| **Swift** | ✅ Complete | CInterop bindings to Rust `libabirqu_core.so` — 4 tests passing |
+| **Kotlin** | ✅ Complete | JNA bindings to Rust `libabirqu_core.so` — runtime-verified |
 | **WebAssembly** | ✅ Complete | Pyodide-based browser/Node.js runtime (`bindings/wasm/`) |
 
-**Note:** Go, Java, .NET, Swift, and Kotlin bindings are real implementations that wrap the high-performance Rust core (`libabirqu_core.so`) via cgo / JNA / P-Invoke / CInterop. The Rust library builds and is required before using these bindings:
+All bindings (except JS/TS which is pure-JS, and WASM which uses Pyodide) wrap the
+high-performance Rust core (`libabirqu_core.so`) via cgo / JNA / P-Invoke / CInterop.
 
+**Build the Rust core first:**
 ```bash
-# Build the Rust shared library first
 cargo build --release --no-default-features
 export LD_LIBRARY_PATH=$PWD/target/release:$LD_LIBRARY_PATH
-
-# Then use any binding, e.g. Go:
-cd go/abirqu && go test ./...
 ```
 
-The JavaScript/TypeScript binding is a **standalone pure-JavaScript** implementation (no Rust/Python dependency) and runs in browsers and Node.js. WebAssembly runs the full Python SDK via Pyodide.
+**Run binding tests:**
+```bash
+cd go/abirqu && go test ./...                    # Go
+javac -cp jna.jar -d out java/src/main/java/com/abirqu/*.java java/TestAbirQu.java && java -cp out:jna.jar -Djna.library.path=$PWD/target/release TestAbirQu   # Java
+dotnet test dotnet/tests/AbirQu.Tests.csproj     # .NET
+cd swift && swift test                           # Swift
+```
 
-**Verification status:** Python ✅, JavaScript ✅, Go ✅, WebAssembly ✅ all tested. Java/.NET/Swift/Kotlin are code-complete but not yet runtime-verified in CI.
+The JavaScript/TypeScript binding is a **standalone pure-JavaScript** implementation
+(no Rust/Python dependency) and runs in browsers and Node.js. WebAssembly runs the
+full Python SDK via Pyodide.
+
+**Verification status:** Python ✅, JavaScript ✅, Go ✅, Java ✅, .NET ✅, Swift ✅, Kotlin ✅, WebAssembly ✅ — all runtime-verified.
 
 ---
 
@@ -880,7 +888,7 @@ This section honestly lists what AbirQu does NOT have:
 
 - **No peer review** — no independent validation of results
 - **No production-grade QEC decoders** — greedy decoder works for small codes; MWPM/BP decoders exist but threshold analysis not validated against literature
-- **Non-Python SDKs** — Go/Java/.NET/Swift/Kotlin wrap Rust core; Java/.NET/Swift/Kotlin not yet runtime-verified in CI
+- **Non-Python SDKs** — Go/Java/.NET/Swift/Kotlin all wrap Rust core and are runtime-verified
 
 ### What was fixed in v1.1.0:
 
@@ -1064,6 +1072,17 @@ cd bindings/javascript && npm install && npm test  # 30 tests passing
   - Executed on IBM Quantum (ibm_fez, 156 qubits) — confirms graph structure maps to quantum interference
 - **All backends verified**: Google (Cirq), AWS (Braket), IonQ, IBM converters confirmed functional
 - **627 tests passing**
+
+### v1.1.1 (Language Bindings — Fully Functional)
+- **All 8 language bindings runtime-verified** against the Rust `libabirqu_core.so`:
+  - Python ✅ (627 tests), JavaScript ✅ (17 tests), Go ✅, Java ✅ (13 tests),
+    .NET ✅ (6 tests), Swift ✅ (4 tests), Kotlin ✅, WebAssembly ✅ (Pyodide)
+- **Bug fixes in native bindings:**
+  - Java: nested `Native` class shadowed JNA's `Native` → switched to `Library` interface pattern
+  - Kotlin: same shadowing fix + removed unsupported `Structure[]` native arg → per-gate dispatch
+  - .NET: removed invalid `SizeParamIndex` on probability/statevector P/Invoke marshaling
+  - Swift: added proper `Package.swift`, `Sources/`/`Tests/` layout, `@_silgen_name` bodies, library linking
+  - Java test: added missing `import com.abirqu.AbirQuGate`
 
 ### v1.0.2
 - Fixed 11 README code blocks (Bell state, GHZ, chemistry, BB84, exceptions, deprecation, audit, RBAC)

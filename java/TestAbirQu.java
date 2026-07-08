@@ -1,4 +1,5 @@
 import com.abirqu.AbirQuSimulator;
+import com.abirqu.AbirQuGate;
 
 /**
  * Test suite for AbirQu Java JNI wrapper
