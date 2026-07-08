@@ -17,8 +17,21 @@ import numpy as np
 from datetime import datetime
 from typing import List, Dict, Tuple
 
-# Set IBM token
-os.environ['IBM_QUANTUM_TOKEN'] = 'UoGgU1fsbWi9vTIA4Lu-SjBtaZl0DKWH6WedLBnnCkpe'
+# Set IBM token (use environment variable or .env file)
+# Get token from env, or load from .env if present
+import os.path
+if not os.getenv('IBM_QUANTUM_TOKEN'):
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+    if os.path.exists(env_path):
+        with open(env_path) as f:
+            for line in f:
+                if line.strip().startswith('IBM_QUANTUM_TOKEN'):
+                    os.environ['IBM_QUANTUM_TOKEN'] = line.strip().split('=', 1)[1].strip().strip('"\'')
+    else:
+        raise RuntimeError(
+            "IBM_QUANTUM_TOKEN not set. Set the environment variable or create a .env file. "
+            "Get your token from https://quantum.cloud.ibm.com/"
+        )
 
 from abirqu import Circuit
 from abirqu.primitives import QuantumRun

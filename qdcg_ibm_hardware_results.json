@@ -2,7 +2,7 @@
   "project": "Quantum Dynamic Cognitive Graph (QDCG) — IBM Quantum Hardware Execution",
   "timestamp": "2026-07-09",
   "backend": "ibm_fez (156 qubits, IBM Quantum Platform)",
-  "token_used": "UoGgU1fsbWi9vTIA4Lu-SjBtaZl0DKWH6WedLBnnCkpe",
+  "token_used": "[REDACTED - user's private IBM Quantum API token]",
 
   "experiment_1": {
     "name": "QDCG Basic — 'The cat sits on the chair'",
