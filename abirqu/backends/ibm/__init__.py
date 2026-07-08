@@ -30,7 +30,7 @@ class IBMQuantumCredentials:
     def from_env(cls) -> "IBMQuantumCredentials":
         return cls(
             api_token=os.getenv("IBM_QUANTUM_TOKEN", os.getenv("QISKIT_IBM_TOKEN", "")),
-            instance=os.getenv("IBM_QUANTUM_INSTANCE", "ibm-q/open/main"),
+            instance=os.getenv("IBM_QUANTUM_INSTANCE", "abirqu"),
         )
 
     def validate(self) -> bool:
@@ -81,13 +81,13 @@ class IBMQuantumBackend(QuantumBackend):
         try:
             from qiskit_ibm_runtime import QiskitRuntimeService
             QiskitRuntimeService.save_account(
-                channel="ibm_quantum",
+                channel="ibm_quantum_platform",
                 token=self.creds.api_token,
                 instance=self.creds.instance,
                 overwrite=True,
             )
             self._service = QiskitRuntimeService(
-                channel="ibm_quantum",
+                channel="ibm_quantum_platform",
                 instance=self.creds.instance,
             )
             self._backend = self._service.backend(self.backend_name)
