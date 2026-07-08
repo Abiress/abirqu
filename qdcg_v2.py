@@ -67,13 +67,22 @@ def extract_concepts_enhanced(text: str) -> Dict:
     concept_categories = {}
 
     for word in words:
+        matched = False
         for category, patterns in SEMANTIC_GROUPS.items():
             if word in patterns:
                 concept = word.upper()
                 if concept not in concepts:
                     concepts.append(concept)
                     concept_categories[concept] = category
+                matched = True
                 break
+        # Fallback: treat significant words (len>=5) as concepts
+        if not matched and len(word) >= 5 and word not in (
+            'about', 'these', 'those', 'their', 'there', 'which', 'would', 'could'):
+            concept = word.upper()
+            if concept not in concepts:
+                concepts.append(concept)
+                concept_categories[concept] = 'TERM'
 
     # Extract relationships from sentence structure
     relationships = []
@@ -299,7 +308,7 @@ def build_multi_hop_circuit(graph: EnhancedCognitiveGraph, query_concepts: List[
                 circuit.cx(src_idx, tgt_idx)
 
                 # Propagate to answer qubit
-                circuit.ccx(src_idx, tgt_idx, answer_qubit)
+                circuit.toffoli(src_idx, tgt_idx, answer_qubit)
 
     # Interference
     for i in range(n_concepts):
