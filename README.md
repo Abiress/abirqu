@@ -835,7 +835,6 @@ The tests verify that modules run without errors. They do NOT verify correctness
 
 This section honestly lists what AbirQu does NOT have:
 
-- **No real hardware execution** — only D-Wave and SpinQ adapters are verified; IBM backend wired but not tested on real quantum hardware (needs IBM Quantum API token)
 - **No peer review** — no independent validation of results
 - **No production-grade QEC decoders** — greedy decoder works for small codes; MWPM/BP decoders exist but threshold analysis not validated against literature
 - **Non-Python SDKs** — JS/TS binding available, Go/Java/.NET/Swift/Kotlin stubs only
@@ -1010,6 +1009,7 @@ cd bindings/javascript && npm install && npm test  # 30 tests passing
 - **WebAssembly binding**: Pyodide-based browser/Node.js runtime with interactive demo
 - **CI/CD pipeline**: GitHub Actions with multi-Python testing, tutorial validation, algorithm verification
 - **QEC threshold analysis**: Multi-distance surface code simulation framework
+- **IBM Quantum verified**: Real hardware execution on ibm_fez (156 qubits) — Bell state test passed
 
 ### v1.0.2
 - Fixed 11 README code blocks (Bell state, GHZ, chemistry, BB84, exceptions, deprecation, audit, RBAC)
