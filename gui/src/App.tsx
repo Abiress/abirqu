@@ -14,10 +14,18 @@ import Console from './components/Console/Console';
 import FrameworkPanel from './components/FrameworkPanel/FrameworkPanel';
 import ExportDialog from './components/ExportDialog/ExportDialog';
 import NoisePanel from './components/NoisePanel/NoisePanel';
+import ExplorerPanel from './components/ExplorerPanel/ExplorerPanel';
+import QECPanel from './components/QECPanel/QECPanel';
+import QCommPanel from './components/QCommPanel/QCommPanel';
+import DomainPanel from './components/DomainPanel/DomainPanel';
+import SecurityPanel from './components/SecurityPanel/SecurityPanel';
+import PluginsPanel from './components/PluginsPanel/PluginsPanel';
+import AskQuantumPanel from './components/AskQuantumPanel/AskQuantumPanel';
+import SettingsPanel from './components/SettingsPanel/SettingsPanel';
 import { useJobStore } from './stores/jobStore';
 import { api } from './api/commands';
 
-type LeftTab = 'circuit' | 'code' | 'qasm' | 'library' | 'framework';
+type LeftTab = 'circuit' | 'code' | 'qasm' | 'library' | 'framework' | 'explorer' | 'qec' | 'qcomm' | 'domain' | 'security' | 'plugins' | 'askq' | 'settings';
 type RightPanel = 'measurement' | 'state' | 'bloch';
 type SideTab = 'hardware' | 'jobs' | 'noise';
 type BottomTab = 'console' | 'results';
@@ -55,13 +63,9 @@ export default function App() {
 
   return (
     <div className="h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] select-none">
-      {/* Toolbar */}
       <Toolbar onExport={() => setExportOpen(true)} />
 
-      {/* Main area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-
-        {/* Top section: sidebar + editor + right panel */}
         <div className="flex-1 flex overflow-hidden min-h-0">
 
           {/* Left Sidebar */}
@@ -82,7 +86,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Sidebar resize handle */}
           <div
             onMouseDown={(e) => handleDrag(e, setSidebarWidth, 160, 400, 'x')}
             className="w-1 flex-shrink-0 cursor-col-resize group hover:bg-[var(--accent-primary)]/20 bg-white/5 transition-colors"
@@ -90,13 +93,20 @@ export default function App() {
 
           {/* Center Editor */}
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-            {/* Tab bar */}
-            <div className="flex items-center border-b border-white/5 bg-[var(--bg-panel)]">
+            <div className="flex items-center border-b border-white/5 bg-[var(--bg-panel)] overflow-x-auto">
               <EditorTab active={leftTab === 'circuit'} onClick={() => setLeftTab('circuit')} icon="⚡" label="Circuit" />
               <EditorTab active={leftTab === 'code'} onClick={() => setLeftTab('code')} icon="{ }" label="Python" />
               <EditorTab active={leftTab === 'qasm'} onClick={() => setLeftTab('qasm')} icon="⟨⟩" label="QASM" />
               <EditorTab active={leftTab === 'library'} onClick={() => setLeftTab('library')} icon="📚" label="Library" />
               <EditorTab active={leftTab === 'framework'} onClick={() => setLeftTab('framework')} icon="🔗" label="Frameworks" />
+              <EditorTab active={leftTab === 'explorer'} onClick={() => setLeftTab('explorer')} icon="📁" label="Explorer" />
+              <EditorTab active={leftTab === 'qec'} onClick={() => setLeftTab('qec')} icon="🛡" label="QEC" />
+              <EditorTab active={leftTab === 'qcomm'} onClick={() => setLeftTab('qcomm')} icon="📡" label="Q-Comm" />
+              <EditorTab active={leftTab === 'domain'} onClick={() => setLeftTab('domain')} icon="🧪" label="Domains" />
+              <EditorTab active={leftTab === 'security'} onClick={() => setLeftTab('security')} icon="🔐" label="Security" />
+              <EditorTab active={leftTab === 'plugins'} onClick={() => setLeftTab('plugins')} icon="🧩" label="Plugins" />
+              <EditorTab active={leftTab === 'askq'} onClick={() => setLeftTab('askq')} icon="💬" label="Ask Q" />
+              <EditorTab active={leftTab === 'settings'} onClick={() => setLeftTab('settings')} icon="⚙" label="Settings" />
               <div className="flex-1" />
               <div className="px-3 text-[10px] text-[var(--text-muted)] flex items-center gap-2">
                 {noiseConfig.enabled && (
@@ -113,17 +123,23 @@ export default function App() {
               </div>
             </div>
 
-            {/* Editor content */}
             <div className="flex-1 overflow-hidden animate-fade-in">
               {leftTab === 'circuit' && <CircuitCanvas />}
               {leftTab === 'code' && <CodePanel />}
               {leftTab === 'qasm' && <OpenQASMPanel />}
               {leftTab === 'library' && <LibrarySidebar />}
               {leftTab === 'framework' && <FrameworkPanel />}
+              {leftTab === 'explorer' && <ExplorerPanel />}
+              {leftTab === 'qec' && <QECPanel />}
+              {leftTab === 'qcomm' && <QCommPanel />}
+              {leftTab === 'domain' && <DomainPanel />}
+              {leftTab === 'security' && <SecurityPanel />}
+              {leftTab === 'plugins' && <PluginsPanel />}
+              {leftTab === 'askq' && <AskQuantumPanel />}
+              {leftTab === 'settings' && <SettingsPanel />}
             </div>
           </div>
 
-          {/* Right resize handle */}
           {!rightCollapsed && (
             <div
               onMouseDown={(e) => handleDrag(e, setRightWidth, 200, 600, 'x')}
@@ -131,7 +147,6 @@ export default function App() {
             />
           )}
 
-          {/* Right Panel */}
           {!rightCollapsed ? (
             <div className="flex flex-col border-l border-white/5 bg-[var(--bg-panel)] animate-slide-in" style={{ width: rightWidth }}>
               <div className="flex items-center border-b border-white/5">
@@ -161,13 +176,11 @@ export default function App() {
           )}
         </div>
 
-        {/* Bottom resize handle */}
         <div
           onMouseDown={(e) => handleDrag(e, setBottomHeight, 60, 400, 'y')}
           className="h-1 flex-shrink-0 cursor-row-resize group hover:bg-[var(--accent-primary)]/20 bg-white/5 transition-colors"
         />
 
-        {/* Bottom Panel */}
         <div className="flex flex-col border-t border-white/5 bg-[var(--bg-panel)]" style={{ height: bottomHeight }}>
           <div className="flex items-center border-b border-white/5 px-2">
             <BottomTab active={bottomTab === 'console'} onClick={() => setBottomTab('console')} label="Console" />
@@ -179,10 +192,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Status Bar */}
       <StatusBar />
-
-      {/* Export Dialog */}
       <ExportDialog open={exportOpen} onClose={() => setExportOpen(false)} />
     </div>
   );
@@ -208,7 +218,7 @@ function EditorTab({ active, onClick, icon, label }: { active: boolean; onClick:
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-4 py-2 text-xs font-medium transition-all ${
+      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all whitespace-nowrap ${
         active
           ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)] bg-[var(--accent-primary)]/5'
           : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-white/[0.02]'

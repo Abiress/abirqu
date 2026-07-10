@@ -36,6 +36,7 @@ class RotatedSurfaceCode:
         self.n = 2 * distance**2 - 2 * distance + 1
         self.k = 1
         self.distance = distance
+        self.num_stabilizers = 0
 
         # Build qubit grid
         self.data_qubits = []
@@ -80,6 +81,8 @@ class RotatedSurfaceCode:
                         qubits.append(grid[pos])
                 if len(qubits) >= 2:
                     self.z_stabilizers.append(qubits)
+
+        self.num_stabilizers = len(self.x_stabilizers) + len(self.z_stabilizers)
 
         # Logical operators
         # Logical X: path across rows (left boundary to right boundary)
@@ -147,6 +150,10 @@ class RotatedSurfaceCode:
         sx = self.syndrome_x(error)
         sz = self.syndrome_z(error)
         return np.concatenate([sx, sz])
+
+    def compute_syndrome(self, error: np.ndarray) -> np.ndarray:
+        """Alias for syndrome() — compatible with SyndromeDecoder."""
+        return self.syndrome(error)
 
     def get_logical_x(self) -> List[int]:
         return self._logical_x.copy()
