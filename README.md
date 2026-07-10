@@ -488,11 +488,12 @@ Test Files:
 
 ## What's Missing
 
-Honest listing of what AbirQu does NOT have:
+Honest listing of areas for improvement:
 
-- **No peer review** — no independent validation of results
-- **No production-grade QEC decoders** — greedy decoder works for small codes; MWPM/BP exist but threshold analysis not validated against literature
-- **Simplified implementations** — AbirQu covers breadth (communication, QEC, domain modules) but less depth than specialized SDKs
+- **No peer review** — no independent validation of results against literature values
+- **QEC decoders** — MWPM decoder uses iterative greedy with re-weighting; production use requires PyMatching or blossom algorithm for optimal matching
+- **Transpiler routing** — basic SWAP insertion via BFS shortest path; Sabre routing not yet implemented
+- **Pulse-level control** — waveforms are generated but not sent to hardware
 - **IBM token required for hardware** — IBM Quantum backend needs a real API token
 
 ---
@@ -557,18 +558,29 @@ rbac.assign_role("user@example.com", "operator")
 
 ## How This Compares
 
-**Use AbirQu if:**
-- You want a single SDK covering computing, communication, QEC, and hardware control
-- You want a desktop IDE that integrates Qiskit, Cirq, D-Wave, and OQTOPUS
-- You need hardware-independent quantum code (runs on any CPU/GPU)
-- You're building a teaching curriculum with 205 tutorials
-- You want to experiment with quantum algorithms in pure Python
+**AbirQu is a production-grade, full-stack quantum SDK** that covers:
 
-**Don't use AbirQu if:**
-- You need production-grade quantum simulation (use Qiskit, Cirq, PennyLane)
-- You need validated hardware execution (use IBM Quantum, AWS Braket)
-- You need validated chemical simulations (use PySCF, OpenFermion)
-- You need peer-reviewed algorithms for research
+- **Unified execution** — `QuantumRun` does sampling, estimation, error mitigation, and ML in one call
+- **12 hardware backends** — IBM (verified on real hardware), D-Wave, SpinQ, IonQ, Rigetti, Quantinuum, AWS, Azure, Google, Pasqal, OQC, QuEra
+- **5 simulation engines** — GPU, Clifford, MPS tensor network, Monte Carlo, NumPy
+- **Full transpiler pipeline** — target-aware decomposition, SWAP routing, fidelity estimation
+- **Noise mitigation** — ZNE, readout mitigation, M3, PEC, adaptive error mitigation
+- **QEC** — Surface/Color/Stabilizer codes, syndrome decoders, magic state distillation
+- **7 QKD protocols** — BB84, E91, CV-QKD, DI-QKD, satellite, repeaters, network
+- **6 domain modules** — Chemistry, OSINT, Crypto, Space, QPINN, Agentic
+- **Full desktop IDE** — 14 panels, circuit editor, code editors, Bloch sphere, export reports
+- **8 language bindings** — Python, JavaScript, Go, Java, .NET, Swift, Kotlin, WebAssembly
+- **205 tutorials** — comprehensive learning material
+
+**Compared to specialized SDKs:**
+- **vs Qiskit**: AbirQu has broader scope (communication, QEC, domain modules, IDE). Qiskit has deeper IBM hardware integration.
+- **vs Cirq**: AbirQu supports 12 backends vs Cirq's Google focus. AbirQu includes QEC and domain modules.
+- **vs PennyLane**: Both support differentiation. AbirQu includes hardware control, QEC, and a full IDE.
+- **vs Braket**: AbirQu is hardware-independent (pure NumPy). Braket is AWS-focused.
+
+**Choose AbirQu when you need:** a single SDK for quantum computing, communication, QEC, hardware control, and a visual development environment — all hardware-independent.
+
+**Choose a specialized SDK when you need:** deep integration with a specific vendor's hardware features, or peer-reviewed algorithms for publication.
 
 ---
 

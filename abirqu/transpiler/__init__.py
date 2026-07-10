@@ -172,11 +172,40 @@ class TranspilerPipeline:
     def _route(self, circuit: Circuit) -> Circuit:
         """Route circuit for hardware connectivity constraints.
 
+        Uses BFS shortest-path SWAP insertion for limited connectivity.
         For all-to-all connectivity, no routing needed.
-        For linear chain, insert SWAP gates as needed.
         """
-        # Simplified: assume all-to-all for now
-        return circuit
+        from .topology import CouplingMap
+        from .routing import RoutingPass
+
+        # Build coupling map for target backend
+        n = circuit.num_qubits
+        import math
+        side = math.ceil(math.sqrt(n))
+
+        if self.target == TargetBackend.IBM:
+            coupling = CouplingMap.heavy_hex(side, side)
+        elif self.target == TargetBackend.GOOGLE:
+            coupling = CouplingMap.grid(side, side)
+        elif self.target in (TargetBackend.IONQ, TargetBackend.QUANTINUUM):
+            coupling = CouplingMap.all_to_all(n)
+        elif self.target == TargetBackend.RIGETTI:
+            coupling = CouplingMap.linear_chain(n)
+        elif self.target == TargetBackend.SPINQ:
+            coupling = CouplingMap.linear_chain(n)
+        elif self.target == TargetBackend.OQC:
+            coupling = CouplingMap.grid(side, side)
+        elif self.target == TargetBackend.NEUTRAL_ATOM:
+            coupling = CouplingMap.grid(side, side)
+        else:
+            coupling = CouplingMap.all_to_all(n)
+
+        # If all-to-all, no routing needed
+        if len(coupling.edges) >= n * (n - 1) // 2:
+            return circuit
+
+        router = RoutingPass(coupling)
+        return router.route(circuit)
 
     def _optimize(self, circuit: Circuit) -> Circuit:
         """Apply circuit optimizations.

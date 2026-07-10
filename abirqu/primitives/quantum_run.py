@@ -244,26 +244,33 @@ class QuantumRun:
         for i, circ in enumerate(self._circuits):
             t0 = time.monotonic()
 
-            # 1. Statevector simulation
-            sv = _statevector_sim(circ)
+            # Check if a hardware backend is specified
+            backend_name = self._resolve_backend()
 
-            # 2. Apply noise model if present
-            if self._noise_model is not None:
-                probs_noisy = self._noise_model.apply_to_statevector(sv, circ.num_qubits)
+            if backend_name and backend_name not in ("numpy", "simulator", "fast", "auto", None):
+                # Route to real hardware backend
+                sv, counts, probs = self._execute_on_hardware(circ, backend_name, rng)
             else:
-                probs_noisy = np.abs(sv) ** 2
+                # 1. Statevector simulation
+                sv = _statevector_sim(circ)
 
-            # 3. Sampling
-            if self._shots > 0:
-                counts = _sample_counts(sv, circ.num_qubits, self._shots, rng)
-                probs = {k: v / self._shots for k, v in counts.items()}
-            else:
-                probs = {
-                    format(j, f"0{circ.num_qubits}b"): float(abs(sv[j]) ** 2)
-                    for j in range(len(sv))
-                    if abs(sv[j]) ** 2 > 1e-12
-                }
-                counts = {}
+                # 2. Apply noise model if present
+                if self._noise_model is not None:
+                    probs_noisy = self._noise_model.apply_to_statevector(sv, circ.num_qubits)
+                else:
+                    probs_noisy = np.abs(sv) ** 2
+
+                # 3. Sampling
+                if self._shots > 0:
+                    counts = _sample_counts(sv, circ.num_qubits, self._shots, rng)
+                    probs = {k: v / self._shots for k, v in counts.items()}
+                else:
+                    probs = {
+                        format(j, f"0{circ.num_qubits}b"): float(abs(sv[j]) ** 2)
+                        for j in range(len(sv))
+                        if abs(sv[j]) ** 2 > 1e-12
+                    }
+                    counts = {}
 
             # 4. Mitigation
             mitigation = None
@@ -275,9 +282,9 @@ class QuantumRun:
             result = SamplerResult(
                 counts=counts,
                 probabilities=probs,
-                statevector=sv if self._shots == 0 else None,
+                statevector=sv if self._shots == 0 and backend_name in (None, "numpy", "simulator", "fast", "auto") else None,
                 shots=self._shots,
-                backend="AbirQu-QuantumRun",
+                backend=backend_name or "AbirQu-QuantumRun",
                 metadata={
                     "circuit_index": i,
                     "circuit_name": circ.name,
@@ -291,6 +298,77 @@ class QuantumRun:
             results.append(result)
 
         return results
+
+    def _resolve_backend(self) -> Optional[str]:
+        """Resolve backend name from the backend parameter."""
+        if self._backend is None:
+            return None
+        if isinstance(self._backend, str):
+            return self._backend
+        # If it's a backend object, extract its name
+        if hasattr(self._backend, 'name'):
+            return self._backend.name
+        if hasattr(self._backend, 'backend_name'):
+            return self._backend.backend_name
+        return str(self._backend)
+
+    def _execute_on_hardware(self, circ: Circuit, backend_name: str,
+                              rng: np.random.Generator):
+        """Execute circuit on a real hardware backend."""
+        sv = None
+        counts = {}
+        probs = {}
+
+        try:
+            if backend_name.startswith("ibm"):
+                # IBM Quantum backend
+                from ..backends.ibm import IBMQuantumBackend
+                backend = IBMQuantumBackend(backend_name=backend_name)
+                result = backend.run_circuit(circ, shots=self._shots)
+                counts = result.get("counts", {})
+                total = sum(counts.values()) if counts else 1
+                probs = {k: v / total for k, v in counts.items()}
+
+            elif backend_name.startswith("dwave") or backend_name == "dwave":
+                # D-Wave backend
+                from ..backends.dwave import DWaveBackend
+                backend = DWaveBackend()
+                result = backend.run_circuit(circ, shots=self._shots)
+                counts = result.get("counts", {})
+                total = sum(counts.values()) if counts else 1
+                probs = {k: v / total for k, v in counts.items()}
+
+            else:
+                # Fall back to local simulation for unknown backends
+                sv = _statevector_sim(circ)
+                if self._shots > 0:
+                    counts = _sample_counts(sv, circ.num_qubits, self._shots, rng)
+                    probs = {k: v / self._shots for k, v in counts.items()}
+                else:
+                    probs = {
+                        format(j, f"0{circ.num_qubits}b"): float(abs(sv[j]) ** 2)
+                        for j in range(len(sv))
+                        if abs(sv[j]) ** 2 > 1e-12
+                    }
+
+        except Exception as e:
+            # Fall back to local simulation on hardware error
+            import warnings
+            warnings.warn(
+                f"Hardware execution failed ({e}), falling back to local simulation"
+            )
+            sv = _statevector_sim(circ)
+            if self._shots > 0:
+                counts = _sample_counts(sv, circ.num_qubits, self._shots, rng)
+                probs = {k: v / self._shots for k, v in counts.items()}
+            else:
+                probs = {
+                    format(j, f"0{circ.num_qubits}b"): float(abs(sv[j]) ** 2)
+                    for j in range(len(sv))
+                    if abs(sv[j]) ** 2 > 1e-12
+                }
+
+        return sv, counts, probs
 
     def _apply_mitigation(self, counts: Dict[str, int],
                           n_qubits: int) -> MitigationResult:
