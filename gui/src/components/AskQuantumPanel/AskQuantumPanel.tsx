@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { api } from '../../api/commands';
 
 interface ChatMessage {
   id: string;
@@ -533,7 +534,7 @@ export default function AskQuantumPanel() {
   );
 
   const handleSubmit = useCallback(
-    (text?: string) => {
+    async (text?: string) => {
       const q = (text || inputValue).trim();
       if (!q) return;
 
@@ -541,25 +542,103 @@ export default function AskQuantumPanel() {
       setChatHistory((prev) => [...prev, userMsg]);
       setInputValue('');
 
-      const pipeline = generatePipeline(q);
+      // Call the real backend
+      let backendResult: any = null;
+      try {
+        backendResult = await api.askQuantum({ query: q });
+      } catch {
+        // Fallback to local pipeline if backend fails
+      }
+
+      const pipeline = backendResult
+        ? [
+            {
+              id: 1, title: 'Intent Classification', status: 'done' as const,
+              content: (
+                <div className="space-y-1">
+                  <div className="flex justify-between"><span className="text-[var(--text-muted)]">Domain</span><span className="text-[var(--accent-primary)]">{backendResult.intent || 'unknown'}</span></div>
+                  <div className="flex justify-between"><span className="text-[var(--text-muted)]">Confidence</span><span className="text-[var(--accent-success)]">{((backendResult.confidence || 0) * 100).toFixed(1)}%</span></div>
+                </div>
+              ),
+            },
+            {
+              id: 2, title: 'Problem Formalization', status: 'done' as const, editable: true,
+              content: (
+                <div className="space-y-1 font-mono text-[10px]">
+                  <div className="text-[var(--text-muted)]">Query:</div>
+                  <div className="text-[var(--text-secondary)] bg-[var(--bg-input)] rounded p-2 break-all">{q}</div>
+                  <div className="text-[var(--text-muted)]">Intent: {backendResult.intent}</div>
+                </div>
+              ),
+            },
+            {
+              id: 3, title: 'Circuit Synthesis', status: 'done' as const, editable: true,
+              content: (
+                <div className="space-y-1">
+                  <div className="flex justify-between"><span className="text-[var(--text-muted)]">Pipeline</span><span className="text-[var(--text-primary)]">{backendResult.pipeline_steps?.length || 6} steps completed</span></div>
+                </div>
+              ),
+            },
+            {
+              id: 4, title: 'Execution Plan', status: 'done' as const,
+              content: (
+                <div className="space-y-1">
+                  <div className="flex justify-between"><span className="text-[var(--text-muted)]">Backend</span><span className="text-[var(--text-primary)]">AbirQu Local Simulator</span></div>
+                  <div className="flex justify-between"><span className="text-[var(--text-muted)]">Status</span><span className="text-[var(--accent-success)]">Completed</span></div>
+                </div>
+              ),
+            },
+            {
+              id: 5, title: 'Raw Result', status: 'done' as const,
+              content: (
+                <div className="space-y-1 font-mono text-[10px]">
+                  <div className="text-[var(--text-secondary)] bg-[var(--bg-input)] rounded p-2">
+                    {JSON.stringify(backendResult, null, 2).slice(0, 300)}
+                  </div>
+                </div>
+              ),
+            },
+            {
+              id: 6, title: 'Final Answer', status: 'done' as const,
+              content: (
+                <div className="p-2 bg-[var(--accent-success)]/5 border border-[var(--accent-success)]/20 rounded-lg" id="aq-final-answer">
+                  <div className="text-[11px] text-[var(--text-primary)] font-medium">{backendResult.final_answer || 'Processing complete'}</div>
+                </div>
+              ),
+            },
+          ]
+        : generatePipeline(q);
+
       setActivePipeline(pipeline);
       setExpandedSteps({});
       setRunningSteps(new Set());
       setExecutedSteps(new Set());
 
-      setTimeout(() => {
+      // Mark all steps as done if backend succeeded
+      if (backendResult) {
+        setExecutedSteps(new Set([1, 2, 3, 4, 5, 6]));
+        setExpandedSteps({ 6: true });
         const assistantMsg: ChatMessage = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          text: `Processing: "${q}"`,
+          text: backendResult.final_answer || `Processed: "${q}"`,
         };
         setChatHistory((prev) => [...prev, assistantMsg]);
-        pipeline.forEach((step, i) => {
-          setTimeout(() => {
-            simulateStep(step.id);
-          }, 400 + i * 700);
-        });
-      }, 200);
+      } else {
+        setTimeout(() => {
+          const assistantMsg: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            text: `Processing: "${q}"`,
+          };
+          setChatHistory((prev) => [...prev, assistantMsg]);
+          pipeline.forEach((step, i) => {
+            setTimeout(() => {
+              simulateStep(step.id);
+            }, 400 + i * 700);
+          });
+        }, 200);
+      }
     },
     [inputValue, simulateStep],
   );

@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { api } from '../../api/commands';
 
 type Protocol =
   | 'BB84'
@@ -31,6 +32,7 @@ interface SimulationResult {
   secure: boolean;
   keyMaterial: string;
   timestamp: number;
+  backendResult?: any;
 }
 
 const PROTOCOLS: Protocol[] = [
@@ -67,7 +69,7 @@ function generateKeyMaterial(length: number): string {
   return result;
 }
 
-function simulateProtocol(protocol: Protocol, params: ProtocolParams): SimulationResult {
+function simulateProtocolLocal(protocol: Protocol, params: ProtocolParams): SimulationResult {
   const baseSiftedLength = Math.floor(Math.random() * 200) + 800;
   let qber: number;
   let chshSValue: number;
@@ -256,14 +258,38 @@ export default function QCommPanel() {
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [running, setRunning] = useState(false);
 
-  const handleRun = useCallback(() => {
+  const handleRun = useCallback(async () => {
     setRunning(true);
     setResult(null);
-    setTimeout(() => {
-      const res = simulateProtocol(protocol, params);
+    try {
+      if (protocol === 'BB84' || protocol === 'E91') {
+        const resp = await api.runQkd({
+          protocol: protocol,
+          num_bits: protocol === 'BB84' ? params.bb84Bits : params.e91Pairs,
+          eavesdrop: protocol === 'BB84' ? params.bb84Eavesdrop : false,
+        });
+        const backendRes = resp;
+        const keyBytes = (backendRes.final_key || []).map((b: number) => b.toString(16).padStart(2, '0')).join('');
+        setResult({
+          siftedKeyLength: backendRes.sifted_length || 0,
+          qber: backendRes.error_rate || 0,
+          chshSValue: backendRes.bell_violation || 0,
+          secure: backendRes.secure || false,
+          keyMaterial: keyBytes || generateKeyMaterial(32),
+          timestamp: Date.now(),
+          backendResult: backendRes,
+        });
+      } else {
+        // Non-QKD protocols still use frontend simulation
+        const res = simulateProtocolLocal(protocol, params);
+        setResult(res);
+      }
+    } catch {
+      const res = simulateProtocolLocal(protocol, params);
       setResult(res);
+    } finally {
       setRunning(false);
-    }, 800);
+    }
   }, [protocol, params]);
 
   const updateParams = (partial: Partial<ProtocolParams>) => {

@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import { api } from '../../api/commands';
 
 interface CodeInfo {
   id: string;
@@ -9,6 +10,7 @@ interface CodeInfo {
   stabilizers: string[];
   qubitLayout: 'line' | 'grid' | 'custom';
   gridSize?: { rows: number; cols: number };
+  backendType: string;
 }
 
 const CODES: CodeInfo[] = [
@@ -20,6 +22,7 @@ const CODES: CodeInfo[] = [
     d: 1,
     stabilizers: ['ZZI', 'IZZ'],
     qubitLayout: 'line',
+    backendType: 'repetition',
   },
   {
     id: 'bit-flip',
@@ -29,6 +32,7 @@ const CODES: CodeInfo[] = [
     d: 1,
     stabilizers: ['ZZI', 'IZZ'],
     qubitLayout: 'line',
+    backendType: 'bit_flip',
   },
   {
     id: 'phase-flip',
@@ -38,6 +42,7 @@ const CODES: CodeInfo[] = [
     d: 1,
     stabilizers: ['XXI', 'IXX'],
     qubitLayout: 'line',
+    backendType: 'phase_flip',
   },
   {
     id: 'shor-9',
@@ -60,6 +65,7 @@ const CODES: CodeInfo[] = [
     ],
     qubitLayout: 'grid',
     gridSize: { rows: 3, cols: 3 },
+    backendType: 'shor',
   },
   {
     id: 'steane-7',
@@ -76,6 +82,7 @@ const CODES: CodeInfo[] = [
       'ZIZIZIZ',
     ],
     qubitLayout: 'custom',
+    backendType: 'steane',
   },
   {
     id: 'surface-3',
@@ -93,6 +100,7 @@ const CODES: CodeInfo[] = [
     ],
     qubitLayout: 'grid',
     gridSize: { rows: 3, cols: 3 },
+    backendType: 'surface',
   },
   {
     id: 'surface-5',
@@ -103,6 +111,7 @@ const CODES: CodeInfo[] = [
     stabilizers: Array(24).fill('....'),
     qubitLayout: 'grid',
     gridSize: { rows: 5, cols: 5 },
+    backendType: 'surface',
   },
   {
     id: 'surface-7',
@@ -113,6 +122,7 @@ const CODES: CodeInfo[] = [
     stabilizers: Array(48).fill('....'),
     qubitLayout: 'grid',
     gridSize: { rows: 7, cols: 7 },
+    backendType: 'surface',
   },
   {
     id: 'color',
@@ -122,6 +132,7 @@ const CODES: CodeInfo[] = [
     d: 3,
     stabilizers: ['ZZZ.III', 'IIIZZZ.', '.III.ZZZ'],
     qubitLayout: 'custom',
+    backendType: 'color',
   },
   {
     id: 'ldpc',
@@ -137,6 +148,7 @@ const CODES: CodeInfo[] = [
     ],
     qubitLayout: 'grid',
     gridSize: { rows: 3, cols: 4 },
+    backendType: 'surface',
   },
 ];
 
@@ -309,6 +321,8 @@ export default function QECPanel() {
     logicalErrorRate: 0,
     successRate: 0,
   });
+  const [backendResult, setBackendResult] = useState<any>(null);
+  const [backendRunning, setBackendRunning] = useState(false);
 
   const code = useMemo(() => CODES.find((c) => c.id === selectedCode)!, [selectedCode]);
   const positions = useMemo(() => getQubitLayout(code), [code]);
@@ -657,6 +671,105 @@ export default function QECPanel() {
             >
               Run Distillation
             </button>
+          </div>
+        </div>
+
+        {/* Run on Real Backend */}
+        <div className="space-y-1.5">
+          <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Real Backend Execution</label>
+          <div className="rounded-md bg-[var(--bg-input)] border border-white/5 p-2 space-y-2">
+            <div className="text-[9px] text-[var(--text-muted)]">
+              Runs {code.name} on the AbirQu QEC engine
+            </div>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="text-[9px] text-[var(--text-muted)]">Error Rate</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="1"
+                  defaultValue={0.1}
+                  id="qec-error-rate"
+                  className="w-full px-2 py-1 rounded bg-[var(--bg-primary)] border border-white/5 text-[10px] text-[var(--text-primary)] font-mono"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-[9px] text-[var(--text-muted)]">Trials</label>
+                <input
+                  type="number"
+                  step="100"
+                  min="100"
+                  max="10000"
+                  defaultValue={1000}
+                  id="qec-trials"
+                  className="w-full px-2 py-1 rounded bg-[var(--bg-primary)] border border-white/5 text-[10px] text-[var(--text-primary)] font-mono"
+                />
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                setBackendRunning(true);
+                setBackendResult(null);
+                try {
+                  const errorRate = parseFloat((document.getElementById('qec-error-rate') as HTMLInputElement)?.value || '0.1');
+                  const numTrials = parseInt((document.getElementById('qec-trials') as HTMLInputElement)?.value || '1000');
+                  const result = await api.runQec({
+                    code_type: code.backendType,
+                    distance: code.d,
+                    error_rate: errorRate,
+                    logical_state: 0,
+                    num_trials: numTrials,
+                  });
+                  setBackendResult(result);
+                } catch (e) {
+                  setBackendResult({ error: String(e) });
+                } finally {
+                  setBackendRunning(false);
+                }
+              }}
+              disabled={backendRunning}
+              className={`w-full py-1.5 rounded-md text-[11px] font-medium border transition-colors ${
+                backendRunning
+                  ? 'bg-[var(--accent-primary)]/5 border-[var(--accent-primary)]/20 text-[var(--text-muted)] cursor-wait'
+                  : 'bg-[var(--accent-success)]/10 border-[var(--accent-success)]/30 text-[var(--accent-success)] hover:bg-[var(--accent-success)]/20'
+              }`}
+            >
+              {backendRunning ? 'Running on QEC Engine...' : 'Run on Real Backend'}
+            </button>
+            {backendResult && !backendResult.error && (
+              <div className="space-y-1.5 mt-1">
+                <div className="grid grid-cols-2 gap-1.5">
+                  <div className="rounded border border-white/5 p-1.5 text-center">
+                    <div className="text-[8px] text-[var(--text-muted)]">Correction Rate</div>
+                    <div className="text-[11px] font-mono font-bold text-[var(--accent-success)]">
+                      {(backendResult.correction_success * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                  <div className="rounded border border-white/5 p-1.5 text-center">
+                    <div className="text-[8px] text-[var(--text-muted)]">Logical Error Rate</div>
+                    <div className="text-[11px] font-mono font-bold text-[var(--accent-error)]">
+                      {(backendResult.logical_error_rate * 100).toFixed(3)}%
+                    </div>
+                  </div>
+                  <div className="rounded border border-white/5 p-1.5 text-center">
+                    <div className="text-[8px] text-[var(--text-muted)]">Code</div>
+                    <div className="text-[11px] font-mono font-bold text-[var(--accent-primary)]">
+                      [{backendResult.n},{backendResult.k},{backendResult.distance}]
+                    </div>
+                  </div>
+                  <div className="rounded border border-white/5 p-1.5 text-center">
+                    <div className="text-[8px] text-[var(--text-muted)]">Trials</div>
+                    <div className="text-[11px] font-mono font-bold text-[var(--text-primary)]">
+                      {backendResult.num_trials}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {backendResult?.error && (
+              <div className="text-[10px] text-[var(--accent-error)] mt-1">{backendResult.error}</div>
+            )}
           </div>
         </div>
 

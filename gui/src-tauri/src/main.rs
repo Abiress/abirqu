@@ -30,6 +30,16 @@ fn main() {
             commands::run_dwave,
             commands::export_circuit,
             commands::get_frameworks,
+            commands::run_qec,
+            commands::run_qkd,
+            commands::run_chemistry,
+            commands::run_shor,
+            commands::run_grover,
+            commands::run_hhl,
+            commands::run_qpinn,
+            commands::run_crypto,
+            commands::run_agentic,
+            commands::ask_quantum,
         ])
         .run(tauri::generate_context!())
         .expect("error while running AbirQu");

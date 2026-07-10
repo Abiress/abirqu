@@ -348,6 +348,96 @@ pub async fn get_frameworks(
     extract_data(resp)
 }
 
+#[tauri::command]
+pub async fn run_qec(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_qec", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_qkd(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_qkd", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_chemistry(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_chemistry", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_shor(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_shor", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_grover(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_grover", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_hhl(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_hhl", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_qpinn(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_qpinn", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_crypto(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_crypto", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_agentic(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_agentic", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn ask_quantum(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "ask_quantum", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
 fn extract_data(resp: Value) -> Result<Value, String> {
     if resp["status"] == "ok" {
         Ok(resp["data"].clone())

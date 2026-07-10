@@ -93,4 +93,15 @@ export const api = {
 
   getFrameworks: () =>
     invoke<Record<string, { installed: boolean; version: string }>>('get_frameworks'),
+
+  runQec: (params: any) => invoke<any>('run_qec', { params }),
+  runQkd: (params: any) => invoke<any>('run_qkd', { params }),
+  runChemistry: (params: any) => invoke<any>('run_chemistry', { params }),
+  runShor: (params: any) => invoke<any>('run_shor', { params }),
+  runGrover: (params: any) => invoke<any>('run_grover', { params }),
+  runHhl: (params: any) => invoke<any>('run_hhl', { params }),
+  runQpinn: (params: any) => invoke<any>('run_qpinn', { params }),
+  runCrypto: (params: any) => invoke<any>('run_crypto', { params }),
+  runAgentic: (params: any) => invoke<any>('run_agentic', { params }),
+  askQuantum: (params: any) => invoke<any>('ask_quantum', { params }),
 };
