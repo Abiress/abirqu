@@ -11,7 +11,7 @@ with open("README.md", "r") as f:
 
 setup(
     name="abirqu",
-    version="1.1.0",
+    version="1.2.0",
     author="Abir Maheshwari",
     author_email="abhirsxn@gmail.com",
     description="Full-stack quantum computing SDK — real hardware support for IBM, D-Wave, SpinQ, and all quantum computers",

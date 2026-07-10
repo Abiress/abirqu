@@ -1,0 +1,8 @@
+node_modules/
+dist/
+target/
+*.deb
+*.rpm
+*.AppImage
+*.dmg
+*.exe
