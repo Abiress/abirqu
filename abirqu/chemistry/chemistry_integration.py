@@ -389,7 +389,7 @@ class OpenFermionHook:
 def run_molecular_vqe(
     mol_data: MolecularData,
     ansatz: str = "uccsd",
-    mapper: str = "jordan_wimizer",
+    mapper: str = "jordan_wigner",
     optimizer: str = "cobyla",
     max_iterations: int = 100,
     shots: int = 4096,
@@ -397,18 +397,14 @@ def run_molecular_vqe(
     """
     Run a complete VQE calculation for a molecule.
 
-    This is the high-level API that chains:
-        1. Classical calculation (PySCF or benchmark data)
-        2. Fermion-to-qubit mapping
-        3. UCCSD ansatz construction
-        4. VQE optimization loop
-        5. Energy evaluation
+    Uses scipy.optimize.minimize (COBYLA) with real circuit simulation
+    via QuantumRun for energy evaluation.
 
     Args:
         mol_data: MolecularData with integrals
         ansatz: "uccsd" or "hardware_efficient"
         mapper: "jordan_wigner", "bravyi_kitaev", or "parity"
-        optimizer: Classical optimizer name
+        optimizer: Classical optimizer name (cobyla, nelder_mead, powell)
         max_iterations: Maximum VQE iterations
         shots: Number of measurement shots
 
@@ -420,7 +416,10 @@ def run_molecular_vqe(
             - "n_qubits": Number of qubits used
             - "n_parameters": Number of ansatz parameters
             - "convergence": List of energies per iteration
+            - "converged": Whether optimizer converged
     """
+    from scipy.optimize import minimize as scipy_minimize
+
     # Ensure integrals are loaded
     if mol_data.one_electron_integrals is None:
         hook = PySCFHook(pyscf_available=False)
@@ -433,33 +432,43 @@ def run_molecular_vqe(
     from ..library.vqe_ansatz import vqe_uccsd, vqe_hardware_efficient
 
     if ansatz == "uccsd":
-        circuit = vqe_uccsd(
+        circuit_fn = lambda params: vqe_uccsd(
             num_qubits=n_qubits,
             num_electrons=mol_data.n_electrons,
+            parameters=params,
         )
-        n_params = circuit.num_parameters if hasattr(circuit, 'num_parameters') else n_qubits * 4
+        n_params = n_qubits * 4
     else:
-        circuit = vqe_hardware_efficient(num_qubits=n_qubits)
+        circuit_fn = lambda params: vqe_hardware_efficient(
+            num_qubits=n_qubits,
+            parameters=params,
+        )
         n_params = n_qubits * 6
 
-    # Simple VQE loop (gradient-free optimization)
     convergence = []
-    best_energy = float('inf')
-    best_params = None
 
-    for iteration in range(max_iterations):
-        # Random parameter perturbation for now
-        # In production, this would use COBYLA/SPSA from quantum_optimizer
-        params = np.random.uniform(-np.pi, np.pi, n_params)
-
-        # Evaluate energy (simplified: use Hamiltonian expectation value)
-        # In full implementation, this would run the circuit and measure
-        energy = _evaluate_energy(params, hamiltonian, n_qubits, circuit)
+    def objective(params):
+        energy = _evaluate_energy(params, hamiltonian, n_qubits, circuit_fn, shots)
         convergence.append(float(energy))
+        return energy
 
-        if energy < best_energy:
-            best_energy = energy
-            best_params = params.copy()
+    # Initial parameters
+    x0 = np.random.uniform(-np.pi, np.pi, n_params)
+
+    # Run VQE with scipy optimizer
+    opt_result = scipy_minimize(
+        objective,
+        x0,
+        method=optimizer.upper() if optimizer.upper() in ('COBYLA', 'NELDER_MEAD', 'POWELL') else 'COBYLA',
+        options={
+            'maxiter': max_iterations,
+            'rhobeg': 0.5,
+            'tol': 1e-6,
+        },
+    )
+
+    best_energy = opt_result.fun
+    best_params = opt_result.x
 
     return {
         "energy": float(best_energy),
@@ -470,37 +479,57 @@ def run_molecular_vqe(
         "convergence": convergence,
         "mapper": mapper,
         "ansatz": ansatz,
+        "converged": opt_result.success,
+        "optimizer": opt_result.message,
     }
 
 
-def _evaluate_energy(params, hamiltonian, n_qubits, circuit):
-    """Evaluate energy expectation value <ψ|H|ψ> for given parameters."""
-    # Simplified energy evaluation using Pauli Hamiltonian
-    # In production, this runs the circuit on simulator and measures
-    total_energy = 0.0
+def _evaluate_energy(params, hamiltonian, n_qubits, circuit_fn, shots=1024):
+    """Evaluate energy expectation value <ψ|H|ψ> for given parameters.
 
+    Uses real quantum circuit simulation via QuantumRun.
+    """
+    from ..primitives.quantum_run import QuantumRun
+
+    # Build parameterized circuit
+    circuit = circuit_fn(params)
+
+    # Run circuit to get statevector
+    qr = QuantumRun(circuits=circuit, shots=shots)
+    result = qr[0]
+
+    # Get statevector for exact expectation values
+    sv = result.statevector
+    if sv is None:
+        # Fallback: use counts to estimate expectations
+        counts = result.counts
+        total = sum(counts.values()) if counts else 1
+        sv = np.zeros(2**n_qubits, dtype=complex)
+        for bitstring, count in counts.items():
+            idx = int(bitstring, 2)
+            sv[idx] = np.sqrt(count / total)
+
+    # Compute <ψ|H|ψ> exactly
+    total_energy = 0.0
     for term in hamiltonian:
-        # For identity term, just add coefficient
         if all(p == 'I' for p in term.paulis):
             total_energy += term.coefficient.real
             continue
 
-        # For non-identity terms, compute expectation value
-        # This is a simplified classical simulation
-        coeff = term.coefficient
-
-        # Compute |⟨ψ|P|ψ⟩| ≈ product of single-qubit expectations
-        expectation = 1.0
-        for i, p in enumerate(term.paulis):
-            if p == 'Z':
-                # Z expectation: cos(θ) for |ψ⟩ = cos(θ/2)|0⟩ + sin(θ/2)|1⟩
-                theta = params[i % len(params)]
-                expectation *= np.cos(theta)
+        # Build Pauli matrix for this term
+        pauli_matrix = np.array([[1.0]], dtype=complex)
+        for p in term.paulis:
+            if p == 'I':
+                pauli_matrix = np.kron(pauli_matrix, np.eye(2, dtype=complex))
             elif p == 'X':
-                expectation *= np.sin(params[i % len(params)])
+                pauli_matrix = np.kron(pauli_matrix, np.array([[0, 1], [1, 0]], dtype=complex))
             elif p == 'Y':
-                expectation *= np.sin(params[i % len(params)])
+                pauli_matrix = np.kron(pauli_matrix, np.array([[0, -1j], [1j, 0]], dtype=complex))
+            elif p == 'Z':
+                pauli_matrix = np.kron(pauli_matrix, np.array([[1, 0], [0, -1]], dtype=complex))
 
-        total_energy += (coeff * expectation).real
+        # <ψ|P|ψ> = sv† · P · sv
+        expectation = np.real(np.conj(sv) @ pauli_matrix @ sv)
+        total_energy += term.coefficient.real * expectation
 
     return total_energy

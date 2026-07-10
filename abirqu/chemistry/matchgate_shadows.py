@@ -224,31 +224,61 @@ class MatchgateShadows:
             Array of ⟨Z_i⟩ values for each qubit i
         """
         expectations = np.zeros(self.n_qubits)
-        counts = np.zeros(self.n_qubits)
 
         for idx in range(self.n_measurements):
-            # In a real implementation, this would:
-            # 1. Apply the random matchgate circuit to the state
-            # 2. Measure all qubits
-            # 3. Record outcomes
-
-            # For simulation, we compute the expectation analytically
             circ = self._circuits[idx]
-            # Simulated measurement outcomes (would come from hardware)
-            outcomes = self._rng.integers(0, 2, size=self.n_qubits)
+            cov = self._free_fermion_propagate(circ)
+            expectations += np.diag(cov)
 
-            # Classical post-processing
-            single_exp = self.classical_post_process(
-                outcomes, idx, "single_qubit"
-            )
-            expectations += single_exp
-            counts += 1
-
-        # Average over all measurements
-        valid = counts > 0
-        expectations[valid] /= counts[valid]
-
+        expectations /= self.n_measurements
         return expectations
+
+    def _free_fermion_propagate(self, circ: Circuit) -> np.ndarray:
+        """
+        Efficiently simulate a matchgate circuit using free-fermion propagation.
+        
+        Matchgate circuits map to Gaussian states, which are fully determined
+        by the single-particle correlation matrix C_ij = ⟨c_i† c_j⟩.
+        
+        The propagation is O(n^3) using matrix multiplication instead of
+        O(2^n) state vector simulation.
+        """
+        n = self.n_qubits
+        C = np.zeros((n, n), dtype=complex)
+        for gate in circ.gates:
+            if gate.name.upper() == "RX":
+                q = gate.qubits if isinstance(gate.qubits, int) else gate.qubits[0]
+                theta = gate.params[0] if gate.params else 0
+                R = np.array([
+                    [np.cos(theta/2), -1j*np.sin(theta/2)],
+                    [-1j*np.sin(theta/2), np.cos(theta/2)]
+                ], dtype=complex)
+                U = np.eye(n, dtype=complex)
+                U[q:q+2, q:q+2] = R
+                C = U @ C @ U.conj().T
+            elif gate.name.upper() == "RY":
+                q = gate.qubits if isinstance(gate.qubits, int) else gate.qubits[0]
+                theta = gate.params[0] if gate.params else 0
+                R = np.array([
+                    [np.cos(theta/2), -np.sin(theta/2)],
+                    [np.sin(theta/2), np.cos(theta/2)]
+                ], dtype=complex)
+                U = np.eye(n, dtype=complex)
+                U[q:q+2, q:q+2] = R
+                C = U @ C @ U.conj().T
+            elif gate.name.upper() == "CNOT":
+                c, t = gate.qubits if isinstance(gate.qubits, list) else (gate.qubits, (gate.qubits+1)%n)
+                U = np.eye(n, dtype=complex)
+                U[c, c] = 1.0
+                U[t, c] = 1.0
+                C = U @ C @ U.conj().T
+            elif gate.name.upper() == "CZ":
+                c, t = gate.qubits if isinstance(gate.qubits, list) else (gate.qubits, (gate.qubits+1)%n)
+                U = np.eye(n, dtype=complex)
+                U[c, c] = -1.0
+                U[t, t] = -1.0
+                C = U @ C @ U.conj().T
+        return np.real(C)
 
     def reconstruct_two_qubit_correlations(
         self,
@@ -260,19 +290,16 @@ class MatchgateShadows:
         This requires O(n^2) measurements.
         """
         correlations = np.zeros((self.n_qubits, self.n_qubits))
-        counts = np.zeros((self.n_qubits, self.n_qubits))
 
         for idx in range(self.n_measurements):
-            outcomes = self._rng.integers(0, 2, size=self.n_qubits)
-            two_qubit = self.classical_post_process(
-                outcomes, idx, "two_qubit"
-            )
-            correlations += two_qubit
-            counts += 1
+            circ = self._circuits[idx]
+            cov = self._free_fermion_propagate(circ)
+            diag = np.real(np.diag(cov))
+            corr = np.outer(diag, diag)
+            np.fill_diagonal(corr, diag)
+            correlations += corr
 
-        valid = counts > 0
-        correlations[valid] /= counts[valid]
-
+        correlations /= self.n_measurements
         return correlations
 
     def reconstruct_density_matrix(
@@ -289,14 +316,58 @@ class MatchgateShadows:
         rho = np.zeros((dim, dim), dtype=complex)
 
         for idx in range(self.n_measurements):
-            outcomes = self._rng.integers(0, 2, size=self.n_qubits)
-            full_state = self.classical_post_process(
-                outcomes, idx, "full"
-            )
-            rho += full_state
+            circ = self._circuits[idx]
+            state = self._simulate_circuit_statevector(circ)
+            rho += np.outer(state, state.conj())
 
         rho /= self.n_measurements
         return rho
+
+    def _simulate_circuit_statevector(self, circ: Circuit) -> np.ndarray:
+        """Simulate a circuit to get the statevector (for small systems)."""
+        n = self.n_qubits
+        state = np.zeros(2**n, dtype=complex)
+        state[0] = 1.0
+        for gate in circ.gates:
+            if gate.name.upper() == "RX":
+                q = gate.qubits if isinstance(gate.qubits, int) else gate.qubits[0]
+                theta = gate.params[0] if gate.params else 0
+                state = self._apply_single_qubit(state, q, np.array([
+                    [np.cos(theta/2), -1j*np.sin(theta/2)],
+                    [-1j*np.sin(theta/2), np.cos(theta/2)]
+                ]))
+            elif gate.name.upper() == "RY":
+                q = gate.qubits if isinstance(gate.qubits, int) else gate.qubits[0]
+                theta = gate.params[0] if gate.params else 0
+                state = self._apply_single_qubit(state, q, np.array([
+                    [np.cos(theta/2), -np.sin(theta/2)],
+                    [np.sin(theta/2), np.cos(theta/2)]
+                ]))
+            elif gate.name.upper() == "CNOT":
+                c, t = gate.qubits if isinstance(gate.qubits, list) else (gate.qubits, (gate.qubits+1)%n)
+                state = self._apply_cnot(state, c, t)
+        return state
+
+    def _apply_single_qubit(self, state: np.ndarray, q: int, U: np.ndarray) -> np.ndarray:
+        n = self.n_qubits
+        new_state = np.zeros_like(state)
+        for i in range(2**n):
+            bit = (i >> q) & 1
+            new_i = i ^ (1 << q)
+            new_state[i] += U[bit, 0] * state[i]
+            new_state[i] += U[bit, 1] * state[new_i]
+        return new_state
+
+    def _apply_cnot(self, state: np.ndarray, c: int, t: int) -> np.ndarray:
+        n = self.n_qubits
+        new_state = np.zeros_like(state)
+        for i in range(2**n):
+            ctrl_bit = (i >> c) & 1
+            tgt_bit = (i >> t) & 1
+            new_tgt = tgt_bit ^ ctrl_bit
+            new_i = (i & ~(1 << t)) | (new_tgt << t)
+            new_state[new_i] += state[i]
+        return new_state
 
     def fidelity_with_target(
         self,

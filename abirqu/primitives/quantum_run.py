@@ -221,6 +221,8 @@ class QuantumRun:
         backend: Optional[Any] = None,
         seed: Optional[int] = None,
         callbacks: Optional[List[Callable]] = None,
+        pulse_mode: bool = False,
+        hardware_profile: Optional[str] = None,
     ):
         self._circuits = [circuits] if isinstance(circuits, Circuit) else list(circuits)
         self._shots = shots
@@ -231,9 +233,29 @@ class QuantumRun:
         self._backend = backend
         self._seed = seed
         self._callbacks = callbacks or []
+        self._pulse_mode = pulse_mode
+        self._hardware_profile = hardware_profile
+        self._pulse_schedule = None
+
+        # If pulse_mode, translate circuits to pulse schedules
+        if self._pulse_mode:
+            self._translate_to_pulses()
 
         # Execute immediately
         self._results = self._execute()
+
+    def _translate_to_pulses(self):
+        """Translate circuits to pulse schedules using PulseScheduler."""
+        try:
+            from ..pulse_translator import PulseScheduler, HardwareProfile
+            hw = HardwareProfile(self._hardware_profile or "superconducting")
+            scheduler = PulseScheduler(hw)
+            self._pulse_schedule = []
+            for circ in self._circuits:
+                schedule = scheduler.schedule(circ)
+                self._pulse_schedule.append(schedule)
+        except ImportError:
+            self._pulse_mode = False
 
     # ── Internal execution engine ─────────────────────────────────
 
@@ -293,6 +315,8 @@ class QuantumRun:
                     "num_gates": len(circ.gates),
                     "elapsed_ms": elapsed * 1000,
                     "mitigation": mitigation,
+                    "pulse_mode": self._pulse_mode,
+                    "pulse_schedule": self._pulse_schedule[i] if self._pulse_mode and self._pulse_schedule and i < len(self._pulse_schedule) else None,
                 },
             )
             results.append(result)
