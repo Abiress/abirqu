@@ -167,7 +167,7 @@ Benchmark results are saved to `benchmark_results.json` in the project root.
 
 ### Running the Test Suite
 
-AbirQu has **412 tests** covering all modules. Run them with:
+AbirQu has **627 tests** covering all modules. Run them with:
 
 ```bash
 # Run all tests
@@ -558,7 +558,7 @@ abirqu/
 │   ├── formats/             # Import/export (Qiskit, Cirq, Braket, etc.)
 │   ├── docs/                # Beginner guide
 │   └── cli.py               # Command-line interface
-├── tests/                   # Test suite (412 tests)
+├── tests/                   # Test suite (627 tests)
 │   ├── test_comprehensive.py
 │   ├── test_gui.py
 │   ├── test_hardware.py
