@@ -180,7 +180,7 @@ AbirQu aims to make quantum computing algorithms accessible through a single, ha
 
 With modules for **quantum chemistry**, **intelligence analytics**, **post-quantum cryptography**, **space applications**, **quantum PDE solvers**, **agentic orchestration**, **quantum communication** (7 protocols), **fault-tolerant QEC** (stabilizer/surface/color codes), **hardware calibration & control**, and a **full quantum IDE**, AbirQu is a comprehensive quantum SDK.
 
-> **v1.0.0 — Full-Stack Quantum SDK** — 6 domain modules, 12 hardware backends, 7 quantum communication protocols, fault-tolerant QEC with 5 decoders, hardware calibration & characterization, noise-aware compilation, full quantum IDE/GUI, 626 tests. Runs on Intel/AMD/Qualcomm/MediaTek via pure NumPy. **Published on PyPI.**
+> **v1.2.0 — Full Quantum IDE** — Tauri 2.x desktop app with all 14 panels: circuit editor, Python/QASM editors, framework integration (Qiskit/Cirq/OQTOPUS/D-Wave), Explorer, QEC Lab, Quantum Comm, Domain Modules (Chemistry/OSINT/Crypto/Space/QPINN/Agentic), Security (AbirGuard), Plugins, Ask Quantum (NL2Q), Settings. 627 tests. Runs on Intel/AMD/Qualcomm/MediaTek via pure NumPy. **Published on PyPI.**
 
 ### Status & Badges
 
@@ -866,7 +866,7 @@ The tests verify that modules run without errors. They do NOT verify correctness
 
 | Version | Date | Key Additions |
 |---------|------|---------------|
-| **v1.2.0** | 2026-07 | **Full Quantum IDE** — Tauri 2.x desktop app: circuit editor, Python/QASM editors, framework integration (Qiskit/Cirq/OQTOPUS/D-Wave), resizable panels, noise simulation, export reports, Bloch sphere, 20 Tauri IPC commands |
+| **v1.2.0** | 2026-07 | **Full Quantum IDE** — Tauri 2.x desktop app with all 14 panels: circuit editor, Python/QASM editors, Explorer, QEC Lab, Quantum Comm, Domain Modules (Chemistry/OSINT/Crypto/Space/QPINN/Agentic), Security (AbirGuard), Plugins & Marketplace, Ask Quantum (NL2Q), Settings. Framework integration (Qiskit/Cirq/OQTOPUS/D-Wave), resizable panels, noise simulation, export reports, Bloch sphere, 20 Tauri IPC commands |
 | **v1.1.0** | 2026-07 | **Production & Commercial Readiness** — Published on PyPI, CI/CD, Shor's algorithm, Grover fixed, VQE chemical accuracy, IBM hardware verified (ibm_fez), QDCG, 627 tests |
 | **v1.0.0** | 2026-07 | **Full Stack + Hardware Control** — Hardware calibration, device characterization, noise profiling, hardware-aware compiler, cloud manager, 412 tests |
 | **v0.8.0** | 2026-07 | **Full Quantum IDE/GUI** — Visual circuit editor, Bloch sphere, state vector, measurement histograms, hardware panel, job dashboard, circuit library, code editor, themes — 125 tests |
