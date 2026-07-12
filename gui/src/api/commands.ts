@@ -217,3 +217,169 @@ export interface PQCAssessResult {
   quantum_bkz: { complexity: string; feasible: boolean };
   recommendation: string;
 }
+
+// ─── OSINT / Graph Optimization ───────────────────────────────────────
+export interface OsintGraphParams {
+  problem?: string;
+  nodes?: number;
+  edge_density?: number;
+  edges?: [number, number][];
+}
+export interface OsintGraphResult {
+  problem: string;
+  num_nodes: number;
+  num_edges: number;
+  edges: [number, number][];
+  cut_value: number;
+  partition: string;
+  best_state: string;
+  hamiltonian_terms: number;
+}
+export async function runOsintGraph(
+  params: OsintGraphParams,
+): Promise<OsintGraphResult> {
+  return invoke('run_osint_graph', { params });
+}
+
+// ─── CV-QKD ───────────────────────────────────────────────────────────
+export interface CVQKDParams {
+  num_symbols?: number;
+  modulation_variance?: number;
+  excess_noise?: number;
+  transmittance?: number;
+}
+export interface CVQKDResult {
+  excess_noise: number;
+  channel_transmittance: number;
+  mutual_information: number;
+  secret_key_rate: number;
+  final_key_length: number;
+  secure: boolean;
+}
+export async function runCVQKD(params: CVQKDParams): Promise<CVQKDResult> {
+  return invoke('run_qcomm_cvqkd', { params });
+}
+
+// ─── DI-QKD ───────────────────────────────────────────────────────────
+export interface DIQKDParams {
+  num_rounds?: number;
+  noise_level?: number;
+  detection_efficiency?: number;
+}
+export interface DIQKDResult {
+  bell_violation: number;
+  chsh_parameter: number;
+  key_rate: number;
+  error_rate: number;
+  secure: boolean;
+  final_key_length: number;
+}
+export async function runDIQKD(params: DIQKDParams): Promise<DIQKDResult> {
+  return invoke('run_qcomm_diqkd', { params });
+}
+
+// ─── Satellite QKD ────────────────────────────────────────────────────
+export interface SatelliteQKDParams {
+  altitude_km?: number;
+  num_pulses?: number;
+  detector_efficiency?: number;
+}
+export interface SatelliteQKDResult {
+  distance_km: number;
+  channel_loss_db: number;
+  detection_rate: number;
+  key_rate: number;
+  key_length: number;
+  secure: boolean;
+}
+export async function runSatelliteQKD(
+  params: SatelliteQKDParams,
+): Promise<SatelliteQKDResult> {
+  return invoke('run_qcomm_satellite', { params });
+}
+
+// ─── Quantum Repeater ─────────────────────────────────────────────────
+export interface RepeaterParams {
+  total_distance_km?: number;
+  num_segments?: number;
+}
+export interface RepeaterResult {
+  total_distance_km: number;
+  num_segments: number;
+  end_to_end_fidelity: number;
+  key_rate: number;
+  key_length: number;
+  latency_ms: number;
+}
+export async function runRepeater(params: RepeaterParams): Promise<RepeaterResult> {
+  return invoke('run_qcomm_repeater', { params });
+}
+
+// ─── Quantum Network ──────────────────────────────────────────────────
+export interface NetworkParams {
+  topology?: string;
+  num_nodes?: number;
+  distance_km?: number;
+}
+export interface NetworkResult {
+  topology: string;
+  num_nodes: number;
+  total_key_rate: number;
+  average_fidelity: number;
+  num_paths: number;
+}
+export async function runNetwork(params: NetworkParams): Promise<NetworkResult> {
+  return invoke('run_qcomm_network', { params });
+}
+
+// ─── Circuit Encryption ───────────────────────────────────────────────
+export interface CircuitEncryptParams {
+  circuit_data: { num_qubits: number; gates: any[] };
+}
+export interface CircuitEncryptResult {
+  ciphertext: string;
+  nonce: string;
+  digest: string;
+  algorithm: string;
+  key_id: string;
+}
+export async function runCircuitEncrypt(
+  params: CircuitEncryptParams,
+): Promise<CircuitEncryptResult> {
+  return invoke('run_circuit_encrypt', { params });
+}
+
+export interface CircuitDecryptParams {
+  ciphertext: string;
+  nonce: string;
+  digest: string;
+  key: string;
+}
+export interface CircuitDecryptResult {
+  success: boolean;
+  num_qubits?: number;
+  num_gates?: number;
+  error?: string;
+}
+export async function runCircuitDecrypt(
+  params: CircuitDecryptParams,
+): Promise<CircuitDecryptResult> {
+  return invoke('run_circuit_decrypt', { params });
+}
+
+// ─── Plugins ──────────────────────────────────────────────────────────
+export interface PluginInfo {
+  name: string;
+  version: string;
+  description?: string;
+  tags?: string[];
+  downloads?: number;
+  installed?: boolean;
+}
+export interface PluginListResult {
+  installed: PluginInfo[];
+  marketplace: PluginInfo[];
+}
+export async function runPluginList(): Promise<PluginListResult> {
+  return invoke('run_plugin_list', { params: {} });
+}

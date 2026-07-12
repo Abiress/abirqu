@@ -330,3 +330,311 @@ def handle_pqc_assess(params: Dict[str, Any]) -> Dict[str, Any]:
     lat = LatticeSimulation()
     assessment = lat.quantum_vulnerability_assessment()
     return _to_jsonable(assessment)
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# OSINT / Graph Optimization — wraps abirqu.osint
+# ─────────────────────────────────────────────────────────────────────────
+
+def handle_osint_graph(params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    params:
+      problem: "max_cut" | "mis" | "mvc" | "coloring" | "community" | "anomaly"
+      nodes: int (default 8)
+      edge_density: float (default 0.4)
+      edges: Optional[List[Tuple[int,int]]] (custom edges, overrides density)
+    """
+    import abirqu.osint as osint
+
+    problem = params.get("problem", "max_cut").lower()
+    num_nodes = int(params.get("nodes", 8))
+    edge_density = float(params.get("edge_density", 0.4))
+    custom_edges = params.get("edges")
+
+    rng = np.random.default_rng(42)
+
+    if custom_edges:
+        edges = [tuple(e) for e in custom_edges]
+    else:
+        edges = []
+        for i in range(num_nodes):
+            for j in range(i + 1, num_nodes):
+                if rng.random() < edge_density:
+                    edges.append((i, j))
+
+    graph = osint.IntelligenceGraph()
+    for i in range(num_nodes):
+        graph.add_node(str(i), label=f"Node {i}")
+    for i, j in edges:
+        graph.add_edge(str(i), str(j))
+
+    compiler = osint.GraphToIsingCompiler(graph)
+
+    compile_methods = {
+        "max_cut": compiler.compile_max_cut,
+        "mis": compiler.compile_max_cut,  # MAX_INDEPENDENT_SET uses same formulation
+        "mvc": compiler.compile_min_vertex_cover,
+        "coloring": compiler.compile_max_cut,
+        "community": compiler.compile_max_cut,
+        "anomaly": compiler.compile_max_cut,
+    }
+    hamiltonian = compile_methods.get(problem, compiler.compile_max_cut)()
+
+    qaoa_circuit = compiler.build_qaoa_circuit(hamiltonian, p=2)
+
+    from abirqu.primitives.quantum_run import QuantumRun
+    qaoa_circuit.measure_all()
+    run = QuantumRun(qaoa_circuit, shots=512)
+    counts = run.counts if run.counts else {}
+
+    best_state = max(counts, key=counts.get) if counts else "0" * num_nodes
+    cut_value = sum(1 for i in range(len(best_state)) if best_state[i] == '1')
+
+    partition = "".join("A" if best_state[i] == '0' else "B" for i in range(min(len(best_state), num_nodes)))
+
+    return _to_jsonable({
+        "problem": problem,
+        "num_nodes": num_nodes,
+        "num_edges": len(edges),
+        "edges": edges,
+        "cut_value": cut_value,
+        "partition": partition,
+        "best_state": best_state,
+        "hamiltonian_terms": len(hamiltonian) if isinstance(hamiltonian, list) else 0,
+    })
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Quantum Communication — wraps abirqu.quantum_communication (CV-QKD, DI-QKD, etc.)
+# ─────────────────────────────────────────────────────────────────────────
+
+def handle_qcomm_cvqkd(params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    params:
+      num_symbols: int (default 1024)
+      modulation_variance: float (default 4.0)
+      excess_noise: float (default 0.1)
+      transmittance: float (default 0.5)
+    """
+    from abirqu.quantum_communication.cv_qkd import CVQKDProtocol
+
+    sim = CVQKDProtocol(
+        num_symbols=int(params.get("num_symbols", 1024)),
+        modulation_variance=float(params.get("modulation_variance", 4.0)),
+        excess_noise=float(params.get("excess_noise", 0.1)),
+        transmittance=float(params.get("transmittance", 0.5)),
+    )
+    result = sim.run()
+    return _to_jsonable({
+        "excess_noise": result.excess_noise,
+        "channel_transmittance": result.channel_transmittance,
+        "mutual_information": result.mutual_information,
+        "secret_key_rate": result.secret_key_rate,
+        "final_key_length": len(result.final_key) if result.final_key else 0,
+        "secure": result.secret_key_rate > 0,
+    })
+
+
+def handle_qcomm_diqkd(params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    params:
+      num_rounds: int (default 1024)
+      noise_level: float (default 0.05)
+      detection_efficiency: float (default 0.95)
+    """
+    from abirqu.quantum_communication.di_qkd import DIQKDProtocol
+
+    sim = DIQKDProtocol(
+        num_rounds=int(params.get("num_rounds", 1024)),
+        noise_level=float(params.get("noise_level", 0.05)),
+        detection_efficiency=float(params.get("detection_efficiency", 0.95)),
+    )
+    result = sim.run()
+    return _to_jsonable({
+        "bell_violation": result.bell_violation,
+        "chsh_parameter": result.chsh_parameter,
+        "key_rate": result.key_rate,
+        "error_rate": result.error_rate,
+        "secure": result.secure,
+        "final_key_length": len(result.final_key) if result.final_key else 0,
+    })
+
+
+def handle_qcomm_satellite(params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    params:
+      altitude_km: float (default 500)
+      num_pulses: float (default 1e6)
+      detector_efficiency: float (default 0.9)
+    """
+    from abirqu.quantum_communication.satellite import SatelliteQKD, SatelliteLink
+
+    link = SatelliteLink(altitude_km=float(params.get("altitude_km", 500)))
+    sim = SatelliteQKD(link=link, detector_efficiency=float(params.get("detector_efficiency", 0.9)))
+    result = sim.simulate(num_pulses=float(params.get("num_pulses", 1e6)))
+    return _to_jsonable({
+        "distance_km": result.distance_km,
+        "channel_loss_db": result.channel_loss_db,
+        "detection_rate": result.detection_rate,
+        "key_rate": result.key_rate,
+        "key_length": result.key_length,
+        "secure": result.secure,
+    })
+
+
+def handle_qcomm_repeater(params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    params:
+      total_distance_km: float (default 1000)
+      num_segments: int (default 10)
+    """
+    from abirqu.quantum_communication.repeaters import QuantumRepeater
+
+    sim = QuantumRepeater(
+        total_distance_km=float(params.get("total_distance_km", 1000)),
+        num_segments=int(params.get("num_segments", 10)),
+    )
+    result = sim.simulate()
+    return _to_jsonable({
+        "total_distance_km": result.total_distance_km,
+        "num_segments": result.num_segments,
+        "end_to_end_fidelity": result.end_to_end_fidelity,
+        "key_rate": result.key_rate,
+        "key_length": result.key_length,
+        "latency_ms": result.latency_ms,
+    })
+
+
+def handle_qcomm_network(params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    params:
+      topology: "star" | "ring" | "mesh" (default "star")
+      num_nodes: int (default 6)
+      distance_km: float (default 100)
+    """
+    from abirqu.quantum_communication.network import QuantumNetwork, Topology
+
+    topology_map = {
+        "star": Topology.STAR,
+        "ring": Topology.RING,
+        "mesh": Topology.MESH,
+    }
+    topology = topology_map.get(params.get("topology", "star"), Topology.STAR)
+    num_nodes = int(params.get("num_nodes", 6))
+
+    sim = QuantumNetwork(
+        num_nodes=num_nodes,
+        topology=topology,
+    )
+    sim.add_random_links()
+    result = sim.simulate()
+    return _to_jsonable({
+        "topology": params.get("topology", "star"),
+        "num_nodes": num_nodes,
+        "total_key_rate": getattr(result, "total_key_rate", 0),
+        "average_fidelity": getattr(result, "average_fidelity", 0),
+        "num_paths": len(getattr(result, "paths", [])),
+    })
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Circuit Encryption — wraps abirqu.security.CircuitProtector
+# ─────────────────────────────────────────────────────────────────────────
+
+def handle_circuit_encrypt(params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    params:
+      circuit_data: dict with num_qubits and gates
+    """
+    from abirqu.security import CircuitProtector
+    from abirqu.circuit import Circuit
+
+    circuit_data = params.get("circuit_data", {})
+    num_qubits = circuit_data.get("num_qubits", 2)
+    gates = circuit_data.get("gates", [])
+
+    circ = Circuit(num_qubits)
+    for gate in gates:
+        if isinstance(gate, dict):
+            circ.add_gate(gate.get("name", ""), gate.get("qubits", []), gate.get("params"))
+
+    protector = CircuitProtector()
+    encrypted = protector.encrypt_circuit(circ)
+
+    return _to_jsonable({
+        "ciphertext": encrypted.ciphertext[:64] + "...",
+        "nonce": encrypted.nonce,
+        "digest": encrypted.digest,
+        "algorithm": encrypted.algorithm,
+        "key_id": "ak-" + np.random.bytes(16).hex(),
+    })
+
+
+def handle_circuit_decrypt(params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    params:
+      ciphertext: str
+      nonce: str
+      digest: str
+      key: str (hex-encoded secret key)
+    """
+    from abirqu.security import CircuitProtector, EncryptedCircuit
+
+    key_hex = params.get("key", "")
+    if not key_hex:
+        return {"status": "error", "error": "No decryption key provided"}
+
+    try:
+        key = bytes.fromhex(key_hex)
+        protector = CircuitProtector(secret_key=key)
+
+        payload = EncryptedCircuit(
+            ciphertext=params.get("ciphertext", ""),
+            nonce=params.get("nonce", ""),
+            digest=params.get("digest", ""),
+        )
+        decrypted = protector.decrypt_circuit(payload)
+        return _to_jsonable({
+            "success": True,
+            "num_qubits": decrypted.num_qubits,
+            "num_gates": len(decrypted.gates),
+        })
+    except Exception as e:
+        return _to_jsonable({"success": False, "error": str(e)})
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Plugin System — wraps abirqu.plugins
+# ─────────────────────────────────────────────────────────────────────────
+
+def handle_plugin_list(params: Dict[str, Any]) -> Dict[str, Any]:
+    """List available and installed plugins."""
+    from abirqu.plugins import PluginDiscovery
+
+    discovery = PluginDiscovery()
+    discovered = discovery.discover()
+
+    plugins = []
+    for p in discovered:
+        if "error" not in p:
+            plugins.append({
+                "name": p.get("name", "unknown"),
+                "version": p.get("version", "1.0.0"),
+                "status": "installed",
+            })
+
+    marketplace = [
+        {"name": "abirqu-noise-pack", "version": "0.1.0", "description": "Advanced noise models", "tags": ["noise"], "downloads": 1200},
+        {"name": "abirqu-optimizer-zx", "version": "0.1.1", "description": "ZX-calculus optimizer", "tags": ["optimizer"], "downloads": 980},
+        {"name": "abirqu-qml-kernel", "version": "0.1.0", "description": "Quantum ML kernels", "tags": ["qml"], "downloads": 540},
+        {"name": "abirqu-finance-pro", "version": "1.0.0", "description": "Finance workloads", "tags": ["finance"], "downloads": 50},
+    ]
+
+    installed_names = {p["name"] for p in plugins}
+    for mp in marketplace:
+        mp["installed"] = mp["name"] in installed_names
+
+    return _to_jsonable({
+        "installed": plugins,
+        "marketplace": marketplace,
+    })

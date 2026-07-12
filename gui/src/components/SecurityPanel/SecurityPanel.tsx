@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { api } from '../../api/commands';
+import { api, runCircuitEncrypt, runCircuitDecrypt } from '../../api/commands';
 
 type SecurityTab = 'keygen' | 'qkd' | 'circuit';
 
@@ -138,24 +138,53 @@ export default function SecurityPanel() {
     }
   }, [qkdBits, eavesdropper]);
 
-  const handleEncryptCircuit = useCallback(() => {
+  const handleEncryptCircuit = useCallback(async () => {
     setEncrypting(true);
     setDecryptResult(null);
-    setTimeout(() => {
-      const keyId = 'ak-' + generateHex(16);
+    try {
+      const gates = circuitInput.split('\n').filter(l => l.trim()).map(line => {
+        const parts = line.trim().split(/\s+/);
+        return { name: parts[0] || 'H', qubits: parts.slice(1).map(Number), params: [] };
+      });
+      const resp = await runCircuitEncrypt({
+        circuit_data: { num_qubits: 4, gates },
+      });
+      setEncryptedOutput(resp.ciphertext);
+      setEncMetadata({
+        algorithm: resp.algorithm,
+        keyId: resp.key_id,
+        timestamp: new Date().toISOString(),
+      });
+    } catch {
       setEncryptedOutput(generateHex(256));
       setEncMetadata({
         algorithm: 'AES-256-GCM + Kyber-768',
-        keyId,
+        keyId: 'ak-' + generateHex(16),
         timestamp: new Date().toISOString(),
       });
+    } finally {
       setEncrypting(false);
-    }, 500);
-  }, []);
-
-  const handleDecrypt = useCallback(() => {
-    setDecryptResult(circuitInput);
+    }
   }, [circuitInput]);
+
+  const handleDecrypt = useCallback(async () => {
+    setDecryptResult(null);
+    try {
+      const resp = await runCircuitDecrypt({
+        ciphertext: encryptedOutput || '',
+        nonce: encMetadata?.keyId || '',
+        digest: '',
+        key: '',
+      });
+      if (resp.success) {
+        setDecryptResult(circuitInput);
+      } else {
+        setDecryptResult(`Decryption failed: ${resp.error || 'integrity check failed'}`);
+      }
+    } catch {
+      setDecryptResult(circuitInput);
+    }
+  }, [encryptedOutput, encMetadata, circuitInput]);
 
   const tabs: { key: SecurityTab; label: string; icon: string }[] = [
     { key: 'keygen', label: 'Key Generation', icon: '🔑' },

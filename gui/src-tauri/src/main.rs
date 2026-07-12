@@ -46,6 +46,15 @@ fn main() {
             commands::run_qcomm_bb84,
             commands::run_pqc_keygen,
             commands::run_pqc_assess,
+            commands::run_osint_graph,
+            commands::run_qcomm_cvqkd,
+            commands::run_qcomm_diqkd,
+            commands::run_qcomm_satellite,
+            commands::run_qcomm_repeater,
+            commands::run_qcomm_network,
+            commands::run_circuit_encrypt,
+            commands::run_circuit_decrypt,
+            commands::run_plugin_list,
         ])
         .run(tauri::generate_context!())
         .expect("error while running AbirQu");

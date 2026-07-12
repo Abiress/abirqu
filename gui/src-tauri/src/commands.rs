@@ -497,6 +497,87 @@ pub async fn run_pqc_assess(
     extract_data(resp)
 }
 
+#[tauri::command]
+pub async fn run_osint_graph(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "osint_graph", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_qcomm_cvqkd(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "qcomm_cvqkd", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_qcomm_diqkd(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "qcomm_diqkd", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_qcomm_satellite(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "qcomm_satellite", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_qcomm_repeater(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "qcomm_repeater", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_qcomm_network(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "qcomm_network", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_circuit_encrypt(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "circuit_encrypt", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_circuit_decrypt(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "circuit_decrypt", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_plugin_list(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "plugin_list", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
 fn extract_data(resp: Value) -> Result<Value, String> {
     if resp["status"] == "ok" {
         Ok(resp["data"].clone())

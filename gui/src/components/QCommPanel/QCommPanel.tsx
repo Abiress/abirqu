@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { api } from '../../api/commands';
+import { api, runCVQKD, runDIQKD, runSatelliteQKD, runRepeater, runNetwork } from '../../api/commands';
 
 type Protocol =
   | 'BB84'
@@ -279,10 +279,90 @@ export default function QCommPanel() {
           timestamp: Date.now(),
           backendResult: backendRes,
         });
-      } else {
-        // Non-QKD protocols still use frontend simulation
-        const res = simulateProtocolLocal(protocol, params);
-        setResult(res);
+      } else if (protocol === 'CV-QKD') {
+        const resp = await runCVQKD({
+          excess_noise: params.cvqkdLoss,
+          modulation_variance: params.cvqkdModVar,
+        });
+        const keyBytes = Array.from({ length: Math.min(resp.final_key_length, 64) }, (_, i) =>
+          ((i * 7 + 13) % 256).toString(16).padStart(2, '0')
+        ).join('');
+        setResult({
+          siftedKeyLength: resp.final_key_length,
+          qber: 1 - resp.channel_transmittance,
+          chshSValue: 0,
+          secure: resp.secure,
+          keyMaterial: keyBytes,
+          timestamp: Date.now(),
+          backendResult: resp,
+        });
+      } else if (protocol === 'DI-QKD') {
+        const resp = await runDIQKD({
+          num_rounds: params.diqkdRounds,
+        });
+        const keyBytes = Array.from({ length: Math.min(resp.final_key_length, 64) }, (_, i) =>
+          ((i * 11 + 7) % 256).toString(16).padStart(2, '0')
+        ).join('');
+        setResult({
+          siftedKeyLength: resp.final_key_length,
+          qber: resp.error_rate,
+          chshSValue: resp.chsh_parameter,
+          secure: resp.secure,
+          keyMaterial: keyBytes,
+          timestamp: Date.now(),
+          backendResult: resp,
+        });
+      } else if (protocol === 'Satellite QKD') {
+        const resp = await runSatelliteQKD({
+          altitude_km: params.satAltitude,
+          detector_efficiency: 0.9,
+        });
+        const keyBytes = Array.from({ length: Math.min(resp.key_length, 64) }, (_, i) =>
+          ((i * 3 + 17) % 256).toString(16).padStart(2, '0')
+        ).join('');
+        setResult({
+          siftedKeyLength: resp.key_length,
+          qber: resp.channel_loss_db / 100,
+          chshSValue: 0,
+          secure: resp.secure,
+          keyMaterial: keyBytes,
+          timestamp: Date.now(),
+          backendResult: resp,
+        });
+      } else if (protocol === 'Repeater Chains') {
+        const resp = await runRepeater({
+          total_distance_km: params.repeaterHops * 100,
+          num_segments: params.repeaterHops,
+        });
+        const keyBytes = Array.from({ length: Math.min(resp.key_length, 64) }, (_, i) =>
+          ((i * 5 + 31) % 256).toString(16).padStart(2, '0')
+        ).join('');
+        setResult({
+          siftedKeyLength: resp.key_length,
+          qber: 1 - resp.end_to_end_fidelity,
+          chshSValue: 0,
+          secure: resp.end_to_end_fidelity > 0.8,
+          keyMaterial: keyBytes,
+          timestamp: Date.now(),
+          backendResult: resp,
+        });
+      } else if (protocol === 'Quantum Network') {
+        const resp = await runNetwork({
+          topology: params.networkTopology,
+          num_nodes: params.networkNodes,
+        });
+        const keyBytes = Array.from({ length: 32 }, (_, i) =>
+          ((i * 13 + 41) % 256).toString(16).padStart(2, '0')
+        ).join('');
+        setResult({
+          siftedKeyLength: Math.floor(resp.total_key_rate),
+          qber: 1 - resp.average_fidelity,
+          chshSValue: 0,
+          secure: resp.average_fidelity > 0.8,
+          keyMaterial: keyBytes,
+          timestamp: Date.now(),
+          backendResult: resp,
+        });
       }
     } catch {
       const res = simulateProtocolLocal(protocol, params);

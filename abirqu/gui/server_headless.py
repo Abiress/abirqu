@@ -21,6 +21,15 @@ from abirqu.gui.domain_handlers import (
     handle_qcomm_bb84,
     handle_pqc_keygen,
     handle_pqc_assess,
+    handle_osint_graph,
+    handle_qcomm_cvqkd,
+    handle_qcomm_diqkd,
+    handle_qcomm_satellite,
+    handle_qcomm_repeater,
+    handle_qcomm_network,
+    handle_circuit_encrypt,
+    handle_circuit_decrypt,
+    handle_plugin_list,
 )
 
 
@@ -913,6 +922,51 @@ def main():
                 response = _handle_run_agentic(request.get("params", {}))
             elif action == "ask_quantum":
                 response = _handle_ask_quantum(request.get("params", {}))
+            elif action == "osint_graph":
+                try:
+                    response = {"status": "ok", "data": handle_osint_graph(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "qcomm_cvqkd":
+                try:
+                    response = {"status": "ok", "data": handle_qcomm_cvqkd(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "qcomm_diqkd":
+                try:
+                    response = {"status": "ok", "data": handle_qcomm_diqkd(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "qcomm_satellite":
+                try:
+                    response = {"status": "ok", "data": handle_qcomm_satellite(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "qcomm_repeater":
+                try:
+                    response = {"status": "ok", "data": handle_qcomm_repeater(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "qcomm_network":
+                try:
+                    response = {"status": "ok", "data": handle_qcomm_network(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "circuit_encrypt":
+                try:
+                    response = {"status": "ok", "data": handle_circuit_encrypt(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "circuit_decrypt":
+                try:
+                    response = {"status": "ok", "data": handle_circuit_decrypt(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "plugin_list":
+                try:
+                    response = {"status": "ok", "data": handle_plugin_list(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
             else:
                 response = server.handle_request(request)
         except Exception as e:

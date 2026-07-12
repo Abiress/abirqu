@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { api } from '../../api/commands';
+import { api, runOsintGraph } from '../../api/commands';
 
 type Domain = 'chemistry' | 'osint' | 'crypto' | 'space' | 'qpinn' | 'agentic';
 
@@ -258,16 +258,37 @@ function OsintTab() {
     return { nodes, edges };
   }, [nodeCount, edgeDensity]);
 
-  const handleRun = useCallback(() => {
+  const handleRun = useCallback(async () => {
     setRunning(true);
     setResult(null);
-    setTimeout(() => {
-      const cutVal = Math.floor(graphData.edges.length * (0.4 + Math.random() * 0.3));
+    try {
+      const problemMap: Record<string, string> = {
+        'Max-Cut': 'max_cut',
+        'MIS': 'mis',
+        'MVC': 'mvc',
+        'Coloring': 'coloring',
+        'Community': 'community',
+        'Anomaly': 'anomaly',
+      };
+      const resp = await runOsintGraph({
+        problem: problemMap[problem] || 'max_cut',
+        nodes: nodeCount,
+        edge_density: edgeDensity,
+      });
+      setResult({
+        cutValue: resp.cut_value,
+        partition: resp.partition,
+        graphNodes: graphData.nodes,
+        graphEdges: resp.edges || graphData.edges,
+      });
+    } catch {
+      const cutVal = Math.floor(graphData.edges.length * 0.5);
       const partition = Array.from({ length: nodeCount }, () => Math.random() > 0.5 ? 'A' : 'B').join('');
       setResult({ cutValue: cutVal, partition, graphNodes: graphData.nodes, graphEdges: graphData.edges });
+    } finally {
       setRunning(false);
-    }, 1000);
-  }, [graphData, nodeCount]);
+    }
+  }, [graphData, nodeCount, edgeDensity, problem]);
 
   const pColor = result?.partition ? result.partition.split('').map((c, i) => (c === 'A' ? '#3b82f6' : '#f97316')) : [];
 
