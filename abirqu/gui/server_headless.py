@@ -14,6 +14,14 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from abirqu.gui.server import QuantumServer
+from abirqu.gui.domain_handlers import (
+    handle_chemistry_vqe,
+    handle_qec_cycle,
+    handle_qec_distill,
+    handle_qcomm_bb84,
+    handle_pqc_keygen,
+    handle_pqc_assess,
+)
 
 
 def _register_dwave_hardware(server: QuantumServer):
@@ -855,6 +863,36 @@ def main():
                 )
             elif action == "frameworks":
                 response = _handle_frameworks_info()
+            elif action == "chemistry_vqe":
+                try:
+                    response = {"status": "ok", "data": handle_chemistry_vqe(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "qec_cycle":
+                try:
+                    response = {"status": "ok", "data": handle_qec_cycle(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "qec_distill":
+                try:
+                    response = {"status": "ok", "data": handle_qec_distill(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "qcomm_bb84":
+                try:
+                    response = {"status": "ok", "data": handle_qcomm_bb84(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "pqc_keygen":
+                try:
+                    response = {"status": "ok", "data": handle_pqc_keygen(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "pqc_assess":
+                try:
+                    response = {"status": "ok", "data": handle_pqc_assess(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
             elif action == "run_qec":
                 response = _handle_run_qec(request.get("params", {}))
             elif action == "run_qkd":

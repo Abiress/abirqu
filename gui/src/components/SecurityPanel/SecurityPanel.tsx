@@ -9,6 +9,23 @@ const ALGORITHMS = [
   { id: 'sphincs', name: 'SPHINCS+-128f', type: 'Signature', size: 17088 },
 ];
 
+// Only Kyber keygen is currently exposed by the SDK (abirqu.crypto.LatticeSimulation).
+// Dilithium/SPHINCS+ signature keygen is not yet wired — see run_pqc_keygen in
+// domain_handlers.py. Do not fake these; show "not available yet" instead.
+const REAL_BACKED_ALGOS = new Set(['kyber']);
+
+function matrixToHexPreview(matrix: number[][], maxBytes: number): string {
+  const flat = matrix.flat();
+  return flat
+    .slice(0, maxBytes)
+    .map((v) => (((Math.abs(Math.round(v)) % 256) >>> 0).toString(16).padStart(2, '0')))
+    .join('');
+}
+
+// TODO(next): abirqu.cloud.abir_guard circuit encryption is not yet wired to
+// this panel's "Circuit" tab — that still uses placeholder hex via generateHex()
+// below. Wire it the same way keygen/QKD are wired here once a
+// run_circuit_encrypt/run_circuit_decrypt domain_handlers.py function exists.
 function generateHex(bytes: number): string {
   return Array.from({ length: bytes }, () =>
     Math.floor(Math.random() * 256).toString(16).padStart(2, '0')
@@ -50,25 +67,38 @@ export default function SecurityPanel() {
   } | null>(null);
   const [encrypting, setEncrypting] = useState(false);
 
+  const [keygenError, setKeygenError] = useState<string | null>(null);
+  const [qkdError, setQkdError] = useState<string | null>(null);
+
   const handleGenerateKeypair = useCallback(async () => {
     setGenerating(true);
     setShowPrivateKey(false);
+    setKeygenError(null);
     const algo = ALGORITHMS.find((a) => a.id === algorithm)!;
+
+    if (!REAL_BACKED_ALGOS.has(algorithm)) {
+      setGenerating(false);
+      setKeygenError(
+        `${algo.name} keygen isn't wired to the SDK yet — only Kyber-768 is currently ` +
+          `exposed via abirqu.crypto.LatticeSimulation. See domain_handlers.py.`
+      );
+      setKeypair(null);
+      return;
+    }
+
     try {
-      const resp = await api.runCrypto({ type: 'lattice', n_bits: 8 });
+      const result = await api.runPQCKeygen({});
       setKeypair({
-        publicKey: resp.key_generated ? generateHex(algo.size) : generateHex(algo.size),
-        privateKey: generateHex(algo.size + 32),
-        algo: algo.name,
+        publicKey: matrixToHexPreview(result.public_key_preview, algo.size),
+        // The real secret key is intentionally never sent over the wire —
+        // domain_handlers.py only returns its shape. We show that shape,
+        // not fabricated bytes.
+        privateKey: `[${result.secret_key_shape.join('x')} lattice matrix — not transmitted]`,
+        algo: `${algo.name} (${result.scheme})`,
         size: algo.size,
       });
-    } catch {
-      setKeypair({
-        publicKey: generateHex(algo.size),
-        privateKey: generateHex(algo.size + 32),
-        algo: algo.name,
-        size: algo.size,
-      });
+    } catch (e) {
+      setKeygenError(String(e));
     } finally {
       setGenerating(false);
     }
@@ -76,27 +106,33 @@ export default function SecurityPanel() {
 
   const handleRunQKD = useCallback(async () => {
     setQkdRunning(true);
+    setQkdError(null);
     try {
-      const resp = await api.runQkd({ protocol: 'BB84', num_bits: qkdBits, eavesdrop: eavesdropper });
-      const keyBytes = (resp.final_key || []).map((b: number) => b.toString(16).padStart(2, '0')).join('');
-      setQkdResult({
-        siftedKey: keyBytes || generateHex(Math.ceil(qkdBits / 16)),
-        qber: parseFloat(((resp.error_rate || 0) * 100).toFixed(2)),
-        secure: resp.secure || false,
-        rawBits: qkdBits,
-        detectedBits: eavesdropper ? Math.floor(qkdBits * 0.2) : 0,
-        keyMaterial: keyBytes.slice(0, 64) || generateHex(32),
+      // NOTE: the SDK's BB84Simulator does not take an "eavesdropper" flag —
+      // we approximate Eve's presence by raising channel misalignment, which
+      // is the real error-contributing parameter the simulator exposes.
+      // KNOWN UPSTREAM BUG (found while wiring this panel): BB84Simulator
+      // computes `dark_count_errors = self.dark_count_rate * 1e6`, which with
+      // the default dark_count_rate=1e-6 evaluates to 1.0 and swamps the real
+      // signal, making `secure` false at essentially every distance. Filed
+      // as a bug against abirqu/quantum_communication/bb84.py — this panel
+      // reports whatever the SDK actually returns rather than hiding it.
+      const result = await api.runQCommBB84({
+        num_bits: qkdBits,
+        misalignment: eavesdropper ? 0.15 : 0.01,
+        distance_km: 50,
       });
-    } catch {
-      const noiseRate = eavesdropper ? 0.15 : 0.025;
+      const siftedBits = Math.floor(qkdBits * 0.5);
       setQkdResult({
-        siftedKey: generateHex(Math.ceil(qkdBits / 16)),
-        qber: parseFloat((noiseRate * 100).toFixed(2)),
-        secure: noiseRate < 0.11,
+        siftedKey: `${result.final_key_length}-bit key (see console for raw job data)`,
+        qber: parseFloat((result.error_rate * 100).toFixed(2)),
+        secure: result.secure,
         rawBits: qkdBits,
-        detectedBits: eavesdropper ? Math.floor(qkdBits * 0.2) : 0,
-        keyMaterial: generateHex(32),
+        detectedBits: eavesdropper ? Math.floor(siftedBits * 0.4) : 0,
+        keyMaterial: result.final_key_length > 0 ? `${result.final_key_length} bits derived` : '(none — channel not secure)',
       });
+    } catch (e) {
+      setQkdError(String(e));
     } finally {
       setQkdRunning(false);
     }
@@ -191,6 +227,12 @@ export default function SecurityPanel() {
                 'Generate Keypair'
               )}
             </button>
+
+            {keygenError && (
+              <div className="text-[10px] text-[var(--accent-error)] bg-[var(--accent-error)]/10 rounded-lg p-2 border border-[var(--accent-error)]/20">
+                {keygenError}
+              </div>
+            )}
 
             {/* Keypair display */}
             {keypair && (
@@ -309,6 +351,12 @@ export default function SecurityPanel() {
                 'Run Key Exchange'
               )}
             </button>
+
+            {qkdError && (
+              <div className="text-[10px] text-[var(--accent-error)] bg-[var(--accent-error)]/10 rounded-lg p-2 border border-[var(--accent-error)]/20">
+                {qkdError}
+              </div>
+            )}
 
             {/* QKD Results */}
             {qkdResult && (

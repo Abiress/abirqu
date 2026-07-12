@@ -94,6 +94,26 @@ export const api = {
   getFrameworks: () =>
     invoke<Record<string, { installed: boolean; version: string }>>('get_frameworks'),
 
+  // ─── Domain modules (real abirqu SDK calls — see domain_handlers.py) ───
+
+  runChemistryVQE: (params: ChemistryVQEParams) =>
+    invoke<ChemistryVQEResult>('run_chemistry_vqe', { params }),
+
+  runQECCycle: (params: QECCycleParams) =>
+    invoke<QECCycleResult>('run_qec_cycle', { params }),
+
+  runQECDistill: (params: QECDistillParams) =>
+    invoke<QECDistillResult>('run_qec_distill', { params }),
+
+  runQCommBB84: (params: BB84Params) =>
+    invoke<BB84Result>('run_qcomm_bb84', { params }),
+
+  runPQCKeygen: (params: Record<string, never> = {}) =>
+    invoke<PQCKeygenResult>('run_pqc_keygen', { params }),
+
+  runPQCAssess: (params: Record<string, never> = {}) =>
+    invoke<PQCAssessResult>('run_pqc_assess', { params }),
+
   runQec: (params: any) => invoke<any>('run_qec', { params }),
   runQkd: (params: any) => invoke<any>('run_qkd', { params }),
   runChemistry: (params: any) => invoke<any>('run_chemistry', { params }),
@@ -105,3 +125,95 @@ export const api = {
   runAgentic: (params: any) => invoke<any>('run_agentic', { params }),
   askQuantum: (params: any) => invoke<any>('ask_quantum', { params }),
 };
+
+// ─── Domain module types ───────────────────────────────────────────────
+
+export interface ChemistryVQEParams {
+  molecule?: 'H2' | 'LiH' | 'H2O';
+  basis?: string;
+  ansatz?: 'uccsd' | 'hardware_efficient';
+  mapper?: 'jordan_wigner' | 'bravyi_kitaev' | 'parity';
+  optimizer?: string;
+  max_iterations?: number;
+  shots?: number;
+}
+export interface ChemistryVQEResult {
+  molecule: string;
+  basis: string;
+  ansatz: string;
+  mapper: string;
+  n_electrons: number;
+  n_orbitals: number;
+  energy: number;
+  classical_energy: number;
+  error: number;
+  n_qubits: number;
+  n_parameters: number;
+  convergence: number[];
+}
+
+export interface QECCycleParams {
+  code?: 'repetition' | 'bit_flip' | 'phase_flip' | 'shor' | 'steane' | 'surface';
+  decoder?: 'lookup' | 'mwpm';
+  logical_state?: 0 | 1;
+  error_qubits?: number[];
+  size?: number;
+}
+export interface QECCycleResult {
+  code: string;
+  decoder: string;
+  logical_state: number;
+  n_physical_qubits: number;
+  injected_error_qubits: number[];
+  syndrome: number[];
+  correction: number[];
+  corrected_successfully: boolean;
+  overhead: Record<string, number>;
+}
+
+export interface QECDistillParams {
+  state_type?: 't' | 'h';
+  rounds?: number;
+  initial_fidelity?: number;
+}
+export interface QECDistillResult {
+  state_type: string;
+  rounds: number;
+  output_count: number;
+  fidelity: number;
+  success: boolean;
+}
+
+export interface BB84Params {
+  distance_km?: number;
+  num_bits?: number;
+  fiber_loss_db_km?: number;
+  detector_efficiency?: number;
+  dark_count_rate?: number;
+  misalignment?: number;
+  seed?: number;
+}
+export interface BB84Result {
+  distance_km: number;
+  channel_transmission: number;
+  surviving_pulses: number;
+  error_rate: number;
+  key_rate: number;
+  final_key_length: number;
+  secure: boolean;
+}
+
+export interface PQCKeygenResult {
+  scheme: string;
+  public_key_shape: number[];
+  secret_key_shape: number[];
+  public_key_preview: number[][];
+}
+export interface PQCAssessResult {
+  algorithm: string;
+  security_level: string;
+  parameters: Record<string, number>;
+  grover_attack: { complexity: string; feasible: boolean; quantum_speedup: string };
+  quantum_bkz: { complexity: string; feasible: boolean };
+  recommendation: string;
+}

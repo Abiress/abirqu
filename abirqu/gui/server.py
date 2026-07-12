@@ -220,42 +220,48 @@ class QuantumServer:
             self._emit('job_update', job.to_dict())
 
     def _simulate_circuit(self, circuit_data: Any, shots: int) -> Dict:
-        try:
-            from abirqu.circuit import Circuit as AbirCircuit, Gate as AbirGate
-            from abirqu.primitives.quantum_run import QuantumRun
+        """
+        Executes a circuit using the real AbirQu SDK simulator
+        (abirqu.Circuit.run), instead of a hand-rolled statevector engine.
+        This is the single source of truth for gate semantics — any gate
+        AbirQu's own Circuit class supports is automatically supported here.
+        """
+        import abirqu
 
-            if isinstance(circuit_data, dict):
-                num_qubits = circuit_data.get('num_qubits', 2)
-                raw_gates = circuit_data.get('gates', [])
-            elif isinstance(circuit_data, AbirCircuit):
-                num_qubits = circuit_data.num_qubits
-                raw_gates = [{'name': g.name, 'qubits': list(g.qubits), 'params': list(g.params)} for g in circuit_data.gates]
-            else:
-                num_qubits = 2
-                raw_gates = []
+        if isinstance(circuit_data, dict):
+            num_qubits = circuit_data.get('num_qubits', 1)
+            gates = circuit_data.get('gates', [])
+        elif isinstance(circuit_data, abirqu.Circuit):
+            num_qubits = circuit_data.num_qubits
+            gates = [{'name': g.name, 'qubits': list(g.qubits), 'params': list(g.params)} for g in circuit_data.gates]
+        else:
+            num_qubits = 2
+            gates = []
 
-            circ = AbirCircuit(num_qubits, name='gui_simulation')
-            for g in raw_gates:
-                name = g.get('name', '') if isinstance(g, dict) else str(g)
-                qubits = g.get('qubits', [0]) if isinstance(g, dict) else [0]
-                params = g.get('params', []) if isinstance(g, dict) else []
-                circ.gates.append(AbirGate(name, qubits, params=params))
+        circuit = abirqu.Circuit(num_qubits)
+        for gate in gates:
+            if not isinstance(gate, dict):
+                continue
+            gate_name = gate.get('name', '')
+            qubits = gate.get('qubits', [])
+            params = gate.get('params') or None
+            if not gate_name or not qubits:
+                continue
+            circuit.add_gate(gate_name, qubits, params)
+        circuit.measure_all()
 
-            qr = QuantumRun(circuits=circ, shots=shots)
-            r = qr[0]
+        result = circuit.run(shots=shots)
 
-            return {
-                'counts': r.counts,
-                'num_qubits': num_qubits,
-                'shots': shots,
-                'probabilities': r.probabilities,
-                'statevector': [complex(v).real for v, _ in zip(r.statevector, range(len(r.statevector)))] if r.statevector is not None else None,
-                'backend': 'quantumrun',
-            }
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning(f"QuantumRun fallback: {e}")
-            return self._simulate_circuit_fallback(circuit_data, shots)
+        counts = result.get('counts', {})
+        probabilities = result.get('probabilities', {})
+        return {
+            'counts': counts,
+            'num_qubits': num_qubits,
+            'shots': shots,
+            'probabilities': probabilities,
+            'backend': result.get('backend', 'abirqu_simulator'),
+            'success': result.get('success', True),
+        }
 
     def _simulate_circuit_fallback(self, circuit_data: Any, shots: int) -> Dict:
         if np is None:

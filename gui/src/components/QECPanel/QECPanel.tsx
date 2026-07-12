@@ -1,408 +1,187 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { api } from '../../api/commands';
+import { api, QECCycleParams, QECCycleResult, QECDistillResult } from '../../api/commands';
+
+// ─────────────────────────────────────────────────────────────────────────
+// Real code/decoder catalog. Only combinations verified to actually work
+// against the live abirqu.qec module are offered here — "color" and "ldpc"
+// codes, and the "belief_propagation"/"surface"/"gpu_bp" decoders, are
+// left out deliberately.
+// ─────────────────────────────────────────────────────────────────────────
+
+type QECCode = 'repetition' | 'bit_flip' | 'phase_flip' | 'shor' | 'steane' | 'surface';
+type DecoderType = 'lookup' | 'mwpm';
 
 interface CodeInfo {
-  id: string;
+  id: QECCode;
   name: string;
-  n: number;
-  k: number;
-  d: number;
-  stabilizers: string[];
-  qubitLayout: 'line' | 'grid' | 'custom';
-  gridSize?: { rows: number; cols: number };
-  backendType: string;
+  sizeOptions?: number[];
+  defaultSize?: number;
+  referenceOverhead: { n: number; k: number; d: number };
 }
 
 const CODES: CodeInfo[] = [
+  { id: 'repetition', name: 'Repetition', sizeOptions: [3, 5, 7], defaultSize: 3, referenceOverhead: { n: 3, k: 1, d: 2 } },
+  { id: 'bit_flip', name: 'Bit-flip [[3,1,1]]', referenceOverhead: { n: 3, k: 1, d: 1 } },
+  { id: 'phase_flip', name: 'Phase-flip [[3,1,1]]', referenceOverhead: { n: 3, k: 1, d: 1 } },
+  { id: 'shor', name: 'Shor [[9,1,3]]', referenceOverhead: { n: 9, k: 1, d: 3 } },
+  { id: 'steane', name: 'Steane [[7,1,3]]', referenceOverhead: { n: 7, k: 1, d: 3 } },
+  { id: 'surface', name: 'Rotated Surface', sizeOptions: [3, 5, 7], defaultSize: 3, referenceOverhead: { n: 13, k: 1, d: 3 } },
+];
+
+const DECODERS: { id: DecoderType; name: string; description: string; caveat?: string }[] = [
+  { id: 'lookup', name: 'Syndrome Lookup', description: 'Direct stabilizer table lookup (abirqu.qec.SyndromeDecoder)' },
   {
-    id: 'repetition-3',
-    name: 'Repetition [[3,1,1]]',
-    n: 3,
-    k: 1,
-    d: 1,
-    stabilizers: ['ZZI', 'IZZ'],
-    qubitLayout: 'line',
-    backendType: 'repetition',
-  },
-  {
-    id: 'bit-flip',
-    name: 'Bit-flip [[3,1,1]]',
-    n: 3,
-    k: 1,
-    d: 1,
-    stabilizers: ['ZZI', 'IZZ'],
-    qubitLayout: 'line',
-    backendType: 'bit_flip',
-  },
-  {
-    id: 'phase-flip',
-    name: 'Phase-flip [[3,1,1]]',
-    n: 3,
-    k: 1,
-    d: 1,
-    stabilizers: ['XXI', 'IXX'],
-    qubitLayout: 'line',
-    backendType: 'phase_flip',
-  },
-  {
-    id: 'shor-9',
-    name: 'Shor [[9,1,3]]',
-    n: 9,
-    k: 1,
-    d: 3,
-    stabilizers: [
-      'ZZIIIIIII',
-      'IZZIIIIII',
-      'IIZZIIIII',
-      'IIIZZIIII',
-      'IIIIZZIII',
-      'IIIIIZZII',
-      'IIIIIIZZI',
-      'IIIIIIIZZ',
-      'XXXXXXIII',
-      'IIXXXXXXIII',
-      'IIIXXXXXXIII',
-    ],
-    qubitLayout: 'grid',
-    gridSize: { rows: 3, cols: 3 },
-    backendType: 'shor',
-  },
-  {
-    id: 'steane-7',
-    name: 'Steane [[7,1,3]]',
-    n: 7,
-    k: 1,
-    d: 3,
-    stabilizers: [
-      'IIIXXXX',
-      'IXXIIXX',
-      'XIXIXIX',
-      'IIIZZZZ',
-      'IZZIIZZ',
-      'ZIZIZIZ',
-    ],
-    qubitLayout: 'custom',
-    backendType: 'steane',
-  },
-  {
-    id: 'surface-3',
-    name: 'Surface d=3 [[9,1,3]]',
-    n: 9,
-    k: 1,
-    d: 3,
-    stabilizers: [
-      'ZZ.I.I...',
-      'I.ZZ.I..I',
-      'I.I.ZZ..I',
-      'XXXX.....',
-      '.XXXX....',
-      '..XXXX...',
-    ],
-    qubitLayout: 'grid',
-    gridSize: { rows: 3, cols: 3 },
-    backendType: 'surface',
-  },
-  {
-    id: 'surface-5',
-    name: 'Surface d=5 [[25,1,5]]',
-    n: 25,
-    k: 1,
-    d: 5,
-    stabilizers: Array(24).fill('....'),
-    qubitLayout: 'grid',
-    gridSize: { rows: 5, cols: 5 },
-    backendType: 'surface',
-  },
-  {
-    id: 'surface-7',
-    name: 'Surface d=7 [[49,1,7]]',
-    n: 49,
-    k: 1,
-    d: 7,
-    stabilizers: Array(48).fill('....'),
-    qubitLayout: 'grid',
-    gridSize: { rows: 7, cols: 7 },
-    backendType: 'surface',
-  },
-  {
-    id: 'color',
-    name: 'Color [[7,1,3]]',
-    n: 7,
-    k: 1,
-    d: 3,
-    stabilizers: ['ZZZ.III', 'IIIZZZ.', '.III.ZZZ'],
-    qubitLayout: 'custom',
-    backendType: 'color',
-  },
-  {
-    id: 'ldpc',
-    name: 'LDPC [[12,2,4]]',
-    n: 12,
-    k: 2,
-    d: 4,
-    stabilizers: [
-      'ZZZZ......II',
-      'II..ZZZZ.II',
-      'XXXX......XX',
-      '..XX..XXXX.XX',
-    ],
-    qubitLayout: 'grid',
-    gridSize: { rows: 3, cols: 4 },
-    backendType: 'surface',
+    id: 'mwpm',
+    name: 'MWPM',
+    description: 'Minimum Weight Perfect Matching (abirqu.qec.MWPMDecoder)',
+    caveat: 'Verified: MWPM does not correct Repetition/Bit-flip/Phase-flip codes in this SDK version — use Syndrome Lookup for those.',
   },
 ];
 
-type DecoderType = 'syndrome-lookup' | 'mwpm' | 'bp';
-const DECODERS: { id: DecoderType; name: string; description: string }[] = [
-  { id: 'syndrome-lookup', name: 'Syndrome Lookup', description: 'Direct table lookup' },
-  { id: 'mwpm', name: 'MWPM (Greedy)', description: 'Minimum Weight Perfect Matching' },
-  { id: 'bp', name: 'Belief Propagation', description: 'Iterative message passing' },
-];
-
-interface QubitState {
-  id: number;
-  error: 'none' | 'X' | 'Z' | 'Y';
-  row: number;
-  col: number;
-}
-
-interface SyndromeResult {
-  triggeredStabilizers: number[];
-  syndrome: string;
-}
-
-interface DistillationResult {
-  inputStates: number;
-  outputStates: number;
-  success: boolean;
-  fidelity: number;
-  round: number;
-}
-
-interface Stats {
-  totalRuns: number;
-  successfulCorrections: number;
-  logicalErrorRate: number;
-  successRate: number;
-}
-
-function generateRandomError(n: number): QubitState[] {
-  const errorProb = 0.3;
-  const qubits: QubitState[] = [];
-  for (let i = 0; i < n; i++) {
-    const r = Math.random();
-    let error: 'none' | 'X' | 'Z' | 'Y' = 'none';
-    if (r < errorProb / 3) error = 'X';
-    else if (r < (2 * errorProb) / 3) error = 'Z';
-    else if (r < errorProb) error = 'Y';
-    qubits.push({ id: i, error, row: 0, col: 0 });
+function randomErrorQubits(n: number, count: number): number[] {
+  const all = Array.from({ length: n }, (_, i) => i);
+  const picked: number[] = [];
+  for (let i = 0; i < count && all.length > 0; i++) {
+    const idx = Math.floor(Math.random() * all.length);
+    picked.push(all.splice(idx, 1)[0]);
   }
-  return qubits;
-}
-
-function computeSyndrome(qubits: QubitState[], stabilizers: string[]): SyndromeResult {
-  const triggered: number[] = [];
-  let syndrome = '';
-  for (let i = 0; i < Math.min(stabilizers.length, 8); i++) {
-    const stab = stabilizers[i];
-    let anticommutes = false;
-    for (let j = 0; j < qubits.length && j < stab.length; j++) {
-      const s = stab[j];
-      const e = qubits[j].error;
-      if (s === 'X' && (e === 'Z' || e === 'Y')) anticommutes = true;
-      if (s === 'Z' && (e === 'X' || e === 'Y')) anticommutes = true;
-      if (s === 'Y' && (e === 'X' || e === 'Z')) anticommutes = true;
-    }
-    if (anticommutes) {
-      triggered.push(i);
-      syndrome += '1';
-    } else {
-      syndrome += '0';
-    }
-  }
-  return { triggeredStabilizers: triggered, syndrome };
-}
-
-function applyDecoder(
-  decoder: DecoderType,
-  qubits: QubitState[],
-  syndrome: SyndromeResult,
-  code: CodeInfo
-): QubitState[] {
-  const corrected = qubits.map((q) => ({ ...q }));
-  if (decoder === 'syndrome-lookup') {
-    for (const idx of syndrome.triggeredStabilizers) {
-      const stab = code.stabilizers[idx];
-      if (stab) {
-        for (let j = 0; j < corrected.length && j < stab.length; j++) {
-          if (stab[j] === 'X' && corrected[j].error !== 'none') {
-            corrected[j].error = 'none';
-            break;
-          }
-        }
-      }
-    }
-  } else if (decoder === 'mwpm') {
-    for (let i = 0; i < corrected.length; i++) {
-      if (corrected[i].error !== 'none' && syndrome.triggeredStabilizers.length > 0) {
-        const hasAdjacent = syndrome.triggeredStabilizers.some((s) => {
-          const stab = code.stabilizers[s];
-          return stab && (stab[i] === 'X' || stab[i] === 'Z' || stab[i] === 'Y');
-        });
-        if (hasAdjacent) {
-          corrected[i].error = 'none';
-        }
-      }
-    }
-  } else if (decoder === 'bp') {
-    for (let iter = 0; iter < 3; iter++) {
-      for (let i = 0; i < corrected.length; i++) {
-        if (corrected[i].error !== 'none') {
-          const voteCount = syndrome.triggeredStabilizers.filter((s) => {
-            const stab = code.stabilizers[s];
-            return stab && stab[i] !== '.' && stab[i] !== 'I';
-          }).length;
-          if (voteCount >= 2) {
-            corrected[i].error = 'none';
-          }
-        }
-      }
-    }
-  }
-  return corrected;
-}
-
-function runDistillation(inputStates: number, round: number): DistillationResult {
-  const baseSuccessRate = inputStates === 15 ? 0.72 : 0.65;
-  const success = Math.random() < baseSuccessRate + round * 0.02;
-  return {
-    inputStates,
-    outputStates: success ? 1 : 0,
-    success,
-    fidelity: success ? 0.99 + Math.random() * 0.009 : 0.0,
-    round,
-  };
-}
-
-function getQubitLayout(code: CodeInfo): { row: number; col: number }[] {
-  const positions: { row: number; col: number }[] = [];
-  if (code.gridSize) {
-    for (let r = 0; r < code.gridSize.rows; r++) {
-      for (let c = 0; c < code.gridSize.cols; c++) {
-        positions.push({ row: r, col: c });
-      }
-    }
-  } else {
-    for (let i = 0; i < code.n; i++) {
-      const angle = (2 * Math.PI * i) / code.n;
-      const radius = 1.5;
-      positions.push({
-        row: Math.round(radius + radius * Math.sin(angle)),
-        col: Math.round(radius + radius * Math.cos(angle)),
-      });
-    }
-  }
-  return positions;
+  return picked;
 }
 
 export default function QECPanel() {
-  const [selectedCode, setSelectedCode] = useState<string>(CODES[0].id);
-  const [selectedDecoder, setSelectedDecoder] = useState<DecoderType>('syndrome-lookup');
-  const [qubits, setQubits] = useState<QubitState[]>([]);
-  const [syndrome, setSyndrome] = useState<SyndromeResult | null>(null);
-  const [correctedQubits, setCorrectedQubits] = useState<QubitState[]>([]);
-  const [hasEncoded, setHasEncoded] = useState(false);
+  const [selectedCode, setSelectedCode] = useState<QECCode>('steane');
+  const [selectedSize, setSelectedSize] = useState<number | undefined>(undefined);
+  const [selectedDecoder, setSelectedDecoder] = useState<DecoderType>('lookup');
+
+  const [errorQubits, setErrorQubits] = useState<number[]>([]);
+  const [cycleResult, setCycleResult] = useState<QECCycleResult | null>(null);
   const [hasDecoded, setHasDecoded] = useState(false);
-  const [distillationRound, setDistillationRound] = useState(1);
-  const [distillationResults, setDistillationResults] = useState<DistillationResult[]>([]);
-  const [stats, setStats] = useState<Stats>({
-    totalRuns: 0,
-    successfulCorrections: 0,
-    logicalErrorRate: 0,
-    successRate: 0,
-  });
-  const [backendResult, setBackendResult] = useState<any>(null);
-  const [backendRunning, setBackendRunning] = useState(false);
+
+  const [encoding, setEncoding] = useState(false);
+  const [decoding, setDecoding] = useState(false);
+  const [encodeError, setEncodeError] = useState<string | null>(null);
+  const [decodeError, setDecodeError] = useState<string | null>(null);
+
+  const [distillRound, setDistillRound] = useState(1);
+  const [distillResults, setDistillResults] = useState<(QECDistillResult | null)[]>([null, null]);
+  const [distilling, setDistilling] = useState(false);
+  const [distillError, setDistillError] = useState<string | null>(null);
+
+  const [stats, setStats] = useState({ totalRuns: 0, successfulCorrections: 0 });
 
   const code = useMemo(() => CODES.find((c) => c.id === selectedCode)!, [selectedCode]);
-  const positions = useMemo(() => getQubitLayout(code), [code]);
+  const displayOverhead = cycleResult?.overhead ?? code.referenceOverhead;
+  const n = cycleResult?.n_physical_qubits ?? (displayOverhead as any).n ?? code.referenceOverhead.n;
 
-  const handleEncode = useCallback(() => {
-    const newQubits = generateRandomError(code.n);
-    for (let i = 0; i < newQubits.length; i++) {
-      newQubits[i].row = positions[i].row;
-      newQubits[i].col = positions[i].col;
-    }
-    const syn = computeSyndrome(newQubits, code.stabilizers);
-    setQubits(newQubits);
-    setSyndrome(syn);
-    setHasEncoded(true);
-    setHasDecoded(false);
-    setCorrectedQubits([]);
-    setDistillationResults([]);
-  }, [code, positions]);
-
-  const handleDecode = useCallback(() => {
-    if (!hasEncoded || !syndrome) return;
-    const corrected = applyDecoder(selectedDecoder, qubits, syndrome, code);
-    setCorrectedQubits(corrected);
-    setHasDecoded(true);
-
-    const remainingErrors = corrected.filter((q) => q.error !== 'none').length;
-    const success = remainingErrors === 0;
-
-    setStats((prev) => {
-      const newTotal = prev.totalRuns + 1;
-      const newSuccesses = prev.successfulCorrections + (success ? 1 : 0);
-      return {
-        totalRuns: newTotal,
-        successfulCorrections: newSuccesses,
-        logicalErrorRate: 1 - newSuccesses / newTotal,
-        successRate: newSuccesses / newTotal,
+  const runCycle = useCallback(
+    async (qubits: number[], decoder: DecoderType) => {
+      const params: QECCycleParams = {
+        code: selectedCode,
+        decoder,
+        logical_state: 0,
+        error_qubits: qubits,
       };
-    });
-  }, [hasEncoded, syndrome, qubits, selectedDecoder, code]);
+      if (code.sizeOptions && selectedSize) params.size = selectedSize;
+      return api.runQECCycle(params);
+    },
+    [selectedCode, selectedSize, code.sizeOptions]
+  );
 
-  const handleDistill = useCallback(() => {
-    const tResult = runDistillation(15, distillationRound);
-    const hResult = runDistillation(20, distillationRound);
-    setDistillationResults([tResult, hResult]);
-  }, [distillationRound]);
-
-  const resetQubitColor = (q: QubitState, display: 'original' | 'corrected') => {
-    if (display === 'corrected') {
-      return q.error === 'none' ? 'var(--accent-success)' : 'var(--accent-error)';
+  const handleEncode = useCallback(async () => {
+    setEncoding(true);
+    setEncodeError(null);
+    setHasDecoded(false);
+    setCycleResult(null);
+    try {
+      const errorCount = Math.max(1, Math.round((n || code.referenceOverhead.n) * 0.15));
+      const qubits = randomErrorQubits(n || code.referenceOverhead.n, errorCount);
+      setErrorQubits(qubits);
+      const result = await runCycle(qubits, selectedDecoder);
+      setCycleResult(result);
+    } catch (e) {
+      setEncodeError(String(e));
+    } finally {
+      setEncoding(false);
     }
-    return q.error === 'none' ? 'var(--accent-success)' : 'var(--accent-error)';
-  };
+  }, [code, selectedSize, selectedDecoder, n, runCycle]);
 
-  const getErrorLabel = (e: 'none' | 'X' | 'Z' | 'Y') => {
-    if (e === 'none') return '✓';
-    return e;
-  };
+  const handleDecode = useCallback(async () => {
+    if (errorQubits.length === 0) return;
+    setDecoding(true);
+    setDecodeError(null);
+    try {
+      const result = await runCycle(errorQubits, selectedDecoder);
+      setCycleResult(result);
+      setHasDecoded(true);
+      setStats((prev) => ({
+        totalRuns: prev.totalRuns + 1,
+        successfulCorrections: prev.successfulCorrections + (result.corrected_successfully ? 1 : 0),
+      }));
+    } catch (e) {
+      setDecodeError(String(e));
+    } finally {
+      setDecoding(false);
+    }
+  }, [errorQubits, selectedDecoder, runCycle]);
+
+  const handleDistill = useCallback(async () => {
+    setDistilling(true);
+    setDistillError(null);
+    try {
+      const [t, h] = await Promise.all([
+        api.runQECDistill({ state_type: 't', rounds: distillRound }),
+        api.runQECDistill({ state_type: 'h', rounds: distillRound }),
+      ]);
+      setDistillResults([t, h]);
+    } catch (e) {
+      setDistillError(String(e));
+    } finally {
+      setDistilling(false);
+    }
+  }, [distillRound]);
+
+  const successRate = stats.totalRuns > 0 ? stats.successfulCorrections / stats.totalRuns : 0;
+
+  const qubitErrorSet = useMemo(() => new Set(errorQubits), [errorQubits]);
+  const correctionSet = useMemo(
+    () => new Set((cycleResult?.correction ?? []).map((v, i) => (v ? i : -1)).filter((i) => i >= 0)),
+    [cycleResult]
+  );
+  const residualErrorQubits = useMemo(() => {
+    if (!cycleResult) return new Set<number>();
+    const residual = new Set<number>();
+    for (let i = 0; i < n; i++) {
+      const had = qubitErrorSet.has(i) ? 1 : 0;
+      const corr = correctionSet.has(i) ? 1 : 0;
+      if ((had + corr) % 2 === 1) residual.add(i);
+    }
+    return residual;
+  }, [cycleResult, qubitErrorSet, correctionSet, n]);
 
   return (
     <div className="h-full flex flex-col text-[var(--text-primary)] overflow-hidden animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-2 border-b border-white/5 bg-[var(--bg-panel)]">
         <span className="text-[11px] font-semibold text-[var(--accent-primary)]">QEC Lab</span>
-        <span className="text-[9px] text-[var(--text-muted)]">Quantum Error Correction Simulator</span>
+        <span className="text-[9px] text-[var(--text-muted)]">Real abirqu.qec encode → syndrome → decode</span>
       </div>
 
       <div className="flex-1 overflow-auto p-3 space-y-3">
-        {/* Code Picker */}
+        {/* Code Selector */}
         <div className="space-y-1.5">
-          <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Error Correction Code</label>
+          <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Error Correcting Code</label>
           <select
             value={selectedCode}
             onChange={(e) => {
-              setSelectedCode(e.target.value);
-              setQubits([]);
-              setSyndrome(null);
-              setCorrectedQubits([]);
-              setHasEncoded(false);
+              const next = e.target.value as QECCode;
+              const nextInfo = CODES.find((c) => c.id === next)!;
+              setSelectedCode(next);
+              setSelectedSize(nextInfo.defaultSize);
+              setCycleResult(null);
+              setErrorQubits([]);
               setHasDecoded(false);
-              setDistillationResults([]);
+              setEncodeError(null);
+              setDecodeError(null);
             }}
             className="w-full px-2 py-1.5 rounded-md bg-[var(--bg-input)] border border-white/5 text-[11px] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
           >
@@ -412,104 +191,134 @@ export default function QECPanel() {
               </option>
             ))}
           </select>
+          <div className="text-[9px] text-[var(--text-muted)] px-0.5">
+            Color and LDPC codes aren't offered here — verified incompatible with the current decoder API upstream.
+          </div>
         </div>
+
+        {/* Size selector (repetition / surface) */}
+        {code.sizeOptions && (
+          <div className="space-y-1.5 animate-fade-in">
+            <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
+              {code.id === 'surface' ? 'Distance' : 'n (qubits)'}
+            </label>
+            <div className="flex gap-1">
+              {code.sizeOptions.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => {
+                    setSelectedSize(s);
+                    setCycleResult(null);
+                    setErrorQubits([]);
+                    setHasDecoded(false);
+                  }}
+                  className={`flex-1 px-2 py-1 rounded-md text-[10px] font-mono font-bold border transition-all ${
+                    (selectedSize ?? code.defaultSize) === s
+                      ? 'bg-[var(--accent-primary)]/10 border-[var(--accent-primary)]/40 text-[var(--accent-primary)]'
+                      : 'bg-[var(--bg-input)] border-white/5 text-[var(--text-muted)] hover:border-white/10'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Code Properties */}
         <div className="flex gap-2 animate-fade-in">
           <div className="flex-1 rounded-md bg-[var(--bg-input)] border border-white/5 px-2 py-1.5 text-center">
             <div className="text-[9px] text-[var(--text-muted)]">n (physical)</div>
-            <div className="text-[11px] font-mono font-bold text-[var(--accent-primary)]">{code.n}</div>
+            <div className="text-[11px] font-mono font-bold text-[var(--accent-primary)]">{(displayOverhead as any).n}</div>
           </div>
           <div className="flex-1 rounded-md bg-[var(--bg-input)] border border-white/5 px-2 py-1.5 text-center">
             <div className="text-[9px] text-[var(--text-muted)]">k (logical)</div>
-            <div className="text-[11px] font-mono font-bold text-[var(--accent-primary)]">{code.k}</div>
+            <div className="text-[11px] font-mono font-bold text-[var(--accent-primary)]">{(displayOverhead as any).k}</div>
           </div>
           <div className="flex-1 rounded-md bg-[var(--bg-input)] border border-white/5 px-2 py-1.5 text-center">
             <div className="text-[9px] text-[var(--text-muted)]">d (distance)</div>
-            <div className="text-[11px] font-mono font-bold text-[var(--accent-primary)]">{code.d}</div>
+            <div className="text-[11px] font-mono font-bold text-[var(--accent-primary)]">{(displayOverhead as any).d}</div>
           </div>
         </div>
+        {cycleResult && (
+          <div className="text-[9px] text-[var(--accent-success)] px-0.5">✓ Live values from the last real backend run</div>
+        )}
 
         {/* Encode Button */}
         <button
           onClick={handleEncode}
-          className="w-full py-1.5 rounded-md bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 text-[11px] font-medium text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/20 transition-colors"
+          disabled={encoding}
+          className="w-full py-1.5 rounded-md bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 text-[11px] font-medium text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/20 transition-colors disabled:opacity-50"
         >
-          Encode (Generate Random Error)
+          {encoding ? (
+            <span className="flex items-center justify-center gap-1.5">
+              <span className="w-3 h-3 border-2 border-[var(--accent-primary)] border-t-transparent rounded-full animate-spin" />
+              Encoding + computing syndrome...
+            </span>
+          ) : (
+            'Encode (inject random test error)'
+          )}
         </button>
+        {encodeError && (
+          <div className="text-[10px] text-[var(--accent-error)] bg-[var(--accent-error)]/10 rounded-lg p-2 border border-[var(--accent-error)]/20">
+            {encodeError}
+          </div>
+        )}
 
         {/* Qubit Grid */}
-        {hasEncoded && (
+        {cycleResult && (
           <div className="space-y-1.5 animate-fade-in">
             <div className="flex items-center gap-2">
               <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Qubit State</label>
-              <div className="flex-1" />
-              <div className="flex items-center gap-1 text-[9px]">
-                <span className="w-2 h-2 rounded-full bg-[var(--accent-success)]" />
-                <span className="text-[var(--text-muted)]">OK</span>
-                <span className="w-2 h-2 rounded-full bg-[var(--accent-error)] ml-1" />
-                <span className="text-[var(--text-muted)]">Error</span>
+              <div className="flex items-center gap-2 ml-auto">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: 'var(--accent-error)', opacity: 0.3 }} />
+                  <span className="text-[8px] text-[var(--text-muted)]">Error</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: 'var(--accent-success)', opacity: 0.3 }} />
+                  <span className="text-[8px] text-[var(--text-muted)]">Clean</span>
+                </div>
               </div>
             </div>
             <div className="rounded-md bg-[var(--bg-input)] border border-white/5 p-2">
-              {code.gridSize ? (
-                <div
-                  className="grid gap-1 mx-auto"
-                  style={{
-                    gridTemplateColumns: `repeat(${code.gridSize.cols}, minmax(0, 1fr))`,
-                    maxWidth: `${code.gridSize.cols * 36}px`,
-                  }}
-                >
-                  {(hasDecoded ? correctedQubits : qubits).map((q) => (
+              <div className="flex flex-wrap gap-1 justify-center">
+                {Array.from({ length: n }, (_, i) => i).map((qid) => {
+                  const hasError = hasDecoded ? residualErrorQubits.has(qid) : qubitErrorSet.has(qid);
+                  return (
                     <div
-                      key={q.id}
-                      className="relative aspect-square rounded-md border border-white/10 flex flex-col items-center justify-center transition-all duration-300"
-                      style={{ backgroundColor: `${resetQubitColor(q, hasDecoded ? 'corrected' : 'original')}15` }}
-                    >
-                      <span
-                        className="text-[10px] font-mono font-bold"
-                        style={{ color: resetQubitColor(q, hasDecoded ? 'corrected' : 'original') }}
-                      >
-                        {getErrorLabel(q.error)}
-                      </span>
-                      <span className="text-[8px] text-[var(--text-muted)]">q{q.id}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-1 justify-center">
-                  {(hasDecoded ? correctedQubits : qubits).map((q) => (
-                    <div
-                      key={q.id}
+                      key={qid}
                       className="w-8 h-8 rounded-md border border-white/10 flex flex-col items-center justify-center transition-all duration-300"
-                      style={{ backgroundColor: `${resetQubitColor(q, hasDecoded ? 'corrected' : 'original')}15` }}
+                      style={{
+                        backgroundColor: `${hasError ? 'var(--accent-error)' : 'var(--accent-success)'}15`,
+                      }}
                     >
                       <span
                         className="text-[10px] font-mono font-bold"
-                        style={{ color: resetQubitColor(q, hasDecoded ? 'corrected' : 'original') }}
+                        style={{ color: hasError ? 'var(--accent-error)' : 'var(--accent-success)' }}
                       >
-                        {getErrorLabel(q.error)}
+                        {hasError ? '✕' : '✓'}
                       </span>
-                      <span className="text-[8px] text-[var(--text-muted)]">q{q.id}</span>
+                      <span className="text-[8px] text-[var(--text-muted)]">q{qid}</span>
                     </div>
-                  ))}
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
 
         {/* Syndrome Display */}
-        {syndrome && (
+        {cycleResult && (
           <div className="space-y-1.5 animate-fade-in">
             <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Syndrome</label>
             <div className="rounded-md bg-[var(--bg-input)] border border-white/5 p-2">
               <div className="flex flex-wrap gap-1 mb-1.5">
-                {syndrome.syndrome.split('').map((bit, i) => (
+                {cycleResult.syndrome.map((bit, i) => (
                   <span
                     key={i}
                     className={`inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-mono font-bold border ${
-                      bit === '1'
+                      bit === 1
                         ? 'bg-[var(--accent-error)]/15 border-[var(--accent-error)]/40 text-[var(--accent-error)]'
                         : 'bg-white/[0.02] border-white/5 text-[var(--text-muted)]'
                     }`}
@@ -519,15 +328,8 @@ export default function QECPanel() {
                 ))}
               </div>
               <div className="text-[9px] text-[var(--text-muted)]">
-                {syndrome.triggeredStabilizers.length > 0 ? (
-                  <span>
-                    Triggered:{' '}
-                    {syndrome.triggeredStabilizers.map((idx) => (
-                      <span key={idx} className="text-[var(--accent-error)]">
-                        S{idx + 1}{' '}
-                      </span>
-                    ))}
-                  </span>
+                {cycleResult.syndrome.some((b) => b === 1) ? (
+                  <span>{cycleResult.syndrome.filter((b) => b === 1).length} stabilizer(s) triggered</span>
                 ) : (
                   <span className="text-[var(--accent-success)]">No errors detected</span>
                 )}
@@ -537,7 +339,7 @@ export default function QECPanel() {
         )}
 
         {/* Decoder Selector */}
-        {hasEncoded && (
+        {cycleResult && (
           <div className="space-y-1.5 animate-fade-in">
             <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Decoder</label>
             <div className="flex gap-1">
@@ -547,8 +349,8 @@ export default function QECPanel() {
                   onClick={() => setSelectedDecoder(d.id)}
                   className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-medium border transition-all ${
                     selectedDecoder === d.id
-                      ? 'bg-[var(--accent-primary)]/10 border-[var(--accent-primary)]/40 text-[var(--accent-primary)]'
-                      : 'bg-[var(--bg-input)] border-white/5 text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-white/10'
+                      ? 'bg-[var(--accent-primary)]/15 border-[var(--accent-primary)]/40 text-[var(--accent-primary)]'
+                      : 'bg-[var(--bg-input)] border-white/5 text-[var(--text-muted)] hover:border-white/10'
                   }`}
                 >
                   {d.name}
@@ -558,51 +360,60 @@ export default function QECPanel() {
             <div className="text-[9px] text-[var(--text-muted)] px-1">
               {DECODERS.find((d) => d.id === selectedDecoder)?.description}
             </div>
+            {DECODERS.find((d) => d.id === selectedDecoder)?.caveat && (
+              <div className="text-[9px] text-[var(--accent-warning,#eab308)] px-1">
+                ⚠ {DECODERS.find((d) => d.id === selectedDecoder)?.caveat}
+              </div>
+            )}
           </div>
         )}
 
         {/* Decode Button */}
-        {hasEncoded && (
+        {cycleResult && (
           <button
             onClick={handleDecode}
-            className="w-full py-1.5 rounded-md bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 text-[11px] font-medium text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/20 transition-colors"
+            disabled={decoding}
+            className="w-full py-1.5 rounded-md bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 text-[11px] font-medium text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/20 transition-colors disabled:opacity-50"
           >
-            Decode ({DECODERS.find((d) => d.id === selectedDecoder)?.name})
+            {decoding ? 'Decoding...' : `Decode (${DECODERS.find((d) => d.id === selectedDecoder)?.name})`}
           </button>
+        )}
+        {decodeError && (
+          <div className="text-[10px] text-[var(--accent-error)] bg-[var(--accent-error)]/10 rounded-lg p-2 border border-[var(--accent-error)]/20">
+            {decodeError}
+          </div>
         )}
 
         {/* Correction Result */}
-        {hasDecoded && (
+        {hasDecoded && cycleResult && (
           <div className="space-y-1.5 animate-fade-in">
             <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Correction Result</label>
             <div className="rounded-md bg-[var(--bg-input)] border border-white/5 p-2">
               <div className="flex items-center gap-2 mb-1.5">
                 <span
                   className={`w-2 h-2 rounded-full ${
-                    correctedQubits.every((q) => q.error === 'none')
-                      ? 'bg-[var(--accent-success)]'
-                      : 'bg-[var(--accent-error)]'
+                    cycleResult.corrected_successfully ? 'bg-[var(--accent-success)]' : 'bg-[var(--accent-error)]'
                   }`}
                 />
                 <span className="text-[11px] font-medium text-[var(--text-primary)]">
-                  {correctedQubits.every((q) => q.error === 'none')
+                  {cycleResult.corrected_successfully
                     ? 'All errors corrected'
-                    : `${correctedQubits.filter((q) => q.error !== 'none').length} residual error(s)`}
+                    : `${residualErrorQubits.size} residual error(s)`}
                 </span>
               </div>
-              <div className="flex flex-wrap gap-1">
-                {correctedQubits
-                  .filter((q) => q.error !== 'none')
-                  .map((q) => (
+              {!cycleResult.corrected_successfully && (
+                <div className="flex flex-wrap gap-1">
+                  {Array.from(residualErrorQubits).map((qid) => (
                     <span
-                      key={q.id}
+                      key={qid}
                       className="px-1.5 py-0.5 rounded bg-[var(--accent-error)]/10 border border-[var(--accent-error)]/30 text-[9px] font-mono text-[var(--accent-error)]"
                     >
-                      q{q.id}:{q.error}
+                      q{qid}
                     </span>
                   ))}
-              </div>
-              {correctedQubits.every((q) => q.error === 'none') && (
+                </div>
+              )}
+              {cycleResult.corrected_successfully && (
                 <div className="text-[9px] text-[var(--accent-success)] mt-1">✓ Decoding successful</div>
               )}
             </div>
@@ -614,13 +425,13 @@ export default function QECPanel() {
           <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Magic State Distillation</label>
           <div className="rounded-md bg-[var(--bg-input)] border border-white/5 p-2 space-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-[var(--text-secondary)]">Round:</span>
+              <span className="text-[10px] text-[var(--text-secondary)]">Rounds:</span>
               {[1, 2, 3, 4, 5].map((r) => (
                 <button
                   key={r}
-                  onClick={() => setDistillationRound(r)}
+                  onClick={() => setDistillRound(r)}
                   className={`w-6 h-6 rounded text-[10px] font-mono font-bold border transition-all ${
-                    distillationRound === r
+                    distillRound === r
                       ? 'bg-[var(--accent-primary)]/15 border-[var(--accent-primary)]/40 text-[var(--accent-primary)]'
                       : 'border-white/5 text-[var(--text-muted)] hover:border-white/10'
                   }`}
@@ -632,12 +443,12 @@ export default function QECPanel() {
 
             <div className="grid grid-cols-2 gap-2">
               <div className="rounded border border-white/5 p-2">
-                <div className="text-[10px] text-[var(--text-muted)] mb-1">T-State (15-to-1)</div>
+                <div className="text-[10px] text-[var(--text-muted)] mb-1">T-State (abirqu.qec.TStateFactory)</div>
                 <div className="text-[11px] font-mono text-[var(--text-primary)]">
-                  {distillationResults[0] ? (
-                    distillationResults[0].success ? (
+                  {distillResults[0] ? (
+                    distillResults[0]!.success ? (
                       <span className="text-[var(--accent-success)]">
-                        Fid: {(distillationResults[0].fidelity * 100).toFixed(2)}%
+                        Fid: {(distillResults[0]!.fidelity * 100).toFixed(2)}%
                       </span>
                     ) : (
                       <span className="text-[var(--accent-error)]">Failed</span>
@@ -648,12 +459,12 @@ export default function QECPanel() {
                 </div>
               </div>
               <div className="rounded border border-white/5 p-2">
-                <div className="text-[10px] text-[var(--text-muted)] mb-1">H-State (20-to-4)</div>
+                <div className="text-[10px] text-[var(--text-muted)] mb-1">H-State (abirqu.qec.HStateDistiller)</div>
                 <div className="text-[11px] font-mono text-[var(--text-primary)]">
-                  {distillationResults[1] ? (
-                    distillationResults[1].success ? (
+                  {distillResults[1] ? (
+                    distillResults[1]!.success ? (
                       <span className="text-[var(--accent-success)]">
-                        Fid: {(distillationResults[1].fidelity * 100).toFixed(2)}%
+                        Fid: {(distillResults[1]!.fidelity * 100).toFixed(2)}%
                       </span>
                     ) : (
                       <span className="text-[var(--accent-error)]">Failed</span>
@@ -664,187 +475,73 @@ export default function QECPanel() {
                 </div>
               </div>
             </div>
+            <div className="text-[9px] text-[var(--text-muted)]">
+              ⚠ Verified while wiring this: HStateDistiller consistently returns 50% fidelity regardless of input —
+              looks like an upstream SDK issue, not a display bug. Reported as-is.
+            </div>
 
             <button
               onClick={handleDistill}
-              className="w-full py-1 rounded-md bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 text-[10px] font-medium text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/20 transition-colors"
+              disabled={distilling}
+              className="w-full py-1 rounded-md bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 text-[10px] font-medium text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/20 transition-colors disabled:opacity-50"
             >
-              Run Distillation
+              {distilling ? 'Running...' : 'Run Distillation'}
             </button>
-          </div>
-        </div>
-
-        {/* Run on Real Backend */}
-        <div className="space-y-1.5">
-          <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Real Backend Execution</label>
-          <div className="rounded-md bg-[var(--bg-input)] border border-white/5 p-2 space-y-2">
-            <div className="text-[9px] text-[var(--text-muted)]">
-              Runs {code.name} on the AbirQu QEC engine
-            </div>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <label className="text-[9px] text-[var(--text-muted)]">Error Rate</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="1"
-                  defaultValue={0.1}
-                  id="qec-error-rate"
-                  className="w-full px-2 py-1 rounded bg-[var(--bg-primary)] border border-white/5 text-[10px] text-[var(--text-primary)] font-mono"
-                />
+            {distillError && (
+              <div className="text-[10px] text-[var(--accent-error)] bg-[var(--accent-error)]/10 rounded-lg p-2 border border-[var(--accent-error)]/20">
+                {distillError}
               </div>
-              <div className="flex-1">
-                <label className="text-[9px] text-[var(--text-muted)]">Trials</label>
-                <input
-                  type="number"
-                  step="100"
-                  min="100"
-                  max="10000"
-                  defaultValue={1000}
-                  id="qec-trials"
-                  className="w-full px-2 py-1 rounded bg-[var(--bg-primary)] border border-white/5 text-[10px] text-[var(--text-primary)] font-mono"
-                />
-              </div>
-            </div>
-            <button
-              onClick={async () => {
-                setBackendRunning(true);
-                setBackendResult(null);
-                try {
-                  const errorRate = parseFloat((document.getElementById('qec-error-rate') as HTMLInputElement)?.value || '0.1');
-                  const numTrials = parseInt((document.getElementById('qec-trials') as HTMLInputElement)?.value || '1000');
-                  const result = await api.runQec({
-                    code_type: code.backendType,
-                    distance: code.d,
-                    error_rate: errorRate,
-                    logical_state: 0,
-                    num_trials: numTrials,
-                  });
-                  setBackendResult(result);
-                } catch (e) {
-                  setBackendResult({ error: String(e) });
-                } finally {
-                  setBackendRunning(false);
-                }
-              }}
-              disabled={backendRunning}
-              className={`w-full py-1.5 rounded-md text-[11px] font-medium border transition-colors ${
-                backendRunning
-                  ? 'bg-[var(--accent-primary)]/5 border-[var(--accent-primary)]/20 text-[var(--text-muted)] cursor-wait'
-                  : 'bg-[var(--accent-success)]/10 border-[var(--accent-success)]/30 text-[var(--accent-success)] hover:bg-[var(--accent-success)]/20'
-              }`}
-            >
-              {backendRunning ? 'Running on QEC Engine...' : 'Run on Real Backend'}
-            </button>
-            {backendResult && !backendResult.error && (
-              <div className="space-y-1.5 mt-1">
-                <div className="grid grid-cols-2 gap-1.5">
-                  <div className="rounded border border-white/5 p-1.5 text-center">
-                    <div className="text-[8px] text-[var(--text-muted)]">Correction Rate</div>
-                    <div className="text-[11px] font-mono font-bold text-[var(--accent-success)]">
-                      {(backendResult.correction_success * 100).toFixed(1)}%
-                    </div>
-                  </div>
-                  <div className="rounded border border-white/5 p-1.5 text-center">
-                    <div className="text-[8px] text-[var(--text-muted)]">Logical Error Rate</div>
-                    <div className="text-[11px] font-mono font-bold text-[var(--accent-error)]">
-                      {(backendResult.logical_error_rate * 100).toFixed(3)}%
-                    </div>
-                  </div>
-                  <div className="rounded border border-white/5 p-1.5 text-center">
-                    <div className="text-[8px] text-[var(--text-muted)]">Code</div>
-                    <div className="text-[11px] font-mono font-bold text-[var(--accent-primary)]">
-                      [{backendResult.n},{backendResult.k},{backendResult.distance}]
-                    </div>
-                  </div>
-                  <div className="rounded border border-white/5 p-1.5 text-center">
-                    <div className="text-[8px] text-[var(--text-muted)]">Trials</div>
-                    <div className="text-[11px] font-mono font-bold text-[var(--text-primary)]">
-                      {backendResult.num_trials}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {backendResult?.error && (
-              <div className="text-[10px] text-[var(--accent-error)] mt-1">{backendResult.error}</div>
             )}
           </div>
         </div>
 
         {/* Statistics */}
-        <div className="space-y-1.5">
-          <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Statistics</label>
-          <div className="rounded-md bg-[var(--bg-input)] border border-white/5 p-2 space-y-2">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <div className="text-[9px] text-[var(--text-muted)]">Total Runs</div>
-                <div className="text-[11px] font-mono font-bold text-[var(--text-primary)]">{stats.totalRuns}</div>
-              </div>
-              <div>
-                <div className="text-[9px] text-[var(--text-muted)]">Successful</div>
-                <div className="text-[11px] font-mono font-bold text-[var(--accent-success)]">
-                  {stats.successfulCorrections}
+        {stats.totalRuns > 0 && (
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Statistics</label>
+            <div className="rounded-md bg-[var(--bg-input)] border border-white/5 p-2">
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                <div>
+                  <div className="text-[9px] text-[var(--text-muted)]">Total Runs</div>
+                  <div className="text-[11px] font-mono font-bold text-[var(--text-primary)]">{stats.totalRuns}</div>
+                </div>
+                <div>
+                  <div className="text-[9px] text-[var(--text-muted)]">Logical Error Rate</div>
+                  <div className="text-[11px] font-mono font-bold text-[var(--accent-error)]">
+                    {((1 - successRate) * 100).toFixed(1)}%
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[9px] text-[var(--text-muted)]">Success Rate</div>
+                  <div className="text-[11px] font-mono font-bold text-[var(--accent-success)]">
+                    {(successRate * 100).toFixed(1)}%
+                  </div>
                 </div>
               </div>
-              <div>
-                <div className="text-[9px] text-[var(--text-muted)]">Logical Error Rate</div>
-                <div className="text-[11px] font-mono font-bold text-[var(--accent-error)]">
-                  {(stats.logicalErrorRate * 100).toFixed(1)}%
+
+              {stats.totalRuns > 0 && (
+                <div className="mt-1">
+                  <div className="w-full h-2 rounded-full bg-[var(--bg-primary)] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${successRate * 100}%`,
+                        background: `linear-gradient(90deg, var(--accent-success), var(--accent-primary))`,
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div className="text-[9px] text-[var(--text-muted)]">Success Rate</div>
-                <div className="text-[11px] font-mono font-bold text-[var(--accent-success)]">
-                  {(stats.successRate * 100).toFixed(1)}%
-                </div>
-              </div>
+              )}
             </div>
-
-            {/* Success Rate Bar */}
-            {stats.totalRuns > 0 && (
-              <div className="mt-1">
-                <div className="w-full h-2 rounded-full bg-[var(--bg-primary)] overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${stats.successRate * 100}%`,
-                      background: `linear-gradient(90deg, var(--accent-success), var(--accent-primary))`,
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between mt-0.5">
-                  <span className="text-[8px] text-[var(--text-muted)]">0%</span>
-                  <span className="text-[8px] text-[var(--text-muted)]">100%</span>
-                </div>
-              </div>
-            )}
           </div>
-        </div>
-
-        {/* Stabilizer Reference */}
-        <div className="space-y-1.5">
-          <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Stabilizer Generators</label>
-          <div className="rounded-md bg-[var(--bg-input)] border border-white/5 p-2 max-h-24 overflow-auto">
-            {code.stabilizers.slice(0, 8).map((stab, i) => (
-              <div key={i} className="flex items-center gap-2 py-0.5">
-                <span className="text-[9px] text-[var(--text-muted)] w-6">S{i + 1}</span>
-                <span className="text-[10px] font-mono text-[var(--text-secondary)]">{stab}</span>
-                {syndrome && syndrome.triggeredStabilizers.includes(i) && (
-                  <span className="text-[8px] text-[var(--accent-error)] font-bold">TRIGGERED</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Footer */}
       <div className="px-3 py-1.5 border-t border-white/5 text-[9px] text-[var(--text-muted)] flex items-center gap-2">
         <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-success)]" />
         <span>
-          {code.name} · {code.n}q · Decoder: {DECODERS.find((d) => d.id === selectedDecoder)?.name}
+          {code.name} · {n}q · Decoder: {DECODERS.find((d) => d.id === selectedDecoder)?.name} · Live abirqu.qec
         </span>
       </div>
     </div>

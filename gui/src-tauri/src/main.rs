@@ -40,6 +40,12 @@ fn main() {
             commands::run_crypto,
             commands::run_agentic,
             commands::ask_quantum,
+            commands::run_chemistry_vqe,
+            commands::run_qec_cycle,
+            commands::run_qec_distill,
+            commands::run_qcomm_bb84,
+            commands::run_pqc_keygen,
+            commands::run_pqc_assess,
         ])
         .run(tauri::generate_context!())
         .expect("error while running AbirQu");

@@ -438,6 +438,65 @@ pub async fn ask_quantum(
     extract_data(resp)
 }
 
+// ─── Domain module commands (Chemistry / QEC / Quantum Comm / PQC) ────────
+// Each wraps a real abirqu_gui.domain_handlers function via the same
+// action-dispatch JSON protocol as every other command above — see
+// abirqu/gui/domain_handlers.py for the actual SDK calls being made.
+
+#[tauri::command]
+pub async fn run_chemistry_vqe(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "chemistry_vqe", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_qec_cycle(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "qec_cycle", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_qec_distill(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "qec_distill", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_qcomm_bb84(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "qcomm_bb84", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_pqc_keygen(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "pqc_keygen", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_pqc_assess(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "pqc_assess", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
 fn extract_data(resp: Value) -> Result<Value, String> {
     if resp["status"] == "ok" {
         Ok(resp["data"].clone())
