@@ -1,6 +1,29 @@
 Changelog
 =========
 
+Version 1.2.0
+-------------
+
+*Production-grade algorithm hardening + pulse-level control*
+
+**Algorithm Hardening**
+- Shor's algorithm: Full quantum modular exponentiation circuit with controlled modular adder, QFT
+- MWPM decoder: Edmonds' blossom algorithm with 2D shortest-path matching
+- Transpiler routing: SABRE with proper qubit mapping updates after SWAPs
+- Chemistry VQE: scipy.optimize.minimize (COBYLA) + real QuantumRun energy evaluation
+- Matchgate shadows: Free-fermion propagation instead of random sampling
+- HHL algorithm: Full quantum linear system solver with QPE
+
+**New Features**
+- Pulse-level control: PulseScheduler/PulseTranslator integrated into QuantumRun
+- AQC solver: Adiabatic quantum computing for Ising/Max-Cut/QUBO
+- GitHub Actions CI/CD for cross-platform desktop builds (Linux, Windows, macOS)
+
+**Desktop IDE**
+- All 14 panels wired to real backend modules
+- Tauri 2.x installers: .deb, .rpm, .AppImage (Linux), .exe (Windows), .dmg (macOS)
+- Version synced to 1.2.0 across all components
+
 Version 1.0.0
 -------------
 

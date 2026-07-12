@@ -247,10 +247,13 @@ Full-featured quantum IDE built with **Tauri 2.x** (Rust + React + TypeScript). 
 
 | Platform | Installer | Size |
 |----------|-----------|------|
-| Linux (Debian/Ubuntu) | `AbirQu_1.0.0_amd64.deb` | 4 MB |
-| Linux (Fedora/RHEL) | `AbirQu-1.0.0-1.x86_64.rpm` | 4 MB |
-| Linux (Universal) | `AbirQu_1.0.0_amd64.AppImage` | 80 MB |
-| Binary (any Linux) | `abirqu-gui` | 13 MB |
+| Linux (Debian/Ubuntu) | `AbirQu_1.2.0_amd64.deb` | 4 MB |
+| Linux (Fedora/RHEL) | `AbirQu-1.2.0-1.x86_64.rpm` | 4 MB |
+| Linux (Universal) | `AbirQu_1.2.0_amd64.AppImage` | 80 MB |
+| Windows (x64) | `AbirQu_1.2.0_x64-setup.exe` | ~5 MB |
+| macOS (Apple Silicon) | `AbirQu_1.2.0_aarch64.dmg` | ~5 MB |
+| macOS (Intel) | `AbirQu_1.2.0_x64.dmg` | ~5 MB |
+| Binary (any Linux) | `abirqu-gui` | 14 MB |
 
 ### All 14 Panels
 
@@ -294,12 +297,37 @@ npx @tauri-apps/cli build
 ### Install (Linux)
 
 ```bash
-sudo dpkg -i AbirQu_1.0.0_amd64.deb
-# or
-sudo rpm -i AbirQu-1.0.0-1.x86_64.rpm
-# or
-chmod +x AbirQu_1.0.0_amd64.AppImage && ./AbirQu_1.0.0_amd64.AppImage
+# Debian/Ubuntu
+sudo dpkg -i AbirQu_1.2.0_amd64.deb
+
+# Fedora/RHEL
+sudo rpm -i AbirQu-1.2.0-1.x86_64.rpm
+
+# Any Linux (portable)
+chmod +x AbirQu_1.2.0_amd64.AppImage && ./AbirQu_1.2.0_amd64.AppImage
 ```
+
+### Install (Windows)
+
+Download `AbirQu_1.2.0_x64-setup.exe` from [Releases](https://github.com/Abiress/abirqu/releases) and run the installer.
+
+### Install (macOS)
+
+Download `AbirQu_1.2.0_aarch64.dmg` (Apple Silicon) or `AbirQu_1.2.0_x64.dmg` (Intel) from [Releases](https://github.com/Abiress/abirqu/releases), open the DMG, and drag AbirQu to Applications.
+
+### Pre-built Binaries
+
+| Platform | Format | Size | Status |
+|----------|--------|------|--------|
+| Linux x64 | `.deb` | ~4 MB | Built & Tested |
+| Linux x64 | `.rpm` | ~4 MB | Built & Tested |
+| Linux x64 | `.AppImage` | ~80 MB | Built & Tested |
+| Windows x64 | `.exe` (NSIS) | ~5 MB | CI/CD Auto-build |
+| macOS ARM64 | `.dmg` | ~5 MB | CI/CD Auto-build |
+| macOS x64 | `.dmg` | ~5 MB | CI/CD Auto-build |
+| Linux ARM64 | `.deb` | ~4 MB | CI/CD Auto-build |
+
+All installers are built automatically via GitHub Actions on every push to `master`.
 
 ---
 

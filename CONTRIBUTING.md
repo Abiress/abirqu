@@ -366,7 +366,7 @@ A good issue report helps us fix the problem faster. Please include:
 - OS: Ubuntu 22.04
 - Python: 3.11.5
 - NumPy: 2.4.4
-- AbirQu: 1.0.0
+- AbirQu: 1.2.0
 
 **Steps to reproduce:**
 ```python
