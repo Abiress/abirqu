@@ -561,59 +561,78 @@ Honest listing of areas for improvement:
 
 ---
 
-## Recent Updates
+## Version History
 
-### v1.2.2 — AI Integration & Full GUI Wiring (2026-07-13)
-- **GUI fully wired**: All 14 panels now call real SDK backend (no more Math.random() mocks)
-- **ExplorerPanel**: Real filesystem listing via IPC
-- **PluginsPanel**: Real plugin listing from backend
-- **Console**: Real job status monitoring
-- **QCommPanel/DomainPanel**: Error states instead of fake data fallbacks
-- **SecurityPanel**: Circuit encrypt/decrypt with key passing
-- **BlochSphere**: Fixed multi-qubit logic
-- **TTN Simulator**: Fixed broken import (`GATE_MATRICES` → removed unused import)
-- Files: `gui/src-tauri/src/commands.rs`, `gui/src/api/commands.ts`, `gui/src/components/*/`, `abirqu/simulation/ttn.py`
+| Version | Date | Description | Key Files |
+|---------|------|-------------|-----------|
+| **v1.2.2** | 2026-07-13 | GUI fully wired (no mock data), TTN bug fixed, honest README | `gui/src/components/*/`, `abirqu/simulation/ttn.py`, `README.md` |
+| **v1.2.2-alpha** | 2026-07-07 | ML Transpiler, MCP, Copilot, NN Layers, Resource Estimation, Benchpress, VS Code Extension | `abirqu/transpiler/ml_transpiler.py` (437), `abirqu/mcp/__init__.py` (431), `abirqu/copilot/__init__.py` (475), `abirqu/nn/__init__.py` (437), `abirqu/resource_estimation/__init__.py` (549), `benchpress/__init__.py` (697), `vscode-extension/` |
+| **v1.2.1** | 2026-07-07 | TTN Simulator, Cross-SDK Inbound, Job Orchestration, Auto-diff, Dynamical Decoupling, Union-Find, Distributed Sim | `abirqu/simulation/ttn.py` (438), `abirqu/converters_inbound.py` (367), `abirqu/job_orchestration.py` (765), `abirqu/autodiff.py` (537), `abirqu/dynamical_decoupling.py` (482), `abirqu/qec/union_find_decoder.py` (371), `abirqu/simulation/distributed.py` (549) |
+| **v1.2.0** | 2026-07-07 | Fixed 7 backend handlers, wired QComm/Domain/Security panels, cross-platform installers | `abirqu/gui/domain_handlers.py`, `gui/src/components/QCommPanel/`, `gui/src/components/DomainPanel/`, `gui/src/components/SecurityPanel/`, `installers/` |
+| **v1.1.0** | 2026-07-06 | IBM Quantum verified on ibm_fez, Shor hybrid, VQE validated, 8 language bindings, 12 backends, 14-panel IDE | `abirqu/backends/ibm_quantum.py`, `abirqu/algorithms/__init__.py`, `abirqu/chemistry/`, `gui/` |
+| **v1.0.0** | 2026-07-05 | Initial release: Circuit DSL, 5 simulators, QEC, noise toolkit, PyPI published | `abirqu/circuit.py` (532), `abirqu/simulation/`, `abirqu/qec/`, `abirqu/noise_toolkit.py` |
 
-### v1.2.2-alpha — AI & ML Features (2026-07-07)
-- **ML Transpiler** (`abirqu/transpiler/ml_transpiler.py`, 437 lines): Real Q-learning RL router + GNN layout optimizer in pure NumPy
-- **MCP Integration** (`abirqu/mcp/__init__.py`, 431 lines): JSON-RPC 2.0 server/client with 5 quantum tools
-- **LLM Copilot** (`abirqu/copilot/__init__.py`, 475 lines): Template-matching NL parser, 7 circuit templates
-- **NN Layers** (`abirqu/nn/__init__.py`, 437 lines): PyTorch/JAX/TensorFlow quantum layers
-- **Resource Estimation** (`abirqu/resource_estimation/__init__.py`, 549 lines): Shor/Grover/VQE/HHL formulas
-- **Benchpress** (`benchpress/__init__.py`, 697 lines): 5 benchmark categories, SDK comparison
-- **VS Code Extension** (`vscode-extension/`): Run/optimize/visualize commands
+---
+
+## What Changed in Each Version
+
+### v1.2.2 (2026-07-13) — GUI Fully Wired
+- **ExplorerPanel**: Real filesystem listing via `list_directory` IPC command
+- **PluginsPanel**: Real plugin listing from backend (removed 100% `Math.random()` mock)
+- **Console**: Real job status monitoring via `listJobs()` polling
+- **QCommPanel/DomainPanel**: Error states instead of `Math.random()` fallbacks
+- **SecurityPanel**: Circuit encrypt/decrypt with key passing between steps
+- **BlochSphere**: Fixed multi-qubit probability calculation
+- **OpenQASMPanel**: Fixed field name mismatch on QASM import
+- **TTN Simulator**: Fixed crash from missing `GATE_MATRICES` import
+- Tests: 702 passed (unchanged)
+
+### v1.2.2-alpha (2026-07-07) — AI & ML Features
+- **ML Transpiler**: Q-learning RL qubit routing + GNN layout optimization (pure NumPy)
+- **MCP Integration**: JSON-RPC 2.0 server/client with 5 quantum tools
+- **LLM Copilot**: Template-matching NL parser with 7 circuit templates
+- **NN Layers**: PyTorch/JAX/TensorFlow quantum layers with autograd
+- **Resource Estimation**: Shor/Grover/VQE/HHL resource formulas + surface code overhead
+- **Benchpress**: 5 benchmark categories with cross-SDK comparison
+- **VS Code Extension**: Run/optimize/visualize commands
 - Version synced to 1.2.2 across all components
 
-### v1.2.1 — Core SDK Completion (2026-07-07)
-- **TTN Simulator** (`abirqu/simulation/ttn.py`, 438 lines): Tree Tensor Network for 200+ qubit circuits
-- **Cross-SDK Inbound** (`abirqu/converters_inbound.py`, 367 lines): Convert from Qiskit, Cirq, PennyLane
-- **Job Orchestration** (`abirqu/job_orchestration.py`, 765 lines): SQLite queue, 4 schedulers, cost estimator
-- **Auto-differentiation** (`abirqu/autodiff.py`, 537 lines): Parameter-shift, finite-diff, adjoint gradient
-- **Dynamical Decoupling** (`abirqu/dynamical_decoupling.py`, 482 lines): XY4, XY8, CPMG, UDD
-- **Union-Find Decoder** (`abirqu/qec/union_find_decoder.py`, 371 lines): Path compression + union-by-rank
-- **Distributed Simulation** (`abirqu/simulation/distributed.py`, 549 lines): MPI with ProcessPoolExecutor fallback
+### v1.2.1 (2026-07-07) — Core SDK Completion
+- **TTN Simulator**: Tree Tensor Network for 200+ qubit circuits
+- **Cross-SDK Inbound**: Convert from Qiskit, Cirq, PennyLane
+- **Job Orchestration**: SQLite queue, 4 schedulers (FIFO/priority/SJF/fair-share), cost estimator
+- **Auto-differentiation**: Parameter-shift, finite-difference, adjoint gradient
+- **Dynamical Decoupling**: XY4, XY8, CPMG, UDD pulse sequences
+- **Union-Find Decoder**: Path compression + union-by-rank
+- **Distributed Simulation**: MPI with ProcessPoolExecutor fallback
 - 75 new tests (627→702 total)
 
-### v1.2.0 — Backend & GUI Fixes (2026-07-07)
-- Fixed all 7 backend handlers: run_qec, run_chemistry, run_grover, run_qpinn, run_crypto, run_agentic, ask_quantum
-- Fixed QCommPanel: 7 protocols wired to real SDK
-- Fixed DomainPanel: OSINT graph optimization wired
-- Fixed SecurityPanel: Circuit encryption wired
+### v1.2.0 (2026-07-07) — Backend & GUI Fixes
+- Fixed `run_qec`: All 7 code types (repetition, bit_flip, phase_flip, shor, steane, surface, color)
+- Fixed `run_chemistry`: Real VQE with scipy COBYLA, proper numpy arrays
+- Fixed `run_grover`: Uses `abirqu.algorithms.grover_search` function
+- Fixed `run_qpinn`: Added `qpinn.train()` call, fixed `initial_condition` callable
+- Fixed `run_crypto`: Lookup table for valid Kyber sizes (512/768/1024)
+- Fixed `run_agentic`: Real circuit optimization with gate-count comparison
+- Fixed `ask_quantum`: Fixed numpy array conversion
+- Wired QCommPanel: 7 protocols to real SDK
+- Wired DomainPanel: OSINT graph optimization
+- Wired SecurityPanel: Circuit encryption
 - Cross-platform installers: .deb, .rpm, .AppImage, binary
 
-### v1.1.0 — Production SDK (2026-07-06)
-- Full IBM Quantum hardware verified on `ibm_fez` (156 qubits, Bell state + QDCG)
+### v1.1.0 (2026-07-06) — Production SDK
+- IBM Quantum verified on `ibm_fez` (156 qubits, Bell state + QDCG)
 - Shor's algorithm: Hybrid implementation (circuit template + classical factoring)
 - VQE convergence validated (chemical accuracy: 0.001175 Ha error on H₂)
 - 8 language bindings verified (Python 627 tests, JS 30, Java 13, .NET 6, Swift 4)
-- 12 real hardware backends (IBM, IonQ, Rigetti, Quantinuum, AWS, Azure, Google, D-Wave, SpinQ, Pasqal, OQC, QuEra)
+- 12 real hardware backends
 - 14-panel IDE with 3D Bloch sphere
 
-### v1.0.0 — Initial Release
-- Circuit DSL with 40+ gates (`abirqu/circuit.py`, 532 lines)
-- Simulation backends (GPU, Clifford, MPS, Monte Carlo, NumPy)
-- QEC (Surface, Color, Stabilizer codes, 5 decoders)
-- Noise toolkit (ZNE, readout mitigation, M3, PEC)
+### v1.0.0 (2026-07-05) — Initial Release
+- Circuit DSL with 40+ gates (532 lines)
+- 5 simulation backends (GPU, Clifford, MPS, Monte Carlo, NumPy)
+- QEC: Surface, Color, Stabilizer codes with 5 decoders
+- Noise toolkit: ZNE, readout mitigation, M3, PEC
 - PyPI published: `pip install abirqu`
 
 ---
