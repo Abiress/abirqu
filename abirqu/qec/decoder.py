@@ -32,11 +32,11 @@ class SyndromeDecoder:
         if self.code is None:
             return
 
-        n = self.code.n
+        n = getattr(self.code, 'n', None) or getattr(self.code, 'physical_qubits', 0)
         if n > 12:
             return
 
-        num_stabs = self.code.num_stabilizers
+        num_stabs = getattr(self.code, 'num_stabilizers', 0)
         for weight in range(min(3, n + 1)):
             for error_positions in self._combinations(n, weight):
                 error = np.zeros(n, dtype=int)
@@ -65,7 +65,7 @@ class SyndromeDecoder:
         return self._greedy_decode(syndrome)
 
     def _greedy_decode(self, syndrome: np.ndarray) -> np.ndarray:
-        n = self.code.n
+        n = getattr(self.code, 'n', None) or getattr(self.code, 'physical_qubits', 0)
         correction = np.zeros(n, dtype=int)
         if not np.any(syndrome):
             return correction
