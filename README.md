@@ -2,18 +2,19 @@
   <img src="assets/logo.png" alt="AbirQu Logo" width="320"/>
 </p>
 
-<h1 align="center">AbirQu Quantum SDK v1.2.0</h1>
+<h1 align="center">AbirQu Quantum SDK v1.2.2</h1>
 
 <p align="center">
   <b>Created by Abir Maheshwari</b> &nbsp;|&nbsp; abhirsxn@gmail.com &nbsp;|&nbsp; <a href="https://aqdi.world">aqdi.world</a> &nbsp;|&nbsp; Indian Quantum Mission Support Enabled
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-1.2.2-blue?style=for-the-badge" alt="Version"/>
   <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" alt="Build"/>
-  <img src="https://img.shields.io/badge/tests-627%20PASS-brightgreen?style=for-the-badge" alt="Tests"/>
+  <img src="https://img.shields.io/badge/tests-702%20PASS-brightgreen?style=for-the-badge" alt="Tests"/>
   <img src="https://img.shields.io/badge/backends-12%20Real-purple?style=for-the-badge" alt="Backends"/>
   <img src="https://img.shields.io/badge/GUI-Full%20IDE%20(14%20panels)-purple?style=for-the-badge" alt="GUI"/>
+  <img src="https://img.shields.io/badge/simulators-6%20Backends-orange?style=for-the-badge" alt="Simulators"/>
   <img src="https://img.shields.io/pypi/v/abirqu?color=blue&label=PyPI&style=for-the-badge" alt="PyPI"/>
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License"/>
 </p>
@@ -49,20 +50,22 @@
 │  Ask Quantum (NL2Q) │ Settings │ Bloch │ Results │ Console           │
 ├─────────────────────────────────────────────────────────────────────┤
 │                      Core Engine                                     │
-│  Circuit DSL │ Gate Matrices │ Transpiler │ Noise Toolkit            │
+│  Circuit DSL │ Gate Matrices │ ML Transpiler │ Noise Toolkit         │
+│  Auto-differentiation │ Dynamical Decoupling │ Resource Estimation   │
 ├─────────────────────────────────────────────────────────────────────┤
-│  12 Hardware Backends      │  5 Simulation Engines                   │
-│  IBM, IonQ, Rigetti,       │  GPU, Clifford, MPS,                   │
+│  12 Hardware Backends      │  6 Simulation Engines                   │
+│  IBM, IonQ, Rigetti,       │  GPU, Clifford, MPS, TTN,              │
 │  Quantinuum, AWS, Azure,   │  Monte Carlo, NumPy                    │
 │  Google, D-Wave, Pasqal,   │                                         │
 │  OQC, QuEra, SpinQ         │                                         │
 ├─────────────────────────────────────────────────────────────────────┤
 │  Quantum OS    │  QEC (Surface/Color/Stabilizer)                     │
-│  Scheduling    │  5 Decoders │ Magic State Distillation              │
-│  RBAC, Audit   │  Fault-Tolerant Compiler                            │
+│  Job Queue     │  6 Decoders (MWPM + Union-Find) │ Magic State       │
+│  RBAC, Audit   │  Fault-Tolerant Compiler │ Resource Estimator       │
 ├─────────────────────────────────────────────────────────────────────┤
 │  Domain Modules: Chemistry │ OSINT │ Crypto │ Space │ QPINN │ Agentic│
 │  Quantum Communication: BB84 │ E91 │ CV-QKD │ DI-QKD                │
+│  AI/ML: MCP Integration │ LLM Copilot │ PyTorch/JAX/TF Layers       │
 │  Novel: Noise-Adaptive Compiler │ SPAE │ Circuit Cutting             │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -80,9 +83,19 @@
 | **Q-PINN** | Quantum PDE solvers | Parameterized quantum circuits for diffusion and Navier-Stokes equations |
 | **Agentic Orchestration** | Task scheduling and execution | Agent task orchestrator, batch execution, multi-GPU simulation |
 | **Quantum Communication** | 7 QKD/networking protocols | BB84, E91, CV-QKD, DI-QKD, satellite, repeaters, network |
-| **Fault-Tolerant QEC** | Error correction codes | Surface/Color/Stabilizer codes, 5 decoders, magic state distillation |
+| **Fault-Tolerant QEC** | Error correction codes | Surface/Color/Stabilizer codes, 6 decoders (MWPM + Union-Find), magic state distillation |
 | **Quantum IDE** | Full desktop IDE | 14 panels, circuit editor, code editors, Bloch sphere, export reports |
 | **Hardware Control** | Calibration and characterization | T1/T2, RB, tomography, SPAM, noise-aware compiler |
+| **ML Transpiler** | AI-enhanced compilation | RL qubit routing, GNN layout optimization, multi-pass pipeline |
+| **Auto-differentiation** | Gradient computation | Parameter-shift, finite-difference, adjoint gradient methods |
+| **Dynamical Decoupling** | Idle-period protection | XY4, XY8, CPMG, UDD pulse sequences |
+| **MCP Integration** | AI agent protocol | JSON-RPC 2.0 server with 5 quantum tools |
+| **LLM Copilot** | Natural language circuits | NL→circuit generation, explanation, optimization suggestions |
+| **Neural Network Layers** | Framework integration | PyTorch/JAX/TensorFlow quantum layers with autograd |
+| **Resource Estimation** | Algorithm cost analysis | Shor/Grover/VQE/HHL resource estimates, surface code overhead |
+| **Benchpress** | Benchmarking suite | Cross-SDK comparison, circuit/transpilation/simulation benchmarks |
+| **VS Code Extension** | Editor integration | Run/optimize/visualize commands for VS Code |
+| **Distributed Simulation** | Multi-worker execution | MPI with ProcessPoolExecutor fallback |
 
 All modules use **pure NumPy with OpenBLAS DYNAMIC_ARCH** — runs on Intel, AMD, Qualcomm, MediaTek, and Apple Silicon without recompilation.
 
@@ -173,6 +186,7 @@ Real, reproducible benchmarks on local NumPy simulator (Intel, 64 threads):
 | **GPU Simulator** | `abirqu.simulation` | CuPy/NumPy statevector with GPU acceleration |
 | **Clifford Simulator** | `abirqu.simulation` | Stabilizer tableau for Clifford circuits |
 | **MPS Simulator** | `abirqu.simulation` | Matrix Product State / tensor network |
+| **TTN Simulator** | `abirqu.simulation` | Tree Tensor Network for 200+ qubit circuits |
 | **Monte Carlo** | `abirqu.simulation` | Stochastic pure-state trajectories |
 | **NumPy Simulator** | `abirqu.numpy_sim` | Pure Python/NumPy statevector (portable fallback) |
 
@@ -187,7 +201,7 @@ Real, reproducible benchmarks on local NumPy simulator (Intel, 64 threads):
 | **Color Code** | Triangular lattice | [[n, 1, d]] |
 | **LDPC** | Parity-check matrix | Configurable |
 
-**5 Decoders:** Syndrome Lookup, Surface-code MWPM, Belief Propagation, MWPM, GPU-Accelerated BP
+**6 Decoders:** Syndrome Lookup, Surface-code MWPM, Belief Propagation, MWPM, GPU-Accelerated BP, Union-Find
 
 **Magic State Distillation:** 15-to-1 T-state and 20-to-4 H-state distillers
 
@@ -218,6 +232,9 @@ Real, reproducible benchmarks on local NumPy simulator (Intel, 64 threads):
 |--------|-------------|
 | **Hardware Calibration** | T1/T2 coherence, gate fidelities, readout errors, crosstalk, randomized benchmarking, process tomography, SPAM analysis |
 | **Noise Toolkit** | ZNE (Richardson/linear/exponential), ReadoutMitigator, M3Mitigator, PECCorrector, calibration circuits |
+| **ML Transpiler** | RL qubit routing, GNN layout optimization, multi-pass optimization pipeline |
+| **Auto-differentiation** | Parameter-shift, finite-difference, adjoint gradient methods for variational circuits |
+| **Dynamical Decoupling** | XY4, XY8, CPMG, UDD pulse sequences for idle-period protection |
 | **Transpiler** | Target-aware decomposition, CouplingMap, RoutingPass, SchedulingPass, FidelityEstimator |
 | **Quantum OS** | Scheduler (FIFO/priority/SJF/fair-share), JobQueue (SQLite), ResourceManager, VirtualQPU, CostEstimator |
 | **Post-Quantum Security** | Kyber-768 KEM, Dilithium-2, SPHINCS+-128f, BB84 QKD, circuit encryption |
@@ -225,12 +242,20 @@ Real, reproducible benchmarks on local NumPy simulator (Intel, 64 threads):
 | **Quantum Optimizers** | COBYLA, SPSA, Adam, Gradient Descent, Nelder-Mead, VQE/QAOA loops |
 | **Pulse Translation** | Gate-to-pulse mapping, crosstalk-aware scheduling, DRAG optimization |
 | **Dynamic Circuits** | Mid-circuit measurement, classical feedback, For/While loops |
+| **MCP Integration** | JSON-RPC 2.0 server with quantum tools for AI agents |
+| **LLM Copilot** | Natural language circuit generation, explanation, optimization suggestions |
+| **Neural Network Layers** | PyTorch/JAX/TensorFlow quantum layers with automatic differentiation |
+| **Resource Estimation** | Algorithm cost analysis, surface code overhead calculator |
+| **Benchpress** | Cross-SDK benchmarking suite with comparison reports |
+| **Distributed Simulation** | MPI-based execution with ProcessPoolExecutor fallback |
+| **Cross-SDK Converters** | Import from Qiskit, Cirq, PennyLane; export to 7 frameworks |
+| **VS Code Extension** | Run/optimize/visualize quantum circuits in VS Code |
 
 ### Language Bindings
 
 | Language | Status | Tests | Notes |
 |----------|--------|-------|-------|
-| **Python** | Complete | 627 | Primary SDK, full feature set |
+| **Python** | Complete | 702 | Primary SDK, full feature set |
 | **JavaScript/TypeScript** | Complete | 30 | Standalone pure-JS, npm publishable |
 | **Go** | Complete | — | cgo bindings to Rust core |
 | **Java** | Complete | 13 | JNA bindings to Rust core |
@@ -249,9 +274,9 @@ Full-featured quantum IDE built with **Tauri 2.x** (Rust + React + TypeScript). 
 
 | Platform | Installer | Size | Download |
 |----------|-----------|------|----------|
-| Linux (Debian/Ubuntu) | `AbirQu_1.2.0_amd64.deb` | 4.2 MB | [Download](installers/AbirQu_1.2.0_amd64.deb) |
-| Linux (Fedora/RHEL) | `AbirQu-1.2.0-1.x86_64.rpm` | 4.2 MB | [Download](installers/AbirQu-1.2.0-1.x86_64.rpm) |
-| Linux (Universal) | `AbirQu_1.2.0_amd64.AppImage` | 80 MB | [Download](installers/AbirQu_1.2.0_amd64.AppImage) |
+| Linux (Debian/Ubuntu) | `AbirQu_1.2.2_amd64.deb` | 4.2 MB | [Download](installers/AbirQu_1.2.2_amd64.deb) |
+| Linux (Fedora/RHEL) | `AbirQu-1.2.2-1.x86_64.rpm` | 4.2 MB | [Download](installers/AbirQu-1.2.2-1.x86_64.rpm) |
+| Linux (Universal) | `AbirQu_1.2.2_amd64.AppImage` | 80 MB | [Download](installers/AbirQu_1.2.2_amd64.AppImage) |
 | Binary (any Linux) | `abirqu-gui` | 14 MB | [Download](installers/abirqu-gui) |
 
 ### All 14 Panels
@@ -297,22 +322,22 @@ npx @tauri-apps/cli build
 
 ```bash
 # Debian/Ubuntu
-sudo dpkg -i AbirQu_1.2.0_amd64.deb
+sudo dpkg -i AbirQu_1.2.2_amd64.deb
 
 # Fedora/RHEL
-sudo rpm -i AbirQu-1.2.0-1.x86_64.rpm
+sudo rpm -i AbirQu-1.2.2-1.x86_64.rpm
 
 # Any Linux (portable)
-chmod +x AbirQu_1.2.0_amd64.AppImage && ./AbirQu_1.2.0_amd64.AppImage
+chmod +x AbirQu_1.2.2_amd64.AppImage && ./AbirQu_1.2.2_amd64.AppImage
 ```
 
 ### Install (Windows)
 
-Download `AbirQu_1.2.0_x64-setup.exe` from [Releases](https://github.com/Abiress/abirqu/releases) and run the installer.
+Download `AbirQu_1.2.2_x64-setup.exe` from [Releases](https://github.com/Abiress/abirqu/releases) and run the installer.
 
 ### Install (macOS)
 
-Download `AbirQu_1.2.0_aarch64.dmg` (Apple Silicon) or `AbirQu_1.2.0_x64.dmg` (Intel) from [Releases](https://github.com/Abiress/abirqu/releases), open the DMG, and drag AbirQu to Applications.
+Download `AbirQu_1.2.2_aarch64.dmg` (Apple Silicon) or `AbirQu_1.2.2_x64.dmg` (Intel) from [Releases](https://github.com/Abiress/abirqu/releases), open the DMG, and drag AbirQu to Applications.
 
 ### Pre-built Binaries
 
@@ -525,43 +550,42 @@ Honest listing of areas for improvement:
 
 ---
 
-## Recent Updates (v1.2.0)
+## Recent Updates
 
-### Backend Handler Fixes
+### v1.2.2 — AI Integration & Missing Features (2026-07-07)
+- **ML Transpiler**: Reinforcement learning qubit routing + GNN layout optimization
+- **MCP Integration**: JSON-RPC 2.0 server with 5 quantum tools for AI agents
+- **LLM Copilot**: Natural language→circuit generation, explanation, optimization
+- **PyTorch/JAX/TensorFlow**: `QuantumLayer` as `nn.Module` with automatic differentiation
+- **Resource Estimation**: Algorithm overhead + surface code cost model
+- **Benchpress**: Cross-SDK benchmarking suite with comparison reports
+- **VS Code Extension**: Commands for run/optimize/visualize
+- 5 new Tauri IPC commands, TypeScript wrappers for all new modules
+- Version synced to 1.2.2 across all components
 
-All backend handlers have been verified and fixed to use real SDK implementations:
+### v1.2.1 — Core SDK Completion (2026-07-07)
+- **TTN Simulator**: Tree Tensor Network for 200+ qubit circuits
+- **Cross-SDK Inbound**: Convert from Qiskit, Cirq, PennyLane
+- **Job Orchestration**: SQLite queue, 4 schedulers (FIFO/priority/SJF/fair-share), cost estimator
+- **Auto-differentiation**: Parameter-shift, finite-difference, adjoint gradient
+- **Dynamical Decoupling**: XY4, XY8, CPMG, UDD pulse sequences
+- **Union-Find Decoder**: Path compression + union-by-rank
+- **Distributed Simulation**: MPI with ProcessPoolExecutor fallback
+- 75 new tests (627→702 total)
 
-| Handler | Previous Issue | Fix Applied |
-|---------|---------------|-------------|
-| **run_qec** | All 7 code types crashed | Fixed `SyndromeDecoder` to accept code object; handle SurfaceCode API differences |
-| **run_chemistry** | Python lists where numpy needed; fake VQE results | Real `scipy.optimize.minimize` VQE with proper numpy arrays |
-| **run_grover** | Module doesn't exist | Uses `abirqu.algorithms.grover_search` function |
-| **run_qpinn** | Crashes on predict before train | Added `qpinn.train()` call; fixed `initial_condition` callable |
-| **run_crypto** | Invalid Kyber parameter from frontend | Lookup table for valid Kyber sizes (512/768/1024) |
-| **run_agentic** | Fake optimization results | Real circuit optimization with gate-count comparison |
-| **ask_quantum** | Chemistry path inherits list/numpy bug | Fixed numpy array conversion |
+### v1.1.0 — Production SDK (2026-07-06)
+- Full IBM Quantum hardware verified on `ibm_fez` (156 qubits)
+- Shor's algorithm fully implemented with modular exponentiation circuits
+- VQE convergence validated (chemical accuracy: 0.001175 Ha error)
+- 8 language bindings verified
+- 12 real hardware backends (IBM, IonQ, Rigetti, Quantinuum, etc.)
+- 14-panel IDE with 3D Bloch sphere
 
-### GUI Panel Wiring
-
-All panels now use real SDK implementations:
-
-| Panel | Previous Issue | Fix Applied |
-|-------|---------------|-------------|
-| **QCommPanel** | CV-QKD, DI-QKD, Satellite, Repeater, Network used mock data | Wired to real `abirqu.quantum_communication` modules |
-| **DomainPanel (OSINT)** | Graph optimization used `Math.random()` | Wired to real `abirqu.osint` graph analysis |
-| **SecurityPanel (Circuit)** | Encryption used placeholder hex | Wired to real `abirqu.security.CircuitProtector` |
-| **QECPanel** | All 7 code types crashed | Fixed to use correct decoder API |
-
-### Cross-Platform Installers
-
-Pre-built installers are available for all platforms:
-
-- **Linux**: `.deb` (Debian/Ubuntu), `.rpm` (Fedora/RHEL), `.AppImage` (Universal)
-- **Windows**: `.exe` (NSIS installer)
-- **macOS**: `.dmg` (Apple Silicon + Intel)
-- **Binary**: Standalone executable for any Linux
-
-All installers are built automatically via GitHub Actions on every push to `master`.
+### v1.0.0 — Initial Release
+- Circuit DSL with 40+ gates
+- Simulation backends (GPU, Clifford, MPS)
+- QEC (Surface, Color, Stabilizer codes)
+- PyPI published: `pip install abirqu`
 
 ---
 
@@ -629,21 +653,25 @@ rbac.assign_role("user@example.com", "operator")
 
 - **Unified execution** — `QuantumRun` does sampling, estimation, error mitigation, and ML in one call
 - **12 hardware backends** — IBM (verified on real hardware), D-Wave, SpinQ, IonQ, Rigetti, Quantinuum, AWS, Azure, Google, Pasqal, OQC, QuEra
-- **5 simulation engines** — GPU, Clifford, MPS tensor network, Monte Carlo, NumPy
-- **Full transpiler pipeline** — target-aware decomposition, SWAP routing, fidelity estimation
-- **Noise mitigation** — ZNE, readout mitigation, M3, PEC, adaptive error mitigation
-- **QEC** — Surface/Color/Stabilizer codes, syndrome decoders, magic state distillation
+- **6 simulation engines** — GPU, Clifford, MPS, TTN, Monte Carlo, NumPy
+- **Full transpiler pipeline** — ML-enhanced (RL routing + GNN layout), target-aware decomposition, SWAP routing, fidelity estimation
+- **Noise mitigation** — ZNE, readout mitigation, M3, PEC, adaptive error mitigation, dynamical decoupling
+- **QEC** — Surface/Color/Stabilizer codes, 6 decoders (MWPM + Union-Find), magic state distillation
 - **7 QKD protocols** — BB84, E91, CV-QKD, DI-QKD, satellite, repeaters, network
 - **6 domain modules** — Chemistry, OSINT, Crypto, Space, QPINN, Agentic
+- **AI integration** — MCP protocol, LLM copilot, PyTorch/JAX/TensorFlow layers
 - **Full desktop IDE** — 14 panels, circuit editor, code editors, Bloch sphere, export reports
 - **8 language bindings** — Python, JavaScript, Go, Java, .NET, Swift, Kotlin, WebAssembly
-- **205 tutorials** — comprehensive learning material
+- **206 tutorials** — comprehensive learning material
+- **Resource estimation** — Algorithm overhead + surface code cost model
+- **Cross-SDK converters** — Import from Qiskit, Cirq, PennyLane
 
 **Compared to specialized SDKs:**
 - **vs Qiskit**: AbirQu has broader scope (communication, QEC, domain modules, IDE). Qiskit has deeper IBM hardware integration.
 - **vs Cirq**: AbirQu supports 12 backends vs Cirq's Google focus. AbirQu includes QEC and domain modules.
 - **vs PennyLane**: Both support differentiation. AbirQu includes hardware control, QEC, and a full IDE.
 - **vs Braket**: AbirQu is hardware-independent (pure NumPy). Braket is AWS-focused.
+- **vs TKET**: AbirQu includes domain modules, QEC, and a full IDE. TKET focuses on hardware-agnostic optimization.
 
 **Choose AbirQu when you need:** a single SDK for quantum computing, communication, QEC, hardware control, and a visual development environment — all hardware-independent.
 
@@ -654,7 +682,7 @@ rbac.assign_role("user@example.com", "operator")
 ## Support
 
 - **Beginner Guide**: [abirqu/docs/beginner_guide.md](abirqu/docs/beginner_guide.md)
-- **205 Tutorials**: [tutorials/INDEX.md](tutorials/INDEX.md)
+- **206 Tutorials**: [tutorials/INDEX.md](tutorials/INDEX.md)
 - **Documentation**: [Readthedocs](https://abirqu.readthedocs.io)
 - **Whitepaper**: [docs/whitepaper.md](docs/whitepaper.md)
 - **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md)
