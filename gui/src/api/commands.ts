@@ -451,3 +451,65 @@ export interface JobQueueResult {
 export async function jobQueueStatus(): Promise<JobQueueResult> {
   return invoke('job_queue_status', { params: {} });
 }
+
+// ─── ML Transpiler ─────────────────────────────────────────────────────
+export interface MLTranspileResult {
+  original_gates: number;
+  optimized_gates: number;
+  original_depth: number;
+  optimized_depth: number;
+  method: string;
+}
+export async function runMLTranspile(n_qubits?: number, depth?: number): Promise<MLTranspileResult> {
+  return invoke('run_ml_transpile', { params: { n_qubits: n_qubits || 4, depth: depth || 3 } });
+}
+
+// ─── MCP Server ────────────────────────────────────────────────────────
+export interface MCPCallResult {
+  tool: string;
+  result: any;
+}
+export async function runMCP(tool: string, args?: Record<string, any>): Promise<MCPCallResult> {
+  return invoke('run_mcp', { params: { tool, args: args || {} } });
+}
+
+// ─── Quantum Copilot ───────────────────────────────────────────────────
+export interface CopilotResult {
+  action: string;
+  description?: string;
+  n_qubits?: number;
+  n_gates?: number;
+  gates?: { name: string; qubits: number[] }[];
+  explanation?: string;
+  suggestions?: string[];
+}
+export async function runCopilot(
+  description: string,
+  action?: string,
+): Promise<CopilotResult> {
+  return invoke('run_copilot', { params: { description, action: action || 'generate' } });
+}
+
+// ─── Resource Estimation ───────────────────────────────────────────────
+export interface ResourceEstimateResult {
+  algorithm: string;
+  estimate: any;
+  overhead: any;
+}
+export async function runResourceEstimate(
+  algorithm: string,
+  n_qubits?: number,
+  code_distance?: number,
+): Promise<ResourceEstimateResult> {
+  return invoke('run_resource_estimate', { params: { algorithm, n_qubits: n_qubits || 8, code_distance: code_distance || 3 } });
+}
+
+// ─── Benchpress ────────────────────────────────────────────────────────
+export interface BenchpressResult {
+  category: string;
+  total_benchmarks: number;
+  results: any;
+}
+export async function runBenchpress(category?: string): Promise<BenchpressResult> {
+  return invoke('run_benchpress', { params: { category: category || 'circuit_construction' } });
+}

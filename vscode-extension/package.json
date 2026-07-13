@@ -1,0 +1,92 @@
+{
+  "name": "abirqu",
+  "displayName": "AbirQu — Quantum Circuit Toolkit",
+  "description": "Run, optimize, and visualize quantum circuits powered by AbirQu.",
+  "version": "0.1.0",
+  "publisher": "abirqu",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "quantum",
+    "qiskit",
+    "cirq",
+    "abirqu",
+    "circuit",
+    "qasm"
+  ],
+  "activationEvents": [
+    "onLanguage:python",
+    "workspaceContains:**.qasm"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "abirqu.run",
+        "title": "AbirQu: Run Circuit"
+      },
+      {
+        "command": "abirqu.optimize",
+        "title": "AbirQu: Optimize Circuit"
+      },
+      {
+        "command": "abirqu.visualize",
+        "title": "AbirQu: Visualize Circuit"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "abirqu.run",
+          "when": "editorHasSelection",
+          "group": "abirqu"
+        },
+        {
+          "command": "abirqu.optimize",
+          "when": "editorHasSelection",
+          "group": "abirqu"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AbirQu",
+      "properties": {
+        "abirqu.backend": {
+          "type": "string",
+          "default": "local",
+          "enum": [
+            "local",
+            "ibm",
+            "aws",
+            "azure",
+            "google"
+          ],
+          "description": "Backend to use when running circuits."
+        },
+        "abirqu.shots": {
+          "type": "integer",
+          "default": 1024,
+          "minimum": 1,
+          "description": "Default number of measurement shots."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {}
+}

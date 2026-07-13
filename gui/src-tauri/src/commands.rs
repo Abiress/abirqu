@@ -623,6 +623,51 @@ pub async fn job_queue_status(
     extract_data(resp)
 }
 
+#[tauri::command]
+pub async fn run_ml_transpile(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_ml_transpile", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_mcp(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_mcp", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_copilot(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_copilot", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_resource_estimate(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_resource_estimate", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_benchpress(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_benchpress", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
 fn extract_data(resp: Value) -> Result<Value, String> {
     if resp["status"] == "ok" {
         Ok(resp["data"].clone())

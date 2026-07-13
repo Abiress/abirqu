@@ -60,6 +60,11 @@ fn main() {
             commands::run_dd,
             commands::run_distributed,
             commands::job_queue_status,
+            commands::run_ml_transpile,
+            commands::run_mcp,
+            commands::run_copilot,
+            commands::run_resource_estimate,
+            commands::run_benchpress,
         ])
         .run(tauri::generate_context!())
         .expect("error while running AbirQu");

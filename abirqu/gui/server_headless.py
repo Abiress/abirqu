@@ -1030,6 +1030,136 @@ def handle_job_queue_status(params: dict) -> dict:
     return {"costs": costs, "queue_depth": 0}
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# v1.2.2 MISSING Feature Handlers
+# ─────────────────────────────────────────────────────────────────────────
+
+def handle_run_ml_transpile(params: dict) -> dict:
+    """Run ML-enhanced transpiler on a circuit."""
+    n_qubits = params.get("n_qubits", 4)
+    depth = params.get("depth", 3)
+
+    from abirqu.circuit import Circuit
+    from abirqu.transpiler.ml_transpiler import MLTranspilerPipeline
+
+    circ = Circuit(n_qubits)
+    for i in range(n_qubits):
+        circ.h(i)
+    for d in range(depth):
+        for i in range(0, n_qubits - 1, 2):
+            circ.cnot(i, i + 1)
+        for i in range(1, n_qubits - 1, 2):
+            circ.cnot(i, i + 1)
+
+    pipeline = MLTranspilerPipeline()
+    result = pipeline.transpile(circ, target=None)
+
+    return {
+        "original_gates": len(circ.gates),
+        "optimized_gates": len(result.gates) if hasattr(result, 'gates') else len(circ.gates),
+        "original_depth": circ.depth(),
+        "optimized_depth": result.depth() if hasattr(result, 'depth') else circ.depth(),
+        "method": "ML Transpiler (RL + GNN)",
+    }
+
+
+def handle_run_mcp(params: dict) -> dict:
+    """Run MCP server tool call."""
+    tool_name = params.get("tool", "get_backend_info")
+    tool_args = params.get("args", {})
+
+    from abirqu.mcp import MCPServer
+
+    server = MCPServer()
+    result = server.handle_tool_call(tool_name, tool_args)
+
+    return {"tool": tool_name, "result": result}
+
+
+def handle_run_copilot(params: dict) -> dict:
+    """Run quantum copilot for circuit generation/explanation."""
+    description = params.get("description", "Bell state on 2 qubits")
+    action = params.get("action", "generate")
+
+    from abirqu.copilot import QuantumCopilot
+
+    copilot = QuantumCopilot()
+
+    if action == "generate":
+        circ = copilot.generate_circuit(description)
+        return {
+            "action": "generate",
+            "description": description,
+            "n_qubits": circ.num_qubits,
+            "n_gates": len(circ.gates),
+            "gates": [{"name": g.name, "qubits": g.qubits} for g in circ.gates[:20]],
+        }
+    elif action == "explain":
+        from abirqu.circuit import Circuit
+        circ = Circuit(2)
+        circ.h(0)
+        circ.cnot(0, 1)
+        explanation = copilot.explain_circuit(circ)
+        return {"action": "explain", "explanation": explanation}
+    elif action == "suggest":
+        from abirqu.circuit import Circuit
+        circ = Circuit(2)
+        circ.h(0)
+        circ.h(0)
+        circ.cnot(0, 1)
+        suggestions = copilot.suggest_optimization(circ)
+        return {"action": "suggest", "suggestions": suggestions}
+    else:
+        return {"action": action, "error": f"Unknown action: {action}"}
+
+
+def handle_run_resource_estimate(params: dict) -> dict:
+    """Estimate resources for a quantum algorithm."""
+    algorithm = params.get("algorithm", "shor")
+    n_qubits = params.get("n_qubits", 8)
+    code_distance = params.get("code_distance", 3)
+
+    from abirqu.resource_estimation import ResourceEstimator, AlgorithmEstimator
+
+    estimator = ResourceEstimator()
+    algo_estimator = AlgorithmEstimator()
+
+    if algorithm == "shor":
+        estimate = algo_estimator.estimate_shor(n_qubits)
+    elif algorithm == "grover":
+        estimate = algo_estimator.estimate_grover(n_qubits)
+    elif algorithm == "vqe":
+        estimate = algo_estimator.estimate_vqe(n_qubits, n_layers=2)
+    elif algorithm == "hhl":
+        estimate = algo_estimator.estimate_hhl(n_qubits)
+    else:
+        estimate = {"error": f"Unknown algorithm: {algorithm}"}
+
+    overhead = estimator.estimate_overhead("surface", n_qubits, code_distance)
+
+    return {
+        "algorithm": algorithm,
+        "estimate": estimate,
+        "overhead": overhead,
+    }
+
+
+def handle_run_benchpress(params: dict) -> dict:
+    """Run benchmark suite."""
+    category = params.get("category", "circuit_construction")
+
+    from benchpress import BenchpressRunner
+
+    runner = BenchpressRunner()
+    result = runner.run_benchmark_suite(category)
+
+    return {
+        "category": category,
+        "total_benchmarks": len(result.get("benchmarks", [])),
+        "results": result,
+    }
+
+
 def main():
     server = QuantumServer()
     server.start()
@@ -1211,6 +1341,31 @@ def main():
             elif action == "job_queue_status":
                 try:
                     response = {"status": "ok", "data": handle_job_queue_status(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "run_ml_transpile":
+                try:
+                    response = {"status": "ok", "data": handle_run_ml_transpile(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "run_mcp":
+                try:
+                    response = {"status": "ok", "data": handle_run_mcp(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "run_copilot":
+                try:
+                    response = {"status": "ok", "data": handle_run_copilot(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "run_resource_estimate":
+                try:
+                    response = {"status": "ok", "data": handle_run_resource_estimate(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "run_benchpress":
+                try:
+                    response = {"status": "ok", "data": handle_run_benchpress(request.get("params", {}))}
                 except Exception as e:
                     response = {"status": "error", "error": str(e)}
             else:
