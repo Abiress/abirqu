@@ -245,15 +245,17 @@ Real, reproducible benchmarks on local NumPy simulator (Intel, 64 threads):
 
 Full-featured quantum IDE built with **Tauri 2.x** (Rust + React + TypeScript). Runs natively on Linux, macOS, and Windows.
 
-| Platform | Installer | Size |
-|----------|-----------|------|
-| Linux (Debian/Ubuntu) | `AbirQu_1.2.0_amd64.deb` | 4 MB |
-| Linux (Fedora/RHEL) | `AbirQu-1.2.0-1.x86_64.rpm` | 4 MB |
-| Linux (Universal) | `AbirQu_1.2.0_amd64.AppImage` | 80 MB |
-| Windows (x64) | `AbirQu_1.2.0_x64-setup.exe` | ~5 MB |
-| macOS (Apple Silicon) | `AbirQu_1.2.0_aarch64.dmg` | ~5 MB |
-| macOS (Intel) | `AbirQu_1.2.0_x64.dmg` | ~5 MB |
-| Binary (any Linux) | `abirqu-gui` | 14 MB |
+### Download Installers
+
+| Platform | Installer | Size | Download |
+|----------|-----------|------|----------|
+| Linux (Debian/Ubuntu) | `AbirQu_1.2.0_amd64.deb` | 4.2 MB | [Download](https://github.com/Abiress/abirqu/releases/download/v1.2.0/AbirQu_1.2.0_amd64.deb) |
+| Linux (Fedora/RHEL) | `AbirQu-1.2.0-1.x86_64.rpm` | 4.2 MB | [Download](https://github.com/Abiress/abirqu/releases/download/v1.2.0/AbirQu-1.2.0-1.x86_64.rpm) |
+| Linux (Universal) | `AbirQu_1.2.0_amd64.AppImage` | 80 MB | [Download](https://github.com/Abiress/abirqu/releases/download/v1.2.0/AbirQu_1.2.0_amd64.AppImage) |
+| Windows (x64) | `AbirQu_1.2.0_x64-setup.exe` | ~5 MB | [Download](https://github.com/Abiress/abirqu/releases/download/v1.2.0/AbirQu_1.2.0_x64-setup.exe) |
+| macOS (Apple Silicon) | `AbirQu_1.2.0_aarch64.dmg` | ~5 MB | [Download](https://github.com/Abiress/abirqu/releases/download/v1.2.0/AbirQu_1.2.0_aarch64.dmg) |
+| macOS (Intel) | `AbirQu_1.2.0_x64.dmg` | ~5 MB | [Download](https://github.com/Abiress/abirqu/releases/download/v1.2.0/AbirQu_1.2.0_x64.dmg) |
+| Binary (any Linux) | `abirqu-gui` | 14 MB | [Download](https://github.com/Abiress/abirqu/releases/download/v1.2.0/abirqu-gui) |
 
 ### All 14 Panels
 
@@ -501,7 +503,7 @@ Test Files:
 
 | Version | Date | Key Additions |
 |---------|------|---------------|
-| **v1.2.0** | 2026-07 | **Full Quantum IDE** — 14 panels: Circuit Editor, Python/QASM, Explorer, QEC Lab, Quantum Comm, Domain Modules (Chemistry/OSINT/Crypto/Space/QPINN/Agentic), Security, Plugins, Ask Quantum (NL2Q), Settings. Framework integration (Qiskit/Cirq/OQTOPUS/D-Wave), resizable panels, noise simulation, export reports, Bloch sphere |
+| **v1.2.0** | 2026-07 | **Full Quantum IDE** — 14 panels: Circuit Editor, Python/QASM, Explorer, QEC Lab, Quantum Comm, Domain Modules (Chemistry/OSINT/Crypto/Space/QPINN/Agentic), Security, Plugins, Ask Quantum (NL2Q), Settings. Framework integration (Qiskit/Cirq/OQTOPUS/D-Wave), resizable panels, noise simulation, export reports, Bloch sphere. **Backend fixes**: All handlers verified and fixed (QEC 7 code types, Chemistry VQE, Grover, QPINN, Crypto lattice, Agentic). **GUI wiring**: All panels use real SDK implementations (QCommPanel, DomainPanel OSINT, SecurityPanel Circuit). Cross-platform installers built and tested. |
 | **v1.1.0** | 2026-07 | **Production Readiness** — Published on PyPI, CI/CD, Shor's algorithm, Grover fixed, VQE chemical accuracy, IBM hardware verified (ibm_fez), 627 tests |
 | **v1.0.0** | 2026-07 | **Full Stack** — Hardware calibration, device characterization, noise profiling, hardware-aware compiler, cloud manager, 412 tests |
 | **v0.8.0** | 2026-07 | **GUI** — Visual circuit editor, Bloch sphere, state vector, histograms, hardware panel, 125 tests |
@@ -523,6 +525,46 @@ Honest listing of areas for improvement:
 - **Transpiler routing** — basic SWAP insertion via BFS shortest path; Sabre routing not yet implemented
 - **Pulse-level control** — waveforms are generated but not sent to hardware
 - **IBM token required for hardware** — IBM Quantum backend needs a real API token
+
+---
+
+## Recent Updates (v1.2.0)
+
+### Backend Handler Fixes
+
+All backend handlers have been verified and fixed to use real SDK implementations:
+
+| Handler | Previous Issue | Fix Applied |
+|---------|---------------|-------------|
+| **run_qec** | All 7 code types crashed | Fixed `SyndromeDecoder` to accept code object; handle SurfaceCode API differences |
+| **run_chemistry** | Python lists where numpy needed; fake VQE results | Real `scipy.optimize.minimize` VQE with proper numpy arrays |
+| **run_grover** | Module doesn't exist | Uses `abirqu.algorithms.grover_search` function |
+| **run_qpinn** | Crashes on predict before train | Added `qpinn.train()` call; fixed `initial_condition` callable |
+| **run_crypto** | Invalid Kyber parameter from frontend | Lookup table for valid Kyber sizes (512/768/1024) |
+| **run_agentic** | Fake optimization results | Real circuit optimization with gate-count comparison |
+| **ask_quantum** | Chemistry path inherits list/numpy bug | Fixed numpy array conversion |
+
+### GUI Panel Wiring
+
+All panels now use real SDK implementations:
+
+| Panel | Previous Issue | Fix Applied |
+|-------|---------------|-------------|
+| **QCommPanel** | CV-QKD, DI-QKD, Satellite, Repeater, Network used mock data | Wired to real `abirqu.quantum_communication` modules |
+| **DomainPanel (OSINT)** | Graph optimization used `Math.random()` | Wired to real `abirqu.osint` graph analysis |
+| **SecurityPanel (Circuit)** | Encryption used placeholder hex | Wired to real `abirqu.security.CircuitProtector` |
+| **QECPanel** | All 7 code types crashed | Fixed to use correct decoder API |
+
+### Cross-Platform Installers
+
+Pre-built installers are available for all platforms:
+
+- **Linux**: `.deb` (Debian/Ubuntu), `.rpm` (Fedora/RHEL), `.AppImage` (Universal)
+- **Windows**: `.exe` (NSIS installer)
+- **macOS**: `.dmg` (Apple Silicon + Intel)
+- **Binary**: Standalone executable for any Linux
+
+All installers are built automatically via GitHub Actions on every push to `master`.
 
 ---
 
