@@ -2,7 +2,7 @@
 
 from packaging.version import Version as _Version
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 __author__ = "Abir Maheshwari"
 __email__ = "abhirsxn@gmail.com"
 __url__ = "https://github.com/abirqu/abirqu"
@@ -160,6 +160,20 @@ from .qpinn import QPINN, NavierStokesQPINN, PDESpec, TrainingConfig
 from .agentic import (
     MultiGPUSimulator, AgentOrchestrator, DistributedQuantumComputer,
     ExecutionTarget, ExecutionPlan,
+)
+
+# Inbound converters (Qiskit, Cirq, PennyLane, QASM → AbirQu)
+from .converters_inbound import from_qiskit, from_cirq, from_pennylane, from_qasm
+
+# Dynamical decoupling
+from .dynamical_decoupling import (
+    DDSequence, XY4Sequence, XY8Sequence, CPMGSequence, UDDSequence, DDScheduler,
+)
+
+# Cloud-native job orchestration
+from .job_orchestration import (
+    JobQueue, JobScheduler, JobBatcher, ResultCache, CostEstimator, AutoBackendSelector,
+    JobStatus as JobOrchestrationStatus, SchedulingPolicy,
 )
 
 # Format exports
@@ -364,6 +378,13 @@ __all__ = [
     "AdaptiveErrorMitigator", "NoiseProfiler", "DriftMonitor", "StrategySelector",
     # Pulse-Level Translation
     "AutomatedPulseEngine", "PulseTranslator", "PulseScheduler", "PulseOptimizer", "HardwareProfile",
+    # Inbound converters
+    "from_qiskit", "from_cirq", "from_pennylane", "from_qasm",
+    # Dynamical decoupling
+    "DDSequence", "XY4Sequence", "XY8Sequence", "CPMGSequence", "UDDSequence", "DDScheduler",
+    # Cloud-native job orchestration
+    "JobQueue", "JobScheduler", "JobBatcher", "ResultCache", "CostEstimator", "AutoBackendSelector",
+    "JobOrchestrationStatus", "SchedulingPolicy",
     # Formats
     "openqasm2", "openqasm3", "quil", "qir", "qasm_xt",
     # Backends (lazy)

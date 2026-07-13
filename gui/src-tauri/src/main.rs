@@ -55,6 +55,11 @@ fn main() {
             commands::run_circuit_encrypt,
             commands::run_circuit_decrypt,
             commands::run_plugin_list,
+            commands::run_ttn,
+            commands::run_autodiff,
+            commands::run_dd,
+            commands::run_distributed,
+            commands::job_queue_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running AbirQu");

@@ -14,6 +14,7 @@ from .decoder import (
     SyndromeDecoder, SurfaceCodeDecoder, BeliefPropagationDecoder,
     MWPMDecoder, GPUAcceleratedDecoder,
 )
+from .union_find_decoder import UnionFindDecoder
 from .magic_state import (
     MagicState, MagicStateDistiller, HStateDistiller,
     TStateFactory, TGateInjector,
@@ -31,7 +32,7 @@ __all__ = [
     'RotatedSurfaceCode', 'LDPCCode',
     # Decoders
     'SyndromeDecoder', 'SurfaceCodeDecoder', 'BeliefPropagationDecoder',
-    'MWPMDecoder', 'GPUAcceleratedDecoder',
+    'MWPMDecoder', 'GPUAcceleratedDecoder', 'UnionFindDecoder',
     # Magic states
     'MagicState', 'MagicStateDistiller', 'HStateDistiller',
     'TStateFactory', 'TGateInjector',

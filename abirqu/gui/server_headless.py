@@ -885,6 +885,151 @@ def _handle_ask_quantum(params: dict):
         return {"status": "error", "error": f"Ask Quantum error: {e}"}
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# v1.2.1 New Feature Handlers
+# ─────────────────────────────────────────────────────────────────────────
+
+def handle_run_ttn(params: dict) -> dict:
+    """Run circuit on Tree Tensor Network simulator."""
+    circuit_data = params.get("circuit", {})
+    n_qubits = circuit_data.get("num_qubits", 4)
+    gates = circuit_data.get("gates", [])
+    shots = params.get("shots", 1024)
+
+    from abirqu.circuit import Circuit
+    from abirqu.simulation.ttn import TTNSimulator
+
+    circ = Circuit(n_qubits)
+    for g in gates:
+        if isinstance(g, dict):
+            name = g.get("name", "")
+            qubits = g.get("qubits", [])
+            p = g.get("params", [])
+            if len(qubits) == 1:
+                circ.add_gate(name, qubits, p)
+            elif len(qubits) == 2:
+                circ.add_gate(name, qubits, p)
+
+    sim = TTNSimulator()
+    counts = sim.run_circuit(circ, shots=shots)
+    return {"counts": counts, "n_qubits": n_qubits, "simulator": "ttn"}
+
+
+def handle_run_autodiff(params: dict) -> dict:
+    """Compute gradients via parameter-shift, finite-difference, or adjoint."""
+    method = params.get("method", "parameter_shift")
+    n_qubits = params.get("n_qubits", 2)
+    n_params = params.get("n_params", 4)
+    hamiltonian_terms = params.get("hamiltonian_terms", 2)
+
+    import numpy as np
+    from abirqu.circuit import Circuit
+    from abirqu.chem.fermion_mappers import PauliTerm
+
+    circ = Circuit(n_qubits)
+    param_values = np.random.uniform(0, np.pi, n_params)
+    for i in range(min(n_params, n_qubits)):
+        circ.rx(i, float(param_values[i]))
+    for i in range(n_qubits - 1):
+        circ.cnot(i, i + 1)
+
+    hamiltonian = [PauliTerm(1.0, ['Z'] * n_qubits), PauliTerm(0.5, ['X'] + ['I'] * (n_qubits - 1))]
+
+    from abirqu.autodiff import parameter_shift_gradient, finite_difference_gradient, adjoint_gradient
+
+    if method == "parameter_shift":
+        result = parameter_shift_gradient(circ, param_values, hamiltonian)
+    elif method == "finite_difference":
+        result = finite_difference_gradient(circ, param_values, hamiltonian)
+    elif method == "adjoint":
+        result = adjoint_gradient(circ, param_values, hamiltonian)
+    else:
+        result = parameter_shift_gradient(circ, param_values, hamiltonian)
+
+    return {
+        "method": result.method,
+        "gradients": [float(g) for g in result.gradients],
+        "circuit_evals": result.circuit_evals,
+        "n_params": n_params,
+    }
+
+
+def handle_run_dd(params: dict) -> dict:
+    """Apply dynamical decoupling sequences to a circuit."""
+    sequence_type = params.get("sequence_type", "XY4")
+    n_qubits = params.get("n_qubits", 2)
+    idle_qubit = params.get("idle_qubit", 0)
+
+    from abirqu.dynamical_decoupling import XY4Sequence, XY8Sequence, CPMGSequence, UDDSequence, DDScheduler
+    from abirqu.circuit import Circuit
+
+    circ = Circuit(n_qubits)
+    circ.h(0)
+    circ.cnot(0, 1)
+
+    seq_map = {
+        "XY4": XY4Sequence(),
+        "XY8": XY8Sequence(),
+        "CPMG": CPMGSequence(N=4),
+        "UDD": UDDSequence(N=8),
+    }
+    seq = seq_map.get(sequence_type, XY4Sequence())
+    scheduler = DDScheduler()
+    scheduled_circ = scheduler.insert_dd(circ, idle_qubit, seq)
+
+    return {
+        "sequence_type": sequence_type,
+        "original_depth": circ.depth(),
+        "scheduled_depth": scheduled_circ.depth(),
+        "pulses_inserted": len(seq.pulse_times),
+        "is_identity": seq.is_identity(),
+    }
+
+
+def handle_run_distributed(params: dict) -> dict:
+    """Run circuit on distributed simulator."""
+    n_workers = params.get("n_workers", 2)
+    n_qubits = params.get("n_qubits", 4)
+    shots = params.get("shots", 1024)
+
+    from abirqu.circuit import Circuit
+    from abirqu.simulation.distributed import MPIQuantumSimulator
+
+    circ = Circuit(n_qubits)
+    circ.h(0)
+    for i in range(n_qubits - 1):
+        circ.cnot(i, i + 1)
+
+    sim = MPIQuantumSimulator(n_workers=n_workers)
+    counts = sim.run_circuit(circ, shots=shots)
+
+    return {"counts": counts, "n_workers": n_workers, "n_qubits": n_qubits}
+
+
+def handle_job_queue_status(params: dict) -> dict:
+    """Get job queue status and cost estimates."""
+    from abirqu.job_orchestration import CostEstimator, AutoBackendSelector
+    from abirqu.circuit import Circuit
+
+    estimator = CostEstimator()
+    selector = AutoBackendSelector()
+
+    circ = Circuit(4)
+    circ.h(0)
+    circ.cnot(0, 1)
+    circ.cnot(1, 2)
+    circ.cnot(2, 3)
+
+    costs = {}
+    for backend in ["ibm_brisbane", "ionq_harmony", "rigetti_aspen", "quantinuum_h1"]:
+        try:
+            costs[backend] = estimator.estimate(circ, backend, shots=1024)
+        except Exception:
+            costs[backend] = {"error": "estimation failed"}
+
+    return {"costs": costs, "queue_depth": 0}
+
+
 def main():
     server = QuantumServer()
     server.start()
@@ -1041,6 +1186,31 @@ def main():
             elif action == "plugin_list":
                 try:
                     response = {"status": "ok", "data": handle_plugin_list(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "run_ttn":
+                try:
+                    response = {"status": "ok", "data": handle_run_ttn(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "run_autodiff":
+                try:
+                    response = {"status": "ok", "data": handle_run_autodiff(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "run_dd":
+                try:
+                    response = {"status": "ok", "data": handle_run_dd(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "run_distributed":
+                try:
+                    response = {"status": "ok", "data": handle_run_distributed(request.get("params", {}))}
+                except Exception as e:
+                    response = {"status": "error", "error": str(e)}
+            elif action == "job_queue_status":
+                try:
+                    response = {"status": "ok", "data": handle_job_queue_status(request.get("params", {}))}
                 except Exception as e:
                     response = {"status": "error", "error": str(e)}
             else:

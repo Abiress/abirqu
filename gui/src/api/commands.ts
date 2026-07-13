@@ -383,3 +383,71 @@ export interface PluginListResult {
 export async function runPluginList(): Promise<PluginListResult> {
   return invoke('run_plugin_list', { params: {} });
 }
+
+// ─── TTN Simulator ─────────────────────────────────────────────────────
+export interface TTNCircuit {
+  num_qubits: number;
+  gates: { name: string; qubits: number[]; params?: number[] }[];
+}
+export interface TTNResult {
+  counts: Record<string, number>;
+  n_qubits: number;
+  simulator: string;
+}
+export async function runTTN(circuit: TTNCircuit, shots?: number): Promise<TTNResult> {
+  return invoke('run_ttn', { params: { circuit, shots: shots || 1024 } });
+}
+
+// ─── Auto-differentiation ──────────────────────────────────────────────
+export interface AutoDiffResult {
+  method: string;
+  gradients: number[];
+  circuit_evals: number;
+  n_params: number;
+}
+export async function runAutoDiff(
+  method: string,
+  n_qubits?: number,
+  n_params?: number,
+): Promise<AutoDiffResult> {
+  return invoke('run_autodiff', { params: { method, n_qubits: n_qubits || 2, n_params: n_params || 4 } });
+}
+
+// ─── Dynamical Decoupling ──────────────────────────────────────────────
+export interface DDResult {
+  sequence_type: string;
+  original_depth: number;
+  scheduled_depth: number;
+  pulses_inserted: number;
+  is_identity: boolean;
+}
+export async function runDD(
+  sequence_type: string,
+  n_qubits?: number,
+  idle_qubit?: number,
+): Promise<DDResult> {
+  return invoke('run_dd', { params: { sequence_type, n_qubits: n_qubits || 2, idle_qubit: idle_qubit || 0 } });
+}
+
+// ─── Distributed Simulation ────────────────────────────────────────────
+export interface DistributedResult {
+  counts: Record<string, number>;
+  n_workers: number;
+  n_qubits: number;
+}
+export async function runDistributed(
+  n_workers?: number,
+  n_qubits?: number,
+  shots?: number,
+): Promise<DistributedResult> {
+  return invoke('run_distributed', { params: { n_workers: n_workers || 2, n_qubits: n_qubits || 4, shots: shots || 1024 } });
+}
+
+// ─── Job Queue Status ──────────────────────────────────────────────────
+export interface JobQueueResult {
+  costs: Record<string, any>;
+  queue_depth: number;
+}
+export async function jobQueueStatus(): Promise<JobQueueResult> {
+  return invoke('job_queue_status', { params: {} });
+}

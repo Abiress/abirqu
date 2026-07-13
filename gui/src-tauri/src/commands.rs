@@ -578,6 +578,51 @@ pub async fn run_plugin_list(
     extract_data(resp)
 }
 
+#[tauri::command]
+pub async fn run_ttn(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_ttn", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_autodiff(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_autodiff", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_dd(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_dd", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn run_distributed(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "run_distributed", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn job_queue_status(
+    bridge: State<'_, PythonBridge>,
+    params: Value,
+) -> Result<Value, String> {
+    let resp = send_request(&bridge, "job_queue_status", json!({ "params": params }))?;
+    extract_data(resp)
+}
+
 fn extract_data(resp: Value) -> Result<Value, String> {
     if resp["status"] == "ok" {
         Ok(resp["data"].clone())
