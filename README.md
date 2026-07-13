@@ -51,7 +51,9 @@
 - **8 language bindings** — Python, JavaScript/TypeScript, Go, Java, .NET, Swift, Kotlin, WebAssembly
 - **206 tutorials** — comprehensive learning material from beginner to advanced
 
-### Architecture
+### Built with
+
+**Python, NumPy, SciPy, Rust, TypeScript, React** &nbsp;|&nbsp; **Licensed under** MIT 2026 &nbsp;|&nbsp; **Runs on** Intel, AMD, Qualcomm, MediaTek, Apple Silicon — CPU and GPU &nbsp;|&nbsp; **No vendor lock-in**
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -536,9 +538,11 @@ Test Files:
 
 | Version | Date | Key Additions |
 |---------|------|---------------|
-| **v1.2.0** | 2026-07 | **Full Quantum IDE** — 14 panels: Circuit Editor, Python/QASM, Explorer, QEC Lab, Quantum Comm, Domain Modules (Chemistry/OSINT/Crypto/Space/QPINN/Agentic), Security, Plugins, Ask Quantum (NL2Q), Settings. Framework integration (Qiskit/Cirq/OQTOPUS/D-Wave), resizable panels, noise simulation, export reports, Bloch sphere. **Backend fixes**: All handlers verified and fixed (QEC 7 code types, Chemistry VQE, Grover, QPINN, Crypto lattice, Agentic). **GUI wiring**: All panels use real SDK implementations (QCommPanel, DomainPanel OSINT, SecurityPanel Circuit). Cross-platform installers built and tested. |
-| **v1.1.0** | 2026-07 | **Production Readiness** — Published on PyPI, CI/CD, Shor's algorithm, Grover fixed, VQE chemical accuracy, IBM hardware verified (ibm_fez), 627 tests |
-| **v1.0.0** | 2026-07 | **Full Stack** — Hardware calibration, device characterization, noise profiling, hardware-aware compiler, cloud manager, 412 tests |
+| **v1.2.2** | 2026-07-13 | **GUI Fully Wired** — All 14 panels use real SDK backend (no mock data). ExplorerPanel filesystem, PluginsPanel real listing, Console job polling, QCommPanel/DomainPanel error states, SecurityPanel key passing, BlochSphere multi-qubit fix, TTN bug fix. |
+| **v1.2.1** | 2026-07-07 | **Core SDK Completion** — TTN Simulator (200+ qubits), Cross-SDK Inbound (Qiskit/Cirq/PennyLane), Job Orchestration (SQLite, 4 schedulers), Auto-differentiation (parameter-shift/adjoint), Dynamical Decoupling (XY4/XY8/CPMG/UDD), Union-Find Decoder, Distributed Simulation (MPI). 75 new tests (627→702). |
+| **v1.2.0** | 2026-07-07 | **Full Quantum IDE** — 14 panels: Circuit Editor, Python/QASM, Explorer, QEC Lab, Quantum Comm, Domain Modules (Chemistry/OSINT/Crypto/Space/QPINN/Agentic), Security, Plugins, Ask Quantum (NL2Q), Settings. Framework integration (Qiskit/Cirq/OQTOPUS/D-Wave), resizable panels, noise simulation, export reports, Bloch sphere. **Backend fixes**: All handlers verified and fixed (QEC 7 code types, Chemistry VQE, Grover, QPINN, Crypto lattice, Agentic). **GUI wiring**: All panels use real SDK implementations (QCommPanel, DomainPanel OSINT, SecurityPanel Circuit). Cross-platform installers built and tested. |
+| **v1.1.0** | 2026-07-06 | **Production Readiness** — Published on PyPI, CI/CD, Shor's algorithm, Grover fixed, VQE chemical accuracy, IBM hardware verified (ibm_fez), 627 tests |
+| **v1.0.0** | 2026-07-05 | **Full Stack** — Hardware calibration, device characterization, noise profiling, hardware-aware compiler, cloud manager, 412 tests |
 | **v0.8.0** | 2026-07 | **GUI** — Visual circuit editor, Bloch sphere, state vector, histograms, hardware panel, 125 tests |
 | **v0.7.0** | 2026-07 | **QEC** — Stabilizer/Surface/Color codes, 5 decoders, magic state distillation, 83 tests |
 | **v0.6.0** | 2026-06 | **Q-Comm** — 7 protocols: BB84, E91, CV-QKD, DI-QKD, satellite, repeaters, network, 30 tests |
@@ -558,82 +562,6 @@ Honest listing of areas for improvement:
 - **Transpiler routing** — basic SWAP insertion via BFS shortest path; Sabre routing not yet implemented
 - **Pulse-level control** — waveforms are generated but not sent to hardware
 - **IBM token required for hardware** — IBM Quantum backend needs a real API token
-
----
-
-## Version History
-
-| Version | Date | Description | Key Files |
-|---------|------|-------------|-----------|
-| **v1.2.2** | 2026-07-13 | GUI fully wired (no mock data), TTN bug fixed, honest README | `gui/src/components/*/`, `abirqu/simulation/ttn.py`, `README.md` |
-| **v1.2.2-alpha** | 2026-07-07 | ML Transpiler, MCP, Copilot, NN Layers, Resource Estimation, Benchpress, VS Code Extension | `abirqu/transpiler/ml_transpiler.py` (437), `abirqu/mcp/__init__.py` (431), `abirqu/copilot/__init__.py` (475), `abirqu/nn/__init__.py` (437), `abirqu/resource_estimation/__init__.py` (549), `benchpress/__init__.py` (697), `vscode-extension/` |
-| **v1.2.1** | 2026-07-07 | TTN Simulator, Cross-SDK Inbound, Job Orchestration, Auto-diff, Dynamical Decoupling, Union-Find, Distributed Sim | `abirqu/simulation/ttn.py` (438), `abirqu/converters_inbound.py` (367), `abirqu/job_orchestration.py` (765), `abirqu/autodiff.py` (537), `abirqu/dynamical_decoupling.py` (482), `abirqu/qec/union_find_decoder.py` (371), `abirqu/simulation/distributed.py` (549) |
-| **v1.2.0** | 2026-07-07 | Fixed 7 backend handlers, wired QComm/Domain/Security panels, cross-platform installers | `abirqu/gui/domain_handlers.py`, `gui/src/components/QCommPanel/`, `gui/src/components/DomainPanel/`, `gui/src/components/SecurityPanel/`, `installers/` |
-| **v1.1.0** | 2026-07-06 | IBM Quantum verified on ibm_fez, Shor hybrid, VQE validated, 8 language bindings, 12 backends, 14-panel IDE | `abirqu/backends/ibm_quantum.py`, `abirqu/algorithms/__init__.py`, `abirqu/chemistry/`, `gui/` |
-| **v1.0.0** | 2026-07-05 | Initial release: Circuit DSL, 5 simulators, QEC, noise toolkit, PyPI published | `abirqu/circuit.py` (532), `abirqu/simulation/`, `abirqu/qec/`, `abirqu/noise_toolkit.py` |
-
----
-
-## What Changed in Each Version
-
-### v1.2.2 (2026-07-13) — GUI Fully Wired
-- **ExplorerPanel**: Real filesystem listing via `list_directory` IPC command
-- **PluginsPanel**: Real plugin listing from backend (removed 100% `Math.random()` mock)
-- **Console**: Real job status monitoring via `listJobs()` polling
-- **QCommPanel/DomainPanel**: Error states instead of `Math.random()` fallbacks
-- **SecurityPanel**: Circuit encrypt/decrypt with key passing between steps
-- **BlochSphere**: Fixed multi-qubit probability calculation
-- **OpenQASMPanel**: Fixed field name mismatch on QASM import
-- **TTN Simulator**: Fixed crash from missing `GATE_MATRICES` import
-- Tests: 702 passed (unchanged)
-
-### v1.2.2-alpha (2026-07-07) — AI & ML Features
-- **ML Transpiler**: Q-learning RL qubit routing + GNN layout optimization (pure NumPy)
-- **MCP Integration**: JSON-RPC 2.0 server/client with 5 quantum tools
-- **LLM Copilot**: Template-matching NL parser with 7 circuit templates
-- **NN Layers**: PyTorch/JAX/TensorFlow quantum layers with autograd
-- **Resource Estimation**: Shor/Grover/VQE/HHL resource formulas + surface code overhead
-- **Benchpress**: 5 benchmark categories with cross-SDK comparison
-- **VS Code Extension**: Run/optimize/visualize commands
-- Version synced to 1.2.2 across all components
-
-### v1.2.1 (2026-07-07) — Core SDK Completion
-- **TTN Simulator**: Tree Tensor Network for 200+ qubit circuits
-- **Cross-SDK Inbound**: Convert from Qiskit, Cirq, PennyLane
-- **Job Orchestration**: SQLite queue, 4 schedulers (FIFO/priority/SJF/fair-share), cost estimator
-- **Auto-differentiation**: Parameter-shift, finite-difference, adjoint gradient
-- **Dynamical Decoupling**: XY4, XY8, CPMG, UDD pulse sequences
-- **Union-Find Decoder**: Path compression + union-by-rank
-- **Distributed Simulation**: MPI with ProcessPoolExecutor fallback
-- 75 new tests (627→702 total)
-
-### v1.2.0 (2026-07-07) — Backend & GUI Fixes
-- Fixed `run_qec`: All 7 code types (repetition, bit_flip, phase_flip, shor, steane, surface, color)
-- Fixed `run_chemistry`: Real VQE with scipy COBYLA, proper numpy arrays
-- Fixed `run_grover`: Uses `abirqu.algorithms.grover_search` function
-- Fixed `run_qpinn`: Added `qpinn.train()` call, fixed `initial_condition` callable
-- Fixed `run_crypto`: Lookup table for valid Kyber sizes (512/768/1024)
-- Fixed `run_agentic`: Real circuit optimization with gate-count comparison
-- Fixed `ask_quantum`: Fixed numpy array conversion
-- Wired QCommPanel: 7 protocols to real SDK
-- Wired DomainPanel: OSINT graph optimization
-- Wired SecurityPanel: Circuit encryption
-- Cross-platform installers: .deb, .rpm, .AppImage, binary
-
-### v1.1.0 (2026-07-06) — Production SDK
-- IBM Quantum verified on `ibm_fez` (156 qubits, Bell state + QDCG)
-- Shor's algorithm: Hybrid implementation (circuit template + classical factoring)
-- VQE convergence validated (chemical accuracy: 0.001175 Ha error on H₂)
-- 8 language bindings verified (Python 627 tests, JS 30, Java 13, .NET 6, Swift 4)
-- 12 real hardware backends
-- 14-panel IDE with 3D Bloch sphere
-
-### v1.0.0 (2026-07-05) — Initial Release
-- Circuit DSL with 40+ gates (532 lines)
-- 5 simulation backends (GPU, Clifford, MPS, Monte Carlo, NumPy)
-- QEC: Surface, Color, Stabilizer codes with 5 decoders
-- Noise toolkit: ZNE, readout mitigation, M3, PEC
-- PyPI published: `pip install abirqu`
 
 ---
 
