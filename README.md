@@ -249,13 +249,10 @@ Full-featured quantum IDE built with **Tauri 2.x** (Rust + React + TypeScript). 
 
 | Platform | Installer | Size | Download |
 |----------|-----------|------|----------|
-| Linux (Debian/Ubuntu) | `AbirQu_1.2.0_amd64.deb` | 4.2 MB | [Download](https://github.com/Abiress/abirqu/releases/download/v1.2.0/AbirQu_1.2.0_amd64.deb) |
-| Linux (Fedora/RHEL) | `AbirQu-1.2.0-1.x86_64.rpm` | 4.2 MB | [Download](https://github.com/Abiress/abirqu/releases/download/v1.2.0/AbirQu-1.2.0-1.x86_64.rpm) |
-| Linux (Universal) | `AbirQu_1.2.0_amd64.AppImage` | 80 MB | [Download](https://github.com/Abiress/abirqu/releases/download/v1.2.0/AbirQu_1.2.0_amd64.AppImage) |
-| Windows (x64) | `AbirQu_1.2.0_x64-setup.exe` | ~5 MB | [Download](https://github.com/Abiress/abirqu/releases/download/v1.2.0/AbirQu_1.2.0_x64-setup.exe) |
-| macOS (Apple Silicon) | `AbirQu_1.2.0_aarch64.dmg` | ~5 MB | [Download](https://github.com/Abiress/abirqu/releases/download/v1.2.0/AbirQu_1.2.0_aarch64.dmg) |
-| macOS (Intel) | `AbirQu_1.2.0_x64.dmg` | ~5 MB | [Download](https://github.com/Abiress/abirqu/releases/download/v1.2.0/AbirQu_1.2.0_x64.dmg) |
-| Binary (any Linux) | `abirqu-gui` | 14 MB | [Download](https://github.com/Abiress/abirqu/releases/download/v1.2.0/abirqu-gui) |
+| Linux (Debian/Ubuntu) | `AbirQu_1.2.0_amd64.deb` | 4.2 MB | [Download](installers/AbirQu_1.2.0_amd64.deb) |
+| Linux (Fedora/RHEL) | `AbirQu-1.2.0-1.x86_64.rpm` | 4.2 MB | [Download](installers/AbirQu-1.2.0-1.x86_64.rpm) |
+| Linux (Universal) | `AbirQu_1.2.0_amd64.AppImage` | 80 MB | [Download](installers/AbirQu_1.2.0_amd64.AppImage) |
+| Binary (any Linux) | `abirqu-gui` | 14 MB | [Download](installers/abirqu-gui) |
 
 ### All 14 Panels
 
