@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { runPluginList } from '../../api/commands';
 
 type PluginStatus = 'installed' | 'available' | 'update';
 
@@ -362,10 +363,60 @@ function PluginDetail({
 }
 
 export default function PluginsPanel() {
-  const [plugins, setPlugins] = useState<Plugin[]>(INITIAL_PLUGINS);
+  const [plugins, setPlugins] = useState<Plugin[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('marketplace');
   const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await runPluginList();
+        if (cancelled) return;
+        const installed: Plugin[] = (resp.installed || []).map((p: any, i: number) => ({
+          id: p.name || `installed-${i}`,
+          name: p.name || 'Unknown',
+          icon: '📦',
+          description: p.description || 'Installed plugin',
+          fullDescription: p.description || 'Installed plugin',
+          author: 'AbirQu',
+          version: p.version || '1.0.0',
+          status: 'installed' as PluginStatus,
+          rating: 0,
+          downloads: 0,
+          tags: p.tags || [],
+          configFields: [],
+          enabled: true,
+        }));
+        const marketplace: Plugin[] = (resp.marketplace || []).map((p: any, i: number) => ({
+          id: p.name || `market-${i}`,
+          name: p.name || 'Unknown',
+          icon: '📦',
+          description: p.description || '',
+          fullDescription: p.description || '',
+          author: 'Community',
+          version: p.version || '1.0.0',
+          status: p.installed ? 'installed' as PluginStatus : 'available' as PluginStatus,
+          rating: 0,
+          downloads: p.downloads || 0,
+          tags: p.tags || [],
+          configFields: [],
+          enabled: false,
+        }));
+        // Merge: installed plugins that aren't in marketplace get added
+        const marketplaceNames = new Set(marketplace.map(p => p.name));
+        const extraInstalled = installed.filter(p => !marketplaceNames.has(p.name));
+        setPlugins([...extraInstalled, ...marketplace]);
+      } catch {
+        if (!cancelled) setPlugins([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const filtered = useMemo(() => {
     let list = plugins;
@@ -494,10 +545,17 @@ export default function PluginsPanel() {
       </div>
 
       <div className="flex-1 overflow-auto p-2 space-y-1.5">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)]">
+            <span className="w-4 h-4 border-2 border-[var(--accent-primary)] border-t-transparent rounded-full animate-spin mb-2" />
+            <span className="text-[11px]">Loading plugins...</span>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)]">
             <span className="text-2xl mb-2 opacity-30">📦</span>
-            <span className="text-[11px]">No plugins found</span>
+            <span className="text-[11px]">
+              {activeTab === 'installed' ? 'No plugins installed' : 'No plugins found'}
+            </span>
             <span className="text-[10px] opacity-50 mt-0.5">
               {search ? 'Try a different search term' : 'No plugins available'}
             </span>

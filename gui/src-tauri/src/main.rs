@@ -65,6 +65,7 @@ fn main() {
             commands::run_copilot,
             commands::run_resource_estimate,
             commands::run_benchpress,
+            commands::list_directory,
         ])
         .run(tauri::generate_context!())
         .expect("error while running AbirQu");

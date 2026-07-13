@@ -567,6 +567,7 @@ def handle_circuit_encrypt(params: Dict[str, Any]) -> Dict[str, Any]:
         "digest": encrypted.digest,
         "algorithm": encrypted.algorithm,
         "key_id": "ak-" + np.random.bytes(16).hex(),
+        "key": protector._secret_key.hex() if hasattr(protector, '_secret_key') else "",
     })
 
 

@@ -364,8 +364,6 @@ class TTNSimulator:
 
     def _apply_gate(self, ttn: TreeTensorNetwork, gate):
         """Apply a gate to the TTN."""
-        from ..gates import GATE_MATRICES
-
         name = gate.name.upper()
         qubits = gate.qubits if hasattr(gate, 'qubits') else [gate.qubit]
         params = getattr(gate, 'params', []) or []

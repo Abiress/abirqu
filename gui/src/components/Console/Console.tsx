@@ -1,15 +1,53 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { listen } from '@tauri-apps/api/event';
+import { api } from '../../api/commands';
+
+interface ConsoleLine {
+  text: string;
+  type: 'info' | 'error' | 'success';
+  jobId?: string;
+}
 
 export default function Console() {
-  const [lines, setLines] = useState<{ text: string; type: 'info' | 'error' | 'success' }[]>([]);
+  const [lines, setLines] = useState<ConsoleLine[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const seenJobs = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    const unlisten = listen<string>('python-output', (event) => {
-      setLines((prev) => [...prev.slice(-200), { text: event.payload, type: 'info' }]);
-    });
-    return () => { unlisten.then((fn) => fn()); };
+    const poll = async () => {
+      try {
+        const jobs = await api.listJobs();
+        for (const job of jobs) {
+          const id = job.job_id;
+          if (!id) continue;
+          const key = `${id}:${job.status}`;
+          if (seenJobs.current.has(key)) continue;
+          seenJobs.current.add(key);
+
+          if (job.status === 'running' || job.status === 'pending') {
+            setLines((prev) => [...prev.slice(-200), {
+              text: `[${id.slice(0, 8)}] ${job.status} on ${job.backend} (${job.shots} shots)`,
+              type: 'info',
+              jobId: id,
+            }]);
+          } else if (job.status === 'completed') {
+            setLines((prev) => [...prev.slice(-200), {
+              text: `[${id.slice(0, 8)}] completed on ${job.backend}`,
+              type: 'success',
+              jobId: id,
+            }]);
+          } else if (job.status === 'failed' || job.status === 'error') {
+            setLines((prev) => [...prev.slice(-200), {
+              text: `[${id.slice(0, 8)}] ${job.error || 'failed'}`,
+              type: 'error',
+              jobId: id,
+            }]);
+          }
+        }
+      } catch {}
+    };
+    poll();
+    const interval = setInterval(poll, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {

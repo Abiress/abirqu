@@ -79,7 +79,9 @@ export default function OpenQASMPanel() {
     try {
       const circuit = getCircuitData();
       const result = await api.convertCircuit(circuit, 'openqasm');
-      if (result?.content) {
+      if (result?.code) {
+        setQasmCode(result.code);
+      } else if (result?.content) {
         setQasmCode(result.content);
       }
     } catch {}

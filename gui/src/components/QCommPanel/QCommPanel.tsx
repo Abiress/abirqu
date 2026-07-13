@@ -60,79 +60,6 @@ const DEFAULT_PARAMS: ProtocolParams = {
   networkTopology: 'star',
 };
 
-function generateKeyMaterial(length: number): string {
-  const chars = '0123456789abcdef';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars[Math.floor(Math.random() * 16)];
-  }
-  return result;
-}
-
-function simulateProtocolLocal(protocol: Protocol, params: ProtocolParams): SimulationResult {
-  const baseSiftedLength = Math.floor(Math.random() * 200) + 800;
-  let qber: number;
-  let chshSValue: number;
-  let secure: boolean;
-
-  switch (protocol) {
-    case 'BB84':
-      qber = params.bb84Eavesdrop
-        ? 0.15 + Math.random() * 0.1
-        : 0.02 + Math.random() * 0.03;
-      chshSValue = 0;
-      secure = qber < 0.11;
-      break;
-    case 'E91':
-      qber = 0.03 + Math.random() * 0.02;
-      chshSValue = params.e91CHSH + (Math.random() - 0.5) * 0.3;
-      chshSValue = Math.max(2.0, Math.min(2.828, chshSValue));
-      secure = chshSValue > 2.0;
-      break;
-    case 'CV-QKD':
-      qber = 0.04 + params.cvqkdLoss * 0.05 + Math.random() * 0.02;
-      chshSValue = 0;
-      secure = qber < 0.08;
-      break;
-    case 'DI-QKD':
-      qber = 0.06 + Math.random() * 0.04;
-      chshSValue = 2.7 + Math.random() * 0.1;
-      secure = qber < 0.09 && chshSValue > 2.0;
-      break;
-    case 'Satellite QKD':
-      qber = 0.05 + params.satAtmLoss * 0.08 + Math.random() * 0.03;
-      chshSValue = 0;
-      secure = qber < 0.1;
-      break;
-    case 'Repeater Chains':
-      qber = 0.02 * params.repeaterHops + Math.random() * 0.02;
-      chshSValue = 0;
-      secure = qber < 0.11;
-      break;
-    case 'Quantum Network':
-      qber = 0.03 + Math.random() * 0.03;
-      chshSValue = 0;
-      secure = qber < 0.08;
-      break;
-    default:
-      qber = 0.05;
-      chshSValue = 0;
-      secure = false;
-  }
-
-  const siftedLength = Math.floor(baseSiftedLength * (1 - qber));
-  const keyLength = Math.floor(siftedLength * 0.5);
-
-  return {
-    siftedKeyLength: siftedLength,
-    qber,
-    chshSValue,
-    secure,
-    keyMaterial: generateKeyMaterial(Math.min(keyLength, 64)),
-    timestamp: Date.now(),
-  };
-}
-
 function NetworkTopologySVG({ topology, nodeCount }: { topology: string; nodeCount: number }) {
   const cx = 100;
   const cy = 75;
@@ -257,10 +184,12 @@ export default function QCommPanel() {
   const [params, setParams] = useState<ProtocolParams>(DEFAULT_PARAMS);
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [running, setRunning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRun = useCallback(async () => {
     setRunning(true);
     setResult(null);
+    setError(null);
     try {
       if (protocol === 'BB84' || protocol === 'E91') {
         const resp = await api.runQkd({
@@ -275,7 +204,7 @@ export default function QCommPanel() {
           qber: backendRes.error_rate || 0,
           chshSValue: backendRes.bell_violation || 0,
           secure: backendRes.secure || false,
-          keyMaterial: keyBytes || generateKeyMaterial(32),
+          keyMaterial: keyBytes || '',
           timestamp: Date.now(),
           backendResult: backendRes,
         });
@@ -284,9 +213,7 @@ export default function QCommPanel() {
           excess_noise: params.cvqkdLoss,
           modulation_variance: params.cvqkdModVar,
         });
-        const keyBytes = Array.from({ length: Math.min(resp.final_key_length, 64) }, (_, i) =>
-          ((i * 7 + 13) % 256).toString(16).padStart(2, '0')
-        ).join('');
+        const keyBytes = '';
         setResult({
           siftedKeyLength: resp.final_key_length,
           qber: 1 - resp.channel_transmittance,
@@ -300,9 +227,7 @@ export default function QCommPanel() {
         const resp = await runDIQKD({
           num_rounds: params.diqkdRounds,
         });
-        const keyBytes = Array.from({ length: Math.min(resp.final_key_length, 64) }, (_, i) =>
-          ((i * 11 + 7) % 256).toString(16).padStart(2, '0')
-        ).join('');
+        const keyBytes = '';
         setResult({
           siftedKeyLength: resp.final_key_length,
           qber: resp.error_rate,
@@ -317,9 +242,7 @@ export default function QCommPanel() {
           altitude_km: params.satAltitude,
           detector_efficiency: 0.9,
         });
-        const keyBytes = Array.from({ length: Math.min(resp.key_length, 64) }, (_, i) =>
-          ((i * 3 + 17) % 256).toString(16).padStart(2, '0')
-        ).join('');
+        const keyBytes = '';
         setResult({
           siftedKeyLength: resp.key_length,
           qber: resp.channel_loss_db / 100,
@@ -334,9 +257,7 @@ export default function QCommPanel() {
           total_distance_km: params.repeaterHops * 100,
           num_segments: params.repeaterHops,
         });
-        const keyBytes = Array.from({ length: Math.min(resp.key_length, 64) }, (_, i) =>
-          ((i * 5 + 31) % 256).toString(16).padStart(2, '0')
-        ).join('');
+        const keyBytes = '';
         setResult({
           siftedKeyLength: resp.key_length,
           qber: 1 - resp.end_to_end_fidelity,
@@ -351,9 +272,7 @@ export default function QCommPanel() {
           topology: params.networkTopology,
           num_nodes: params.networkNodes,
         });
-        const keyBytes = Array.from({ length: 32 }, (_, i) =>
-          ((i * 13 + 41) % 256).toString(16).padStart(2, '0')
-        ).join('');
+        const keyBytes = '';
         setResult({
           siftedKeyLength: Math.floor(resp.total_key_rate),
           qber: 1 - resp.average_fidelity,
@@ -364,9 +283,8 @@ export default function QCommPanel() {
           backendResult: resp,
         });
       }
-    } catch {
-      const res = simulateProtocolLocal(protocol, params);
-      setResult(res);
+    } catch (e) {
+      setError(String(e));
     } finally {
       setRunning(false);
     }
@@ -599,6 +517,12 @@ export default function QCommPanel() {
       >
         {running ? 'Simulating...' : 'Run Protocol'}
       </button>
+
+      {error && (
+        <div className="text-[10px] text-[var(--accent-error)] bg-[var(--accent-error)]/10 rounded-lg p-2 border border-[var(--accent-error)]/20">
+          {error}
+        </div>
+      )}
 
       {/* Results */}
       {result && (

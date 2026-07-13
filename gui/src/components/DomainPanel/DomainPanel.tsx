@@ -242,6 +242,7 @@ function OsintTab() {
   const [edgeDensity, setEdgeDensity] = useState(0.4);
   const [problem, setProblem] = useState('Max-Cut');
   const [running, setRunning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ cutValue: number; partition: string; graphNodes: { x: number; y: number }[]; graphEdges: [number, number][] } | null>(null);
 
   const graphData = useMemo(() => {
@@ -261,6 +262,7 @@ function OsintTab() {
   const handleRun = useCallback(async () => {
     setRunning(true);
     setResult(null);
+    setError(null);
     try {
       const problemMap: Record<string, string> = {
         'Max-Cut': 'max_cut',
@@ -281,10 +283,8 @@ function OsintTab() {
         graphNodes: graphData.nodes,
         graphEdges: resp.edges || graphData.edges,
       });
-    } catch {
-      const cutVal = Math.floor(graphData.edges.length * 0.5);
-      const partition = Array.from({ length: nodeCount }, () => Math.random() > 0.5 ? 'A' : 'B').join('');
-      setResult({ cutValue: cutVal, partition, graphNodes: graphData.nodes, graphEdges: graphData.edges });
+    } catch (e) {
+      setError(String(e));
     } finally {
       setRunning(false);
     }
@@ -324,6 +324,12 @@ function OsintTab() {
       <Btn onClick={handleRun} color="#3b82f6" disabled={running}>
         {running ? <Spinner color="#3b82f6" /> : '▶ Generate QAOA Circuit'}
       </Btn>
+
+      {error && (
+        <div className="text-[10px] text-[var(--accent-error)] bg-[var(--accent-error)]/10 rounded-lg p-2 border border-[var(--accent-error)]/20">
+          {error}
+        </div>
+      )}
 
       {result && (
         <div className="space-y-2 animate-fade-in">

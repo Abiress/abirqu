@@ -342,6 +342,7 @@ export interface CircuitEncryptResult {
   digest: string;
   algorithm: string;
   key_id: string;
+  key: string;
 }
 export async function runCircuitEncrypt(
   params: CircuitEncryptParams,
@@ -512,4 +513,20 @@ export interface BenchpressResult {
 }
 export async function runBenchpress(category?: string): Promise<BenchpressResult> {
   return invoke('run_benchpress', { params: { category: category || 'circuit_construction' } });
+}
+
+// ─── Directory Listing ──────────────────────────────────────────────
+export interface DirEntry {
+  name: string;
+  path: string;
+  is_dir: boolean;
+  size: number;
+  extension?: string;
+}
+export interface DirListResult {
+  path: string;
+  entries: DirEntry[];
+}
+export async function listDirectory(path?: string): Promise<DirListResult> {
+  return invoke('list_directory', { path });
 }

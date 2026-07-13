@@ -1,6 +1,8 @@
 use crate::python::PythonBridge;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use std::fs;
+use std::path::PathBuf;
 use tauri::State;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -666,6 +668,52 @@ pub async fn run_benchpress(
 ) -> Result<Value, String> {
     let resp = send_request(&bridge, "run_benchpress", json!({ "params": params }))?;
     extract_data(resp)
+}
+
+#[tauri::command]
+pub async fn list_directory(path: Option<String>) -> Result<Value, String> {
+    let dir = path.map(PathBuf::from).unwrap_or_else(|| {
+        std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+    });
+
+    let mut entries = Vec::new();
+    match fs::read_dir(&dir) {
+        Ok(rd) => {
+            for entry in rd {
+                if let Ok(entry) = entry {
+                    let file_name = entry.file_name().to_string_lossy().to_string();
+                    let metadata = entry.metadata().ok();
+                    let is_dir = metadata.as_ref().map(|m| m.is_dir()).unwrap_or(false);
+                    let size = metadata.as_ref().map(|m| m.len()).unwrap_or(0);
+                    let ext = if is_dir {
+                        None
+                    } else {
+                        entry.path().extension().map(|e| e.to_string_lossy().to_string())
+                    };
+                    entries.push(json!({
+                        "name": file_name,
+                        "path": entry.path().to_string_lossy(),
+                        "is_dir": is_dir,
+                        "size": size,
+                        "extension": ext,
+                    }));
+                }
+            }
+        }
+        Err(e) => return Err(format!("Failed to read directory: {}", e)),
+    }
+
+    // Sort: directories first, then alphabetically
+    entries.sort_by(|a, b| {
+        let a_dir = a["is_dir"].as_bool().unwrap_or(false);
+        let b_dir = b["is_dir"].as_bool().unwrap_or(false);
+        b_dir.cmp(&a_dir).then_with(|| a["name"].as_str().cmp(&b["name"].as_str()))
+    });
+
+    Ok(json!({
+        "path": dir.to_string_lossy(),
+        "entries": entries,
+    }))
 }
 
 fn extract_data(resp: Value) -> Result<Value, String> {

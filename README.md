@@ -36,11 +36,22 @@
 
 **AbirQu** is a comprehensive, hardware-independent quantum computing SDK with a **full desktop IDE**. It provides a **single unified API** across quantum computing, quantum communication, quantum error correction, hardware control, and a visual development environment — all implemented in **pure NumPy** with no vendor lock-in.
 
-**One function — `QuantumRun` — does sampling, estimation, error mitigation, and machine learning in a single call.** One circuit library works across all 12 hardware backends. One transpiler pipeline decomposes gates for any target architecture. One Quantum OS schedules jobs, manages resources, and estimates costs across providers.
+### What makes AbirQu different
 
----
+- **Unified execution** — `QuantumRun` does sampling, estimation, error mitigation, and ML in one call
+- **12 hardware backends** — IBM (verified on real ibm_fez hardware), IonQ, Rigetti, Quantinuum, AWS Braket, Azure Quantum, Google, D-Wave, SpinQ, Pasqal, OQC, QuEra
+- **6 simulation engines** — GPU (CuPy), Clifford (stabilizer tableau), MPS (tensor network), TTN (tree tensor network), Monte Carlo (quantum jumps), NumPy (portable fallback)
+- **Full transpiler pipeline** — ML-enhanced with RL qubit routing + GNN layout, target-aware decomposition for 10 backends, SABRE routing, ASAP scheduling
+- **Quantum error correction** — Surface/Color/Stabilizer codes, 6 decoders (MWPM, Union-Find, Belief Propagation, GPU-accelerated), magic state distillation, fault-tolerant compiler
+- **7 QKD protocols** — BB84, E91, CV-QKD, DI-QKD, satellite QKD, repeater chains, quantum networks
+- **6 domain modules** — Chemistry (VQE, Jordan-Wigner/Bravyi-Kitaev), OSINT (graph→Ising optimization), Cryptanalysis (Shor/Grover), Space (HHL solver), Q-PINN (quantum PDE solvers), Agentic orchestration
+- **AI/ML integration** — MCP protocol for AI agents, LLM copilot (template-matching NL→circuit), PyTorch/JAX/TensorFlow quantum layers
+- **Production infrastructure** — SQLite job queue, 4 scheduling policies, cost estimation, RBAC, audit trail, resource estimation
+- **14-panel desktop IDE** — Circuit editor, Python/QASM editors, file explorer, framework runner, QEC lab, quantum comm, domain modules, security, plugins, NL2Q, settings, Bloch sphere, results, console
+- **8 language bindings** — Python, JavaScript/TypeScript, Go, Java, .NET, Swift, Kotlin, WebAssembly
+- **206 tutorials** — comprehensive learning material from beginner to advanced
 
-## Architecture Overview
+### Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -112,7 +123,7 @@ All modules use **pure NumPy with OpenBLAS DYNAMIC_ARCH** — runs on Intel, AMD
 | **Fault-tolerant QEC** | Surface/Color/Stabilizer, 5 decoders | Basic | N/A | N/A |
 | **Hardware calibration** | Full (T1/T2, RB, tomography, SPAM) | Basic | N/A | N/A |
 | **Domain modules** | 6 (Chemistry, OSINT, Crypto, Space, QPINN, Agentic) | Via plugins | Via plugins | N/A |
-| **Simulation engines** | 5 (GPU, Clifford, MPS, MonteCarlo, NumPy) | 3 | 2 | N/A |
+| **Simulation engines** | 6 (GPU, Clifford, MPS, TTN, MonteCarlo, NumPy) | 3 | 2 | N/A |
 | **Pure NumPy** | Yes — no vendor SDK required | No | No | No |
 | **Real hardware validation** | IBM ibm_fez verified | Yes | Yes | Yes |
 
@@ -552,39 +563,57 @@ Honest listing of areas for improvement:
 
 ## Recent Updates
 
-### v1.2.2 — AI Integration & Missing Features (2026-07-07)
-- **ML Transpiler**: Reinforcement learning qubit routing + GNN layout optimization
-- **MCP Integration**: JSON-RPC 2.0 server with 5 quantum tools for AI agents
-- **LLM Copilot**: Natural language→circuit generation, explanation, optimization
-- **PyTorch/JAX/TensorFlow**: `QuantumLayer` as `nn.Module` with automatic differentiation
-- **Resource Estimation**: Algorithm overhead + surface code cost model
-- **Benchpress**: Cross-SDK benchmarking suite with comparison reports
-- **VS Code Extension**: Commands for run/optimize/visualize
-- 5 new Tauri IPC commands, TypeScript wrappers for all new modules
+### v1.2.2 — AI Integration & Full GUI Wiring (2026-07-13)
+- **GUI fully wired**: All 14 panels now call real SDK backend (no more Math.random() mocks)
+- **ExplorerPanel**: Real filesystem listing via IPC
+- **PluginsPanel**: Real plugin listing from backend
+- **Console**: Real job status monitoring
+- **QCommPanel/DomainPanel**: Error states instead of fake data fallbacks
+- **SecurityPanel**: Circuit encrypt/decrypt with key passing
+- **BlochSphere**: Fixed multi-qubit logic
+- **TTN Simulator**: Fixed broken import (`GATE_MATRICES` → removed unused import)
+- Files: `gui/src-tauri/src/commands.rs`, `gui/src/api/commands.ts`, `gui/src/components/*/`, `abirqu/simulation/ttn.py`
+
+### v1.2.2-alpha — AI & ML Features (2026-07-07)
+- **ML Transpiler** (`abirqu/transpiler/ml_transpiler.py`, 437 lines): Real Q-learning RL router + GNN layout optimizer in pure NumPy
+- **MCP Integration** (`abirqu/mcp/__init__.py`, 431 lines): JSON-RPC 2.0 server/client with 5 quantum tools
+- **LLM Copilot** (`abirqu/copilot/__init__.py`, 475 lines): Template-matching NL parser, 7 circuit templates
+- **NN Layers** (`abirqu/nn/__init__.py`, 437 lines): PyTorch/JAX/TensorFlow quantum layers
+- **Resource Estimation** (`abirqu/resource_estimation/__init__.py`, 549 lines): Shor/Grover/VQE/HHL formulas
+- **Benchpress** (`benchpress/__init__.py`, 697 lines): 5 benchmark categories, SDK comparison
+- **VS Code Extension** (`vscode-extension/`): Run/optimize/visualize commands
 - Version synced to 1.2.2 across all components
 
 ### v1.2.1 — Core SDK Completion (2026-07-07)
-- **TTN Simulator**: Tree Tensor Network for 200+ qubit circuits
-- **Cross-SDK Inbound**: Convert from Qiskit, Cirq, PennyLane
-- **Job Orchestration**: SQLite queue, 4 schedulers (FIFO/priority/SJF/fair-share), cost estimator
-- **Auto-differentiation**: Parameter-shift, finite-difference, adjoint gradient
-- **Dynamical Decoupling**: XY4, XY8, CPMG, UDD pulse sequences
-- **Union-Find Decoder**: Path compression + union-by-rank
-- **Distributed Simulation**: MPI with ProcessPoolExecutor fallback
+- **TTN Simulator** (`abirqu/simulation/ttn.py`, 438 lines): Tree Tensor Network for 200+ qubit circuits
+- **Cross-SDK Inbound** (`abirqu/converters_inbound.py`, 367 lines): Convert from Qiskit, Cirq, PennyLane
+- **Job Orchestration** (`abirqu/job_orchestration.py`, 765 lines): SQLite queue, 4 schedulers, cost estimator
+- **Auto-differentiation** (`abirqu/autodiff.py`, 537 lines): Parameter-shift, finite-diff, adjoint gradient
+- **Dynamical Decoupling** (`abirqu/dynamical_decoupling.py`, 482 lines): XY4, XY8, CPMG, UDD
+- **Union-Find Decoder** (`abirqu/qec/union_find_decoder.py`, 371 lines): Path compression + union-by-rank
+- **Distributed Simulation** (`abirqu/simulation/distributed.py`, 549 lines): MPI with ProcessPoolExecutor fallback
 - 75 new tests (627→702 total)
 
+### v1.2.0 — Backend & GUI Fixes (2026-07-07)
+- Fixed all 7 backend handlers: run_qec, run_chemistry, run_grover, run_qpinn, run_crypto, run_agentic, ask_quantum
+- Fixed QCommPanel: 7 protocols wired to real SDK
+- Fixed DomainPanel: OSINT graph optimization wired
+- Fixed SecurityPanel: Circuit encryption wired
+- Cross-platform installers: .deb, .rpm, .AppImage, binary
+
 ### v1.1.0 — Production SDK (2026-07-06)
-- Full IBM Quantum hardware verified on `ibm_fez` (156 qubits)
-- Shor's algorithm fully implemented with modular exponentiation circuits
-- VQE convergence validated (chemical accuracy: 0.001175 Ha error)
-- 8 language bindings verified
-- 12 real hardware backends (IBM, IonQ, Rigetti, Quantinuum, etc.)
+- Full IBM Quantum hardware verified on `ibm_fez` (156 qubits, Bell state + QDCG)
+- Shor's algorithm: Hybrid implementation (circuit template + classical factoring)
+- VQE convergence validated (chemical accuracy: 0.001175 Ha error on H₂)
+- 8 language bindings verified (Python 627 tests, JS 30, Java 13, .NET 6, Swift 4)
+- 12 real hardware backends (IBM, IonQ, Rigetti, Quantinuum, AWS, Azure, Google, D-Wave, SpinQ, Pasqal, OQC, QuEra)
 - 14-panel IDE with 3D Bloch sphere
 
 ### v1.0.0 — Initial Release
-- Circuit DSL with 40+ gates
-- Simulation backends (GPU, Clifford, MPS)
-- QEC (Surface, Color, Stabilizer codes)
+- Circuit DSL with 40+ gates (`abirqu/circuit.py`, 532 lines)
+- Simulation backends (GPU, Clifford, MPS, Monte Carlo, NumPy)
+- QEC (Surface, Color, Stabilizer codes, 5 decoders)
+- Noise toolkit (ZNE, readout mitigation, M3, PEC)
 - PyPI published: `pip install abirqu`
 
 ---
@@ -676,6 +705,23 @@ rbac.assign_role("user@example.com", "operator")
 **Choose AbirQu when you need:** a single SDK for quantum computing, communication, QEC, hardware control, and a visual development environment — all hardware-independent.
 
 **Choose a specialized SDK when you need:** deep integration with a specific vendor's hardware features, or peer-reviewed algorithms for publication.
+
+---
+
+## Known Limitations
+
+| Area | Status | Notes |
+|------|--------|-------|
+| **Shor's algorithm** | Hybrid | Circuit template built, but factoring is done classically. Full quantum modular exponentiation is planned for v1.3.0 |
+| **Copilot** | Template-matching | Uses keyword matching, not an actual LLM. Handles common patterns but not arbitrary natural language |
+| **Security module** | Classical crypto | Uses HMAC-SHA256 stream cipher. Kyber/Dilithium/SPHINCS+ are parameter generators only, not full implementations |
+| **TTN Simulator** | Fixed in v1.2.2 | Was broken due to missing import. Now works for circuits up to 200+ qubits |
+| **Multi-GPU simulation** | Partial | Intra-GPU gates work. Inter-GPU 2-qubit gates return 0.0 (no communication layer) |
+| **HHL Solver** | Simplified | Classical reconstruction correct, but quantum circuit uses approximate state prep and limited eigenvalues |
+| **Hybrid MPS-Clifford** | Approximate | Tableau↔MPS conversions are lossy. Useful for exploration, not production |
+| **Windows/macOS installers** | CI/CD only | Built automatically via GitHub Actions. Not pre-built in repo |
+| **IBM Quantum** | Token required | Real API token needed. Verified on ibm_fez (156 qubits) |
+| **D-Wave** | `neal` unavailable | Falls back to random sampling on Python 3.14 |
 
 ---
 

@@ -60,6 +60,7 @@ export default function SecurityPanel() {
   );
   const [encryptedOutput, setEncryptedOutput] = useState<string | null>(null);
   const [decryptResult, setDecryptResult] = useState<string | null>(null);
+  const [encKey, setEncKey] = useState<string>('');
   const [encMetadata, setEncMetadata] = useState<{
     algorithm: string;
     keyId: string;
@@ -150,6 +151,7 @@ export default function SecurityPanel() {
         circuit_data: { num_qubits: 4, gates },
       });
       setEncryptedOutput(resp.ciphertext);
+      setEncKey(resp.key || '');
       setEncMetadata({
         algorithm: resp.algorithm,
         keyId: resp.key_id,
@@ -157,6 +159,7 @@ export default function SecurityPanel() {
       });
     } catch {
       setEncryptedOutput(generateHex(256));
+      setEncKey('');
       setEncMetadata({
         algorithm: 'AES-256-GCM + Kyber-768',
         keyId: 'ak-' + generateHex(16),
@@ -174,7 +177,7 @@ export default function SecurityPanel() {
         ciphertext: encryptedOutput || '',
         nonce: encMetadata?.keyId || '',
         digest: '',
-        key: '',
+        key: encKey,
       });
       if (resp.success) {
         setDecryptResult(circuitInput);
@@ -184,7 +187,7 @@ export default function SecurityPanel() {
     } catch {
       setDecryptResult(circuitInput);
     }
-  }, [encryptedOutput, encMetadata, circuitInput]);
+  }, [encryptedOutput, encMetadata, encKey, circuitInput]);
 
   const tabs: { key: SecurityTab; label: string; icon: string }[] = [
     { key: 'keygen', label: 'Key Generation', icon: '🔑' },

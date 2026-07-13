@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { listDirectory } from '../../api/commands';
 
 type FileNode = {
   id: string;
@@ -7,34 +8,29 @@ type FileNode = {
   extension?: string;
   size?: number;
   children?: FileNode[];
+  path?: string;
 };
 
-const MOCK_SIZES: Record<string, number> = {
-  'bell_state.qasm': 2048,
-  'grover_search.py': 4096,
-  'README.md': 1024,
-};
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 9);
+}
 
-const INITIAL_TREE: FileNode[] = [
-  {
-    id: 'root',
-    name: 'project',
-    type: 'folder',
-    children: [
-      {
-        id: 'circuits',
-        name: 'circuits',
-        type: 'folder',
-        children: [
-          { id: 'bell', name: 'bell_state.qasm', type: 'file', extension: 'qasm', size: MOCK_SIZES['bell_state.qasm'] },
-          { id: 'grover', name: 'grover_search.py', type: 'file', extension: 'py', size: MOCK_SIZES['grover_search.py'] },
-        ],
-      },
-      { id: 'results', name: 'results', type: 'folder', children: [] },
-      { id: 'readme', name: 'README.md', type: 'file', extension: 'md', size: MOCK_SIZES['README.md'] },
-    ],
-  },
-];
+async function loadDirectoryAsTree(path?: string): Promise<FileNode[]> {
+  try {
+    const resp = await listDirectory(path);
+    return resp.entries.map((entry) => ({
+      id: entry.path,
+      name: entry.name,
+      type: (entry.is_dir ? 'folder' : 'file') as 'file' | 'folder',
+      extension: entry.extension,
+      size: entry.size,
+      path: entry.path,
+      children: entry.is_dir ? [] : undefined,
+    }));
+  } catch {
+    return [];
+  }
+}
 
 function getFileIcon(name: string, type: 'file' | 'folder', expanded?: boolean): string {
   if (type === 'folder') return expanded ? '📂' : '📁';
@@ -49,10 +45,6 @@ function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function generateId(): string {
-  return Math.random().toString(36).substring(2, 9);
 }
 
 function findAndModify(
@@ -82,6 +74,22 @@ function addChildToNode(
     }
     if (node.children) {
       return { ...node, children: addChildToNode(node.children, parentId, child) };
+    }
+    return node;
+  });
+}
+
+function setNodeChildren(
+  nodes: FileNode[],
+  parentId: string,
+  children: FileNode[]
+): FileNode[] {
+  return nodes.map((node) => {
+    if (node.id === parentId) {
+      return { ...node, children };
+    }
+    if (node.children) {
+      return { ...node, children: setNodeChildren(node.children, parentId, children) };
     }
     return node;
   });
@@ -181,9 +189,10 @@ function TreeNode({ node, depth, selectedId, expandedIds, onSelect, onToggle, on
 }
 
 export default function ExplorerPanel() {
-  const [tree, setTree] = useState<FileNode[]>(INITIAL_TREE);
+  const [tree, setTree] = useState<FileNode[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set(['root']));
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
     x: 0,
@@ -197,6 +206,19 @@ export default function ExplorerPanel() {
   const [renameValue, setRenameValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const renameRef = useRef<HTMLInputElement>(null);
+
+  // Load root directory on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const entries = await loadDirectoryAsTree();
+      if (!cancelled) {
+        setTree(entries);
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     if (isCreating && inputRef.current) {
@@ -239,10 +261,17 @@ export default function ExplorerPanel() {
         next.delete(id);
       } else {
         next.add(id);
+        // Load children if folder is empty
+        const node = findNodeById(tree, id);
+        if (node && node.type === 'folder' && node.children && node.children.length === 0 && node.path) {
+          loadDirectoryAsTree(node.path).then((children) => {
+            setTree((prevTree) => setNodeChildren(prevTree, id, children));
+          });
+        }
       }
       return next;
     });
-  }, []);
+  }, [tree]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent, id: string, type: 'file' | 'folder') => {
     e.preventDefault();
@@ -401,18 +430,29 @@ export default function ExplorerPanel() {
 
       {/* File tree */}
       <div className="flex-1 overflow-auto py-1">
-        {tree.map((node) => (
-          <TreeNode
-            key={node.id}
-            node={node}
-            depth={0}
-            selectedId={selectedId}
-            expandedIds={expandedIds}
-            onSelect={handleSelect}
-            onToggle={handleToggle}
-            onContextMenu={handleContextMenu}
-          />
-        ))}
+        {loading ? (
+          <div className="flex items-center justify-center h-full text-[var(--text-muted)]">
+            <span className="w-3 h-3 border-2 border-[var(--accent-primary)] border-t-transparent rounded-full animate-spin mr-2" />
+            <span className="text-[10px]">Loading...</span>
+          </div>
+        ) : tree.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-[var(--text-muted)]">
+            <span className="text-[10px]">No files found</span>
+          </div>
+        ) : (
+          tree.map((node) => (
+            <TreeNode
+              key={node.id}
+              node={node}
+              depth={0}
+              selectedId={selectedId}
+              expandedIds={expandedIds}
+              onSelect={handleSelect}
+              onToggle={handleToggle}
+              onContextMenu={handleContextMenu}
+            />
+          ))
+        )}
       </div>
 
       {/* Status bar */}

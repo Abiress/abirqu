@@ -14,8 +14,37 @@ export default function BlochSphere() {
   if (data?.counts) {
     const counts = data.counts as Record<string, number>;
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
-    const p0 = (counts['0'] || 0) / total;
-    theta = 2 * Math.acos(Math.min(1, Math.sqrt(p0)));
+    if (total > 0) {
+      // For multi-qubit states (e.g. "00", "01", "10", "11"),
+      // compute the probability of qubit 0 being |0⟩ by summing
+      // all basis states whose first character is '0'.
+      let p0 = 0;
+      for (const [state, count] of Object.entries(counts)) {
+        if (state.length > 0 && state[0] === '0') {
+          p0 += count / total;
+        }
+      }
+      theta = 2 * Math.acos(Math.min(1, Math.sqrt(Math.max(0, p0))));
+      // Compute phi from qubit 0's off-diagonal coherence:
+      // average phase of |0⟩-starting states weighted by amplitude.
+      // For a simple estimate, use the ratio of |01⟩ to |00⟩ amplitudes.
+      const n = Object.keys(counts)[0]?.length || 1;
+      if (n >= 2) {
+        let sumIm = 0;
+        let sumRe = 0;
+        for (const [state, count] of Object.entries(counts)) {
+          if (state.length >= 2 && state[0] === '0' && state[1] === '1') {
+            sumRe += count / total;
+          }
+          if (state.length >= 2 && state[0] === '0' && state[1] === '0') {
+            sumIm += count / total;
+          }
+        }
+        if (sumRe + sumIm > 0) {
+          phi = Math.atan2(sumRe, sumIm);
+        }
+      }
+    }
   }
 
   const draw = useCallback(() => {
