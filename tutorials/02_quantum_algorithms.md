@@ -61,7 +61,7 @@ Shor's algorithm factors integers in polynomial time using quantum period findin
 circuit, metadata = shor_factorization(num_to_factor=15, num_qubits=8)
 
 print(f"Number to factor: {metadata['num_to_factor']}")
-print(f"Factors found: {metadata['factorization']}")
+print(f"Factors found: {metadata['factors']}")
 print(f"Success: {metadata['success']}")
 print(f"Algorithm: {metadata['algorithm']}")
 ```
@@ -75,7 +75,7 @@ print(f"Algorithm: {metadata['algorithm']}")
 ```python
 # Factor another number
 circuit, meta = shor_factorization(num_to_factor=21, num_qubits=10)
-print(f"Factors of 21: {meta['factorization']}")
+print(f"Factors of 21: {meta['factors']}")
 ```
 
 ## 3. Quantum Fourier Transform (QFT)

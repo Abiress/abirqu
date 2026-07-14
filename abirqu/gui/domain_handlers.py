@@ -298,26 +298,49 @@ def handle_qcomm_bb84(params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # ─────────────────────────────────────────────────────────────────────────
-# Cryptography / PQC — wraps abirqu.crypto (LatticeSimulation)
+# Cryptography / PQC — wraps abirqu.security post-quantum implementations
 # ─────────────────────────────────────────────────────────────────────────
 
 def handle_pqc_keygen(params: Dict[str, Any]) -> Dict[str, Any]:
     """
     params:
-      scheme: "kyber" (only lattice keygen currently exposed by the SDK)
+      scheme: "kyber" | "dilithium" | "sphincs"
+      security_level: int (optional, depends on scheme)
     """
-    from abirqu.crypto import LatticeSimulation
+    from abirqu.security import KyberKEM, DilithiumSignatures, SPHINCSSignatures
 
-    lat = LatticeSimulation()
-    keypair = lat.generate_keypair()
-    return _to_jsonable({
-        "scheme": "kyber768",
-        "public_key_shape": list(keypair["public_key"].shape),
-        "secret_key_shape": list(keypair["secret_key"].shape),
-        # keys are large matrices — return shapes + a truncated preview,
-        # never dump the full secret key back over the wire in a real product
-        "public_key_preview": keypair["public_key"][:2].tolist(),
-    })
+    scheme = params.get("scheme", "kyber").lower()
+
+    if scheme == "dilithium":
+        security_level = params.get("security_level", 2)
+        dilithium = DilithiumSignatures(security_level)
+        keypair = dilithium.generate_keypair()
+        return _to_jsonable({
+            "scheme": f"dilithium{security_level}",
+            "public_key_preview": list(keypair.public_key[:32]),
+            "secret_key_shape": [len(keypair.secret_key)],
+            "public_key_size": len(keypair.public_key),
+        })
+    elif scheme == "sphincs":
+        security_level = params.get("security_level", 128)
+        sphincs = SPHINCSSignatures(security_level)
+        keypair = sphincs.generate_keypair()
+        return _to_jsonable({
+            "scheme": f"sphincs+-{security_level}f",
+            "public_key_preview": list(keypair.public_key[:32]),
+            "secret_key_shape": [len(keypair.secret_key)],
+            "public_key_size": len(keypair.public_key),
+        })
+    else:
+        security_level = params.get("security_level", 768)
+        kem = KyberKEM(security_level)
+        keypair = kem.generate_keypair()
+        return _to_jsonable({
+            "scheme": f"kyber{security_level}",
+            "public_key_preview": list(keypair.public_key[:32]),
+            "secret_key_shape": [len(keypair.secret_key)],
+            "public_key_size": len(keypair.public_key),
+        })
 
 
 def handle_pqc_assess(params: Dict[str, Any]) -> Dict[str, Any]:

@@ -239,7 +239,7 @@ class HybridSimulator:
 
         If the MPS has low bond dimension, it's close to a stabilizer state
         and this conversion is accurate. For high-entanglement MPS,
-        this is an approximation.
+        this is an approximation using reduced density matrices.
         """
         tableau = StabilizerTableau(self.n_qubits)
 
@@ -249,14 +249,33 @@ class HybridSimulator:
                 probs = np.abs(sv) ** 2
 
                 for q in range(self.n_qubits):
-                    p1 = sum(probs[i] for i in range(len(sv))
-                             if (i >> (self.n_qubits - 1 - q)) & 1)
-                    if abs(p1 - 1.0) < 0.01:
-                        tableau._apply_x(q)
-                    elif abs(p1 - 0.0) < 0.01:
+                    p0 = sum(probs[i] for i in range(len(sv))
+                             if not ((i >> (self.n_qubits - 1 - q)) & 1))
+                    p1 = 1.0 - p0
+
+                    if abs(p1) < 0.01:
                         pass
-                    else:
+                    elif abs(p1 - 1.0) < 0.01:
+                        tableau._apply_x(q)
+                    elif abs(p0 - 0.5) < 0.05 and abs(p1 - 0.5) < 0.05:
                         tableau._apply_h(q)
+
+                for q1 in range(self.n_qubits):
+                    for q2 in range(q1 + 1, self.n_qubits):
+                        p00 = sum(probs[i] for i in range(len(sv))
+                                  if not ((i >> (self.n_qubits - 1 - q1)) & 1)
+                                  and not ((i >> (self.n_qubits - 1 - q2)) & 1))
+                        p01 = sum(probs[i] for i in range(len(sv))
+                                  if not ((i >> (self.n_qubits - 1 - q1)) & 1)
+                                  and ((i >> (self.n_qubits - 1 - q2)) & 1))
+                        p10 = sum(probs[i] for i in range(len(sv))
+                                  and ((i >> (self.n_qubits - 1 - q1)) & 1)
+                                  and not ((i >> (self.n_qubits - 1 - q2)) & 1))
+
+                        corr = abs(p00 + p11 - p01 - p10)
+                        if corr > 0.9:
+                            tableau._apply_cnot(q1, q2)
+
             except Exception:
                 pass
 

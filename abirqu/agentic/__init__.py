@@ -662,7 +662,6 @@ class DistributedQuantumComputer:
         if not available_qpus:
             raise RuntimeError("No available QPUs for distribution")
 
-        # Simple partitioning: split into chunks
         subcircuits = []
         qpu_idx = 0
 
@@ -671,7 +670,18 @@ class DistributedQuantumComputer:
             qpu_id = available_qpus[qpu_idx % len(available_qpus)][0]
 
             sub_circ = Circuit(end - start, f"SubCircuit_{qpu_id}")
-            # Would extract relevant gates here
+            for gate in circuit.gates:
+                gate_qubits = gate.qubits if hasattr(gate, 'qubits') and gate.qubits else []
+                if not gate_qubits:
+                    continue
+                if all(start <= q < end for q in gate_qubits):
+                    new_qubits = [q - start for q in gate_qubits]
+                    sub_circ.gates.append(Gate(
+                        gate.name,
+                        new_qubits,
+                        getattr(gate, 'matrix', None),
+                        getattr(gate, 'params', []),
+                    ))
             subcircuits.append((qpu_id, sub_circ))
             qpu_idx += 1
 
@@ -685,17 +695,40 @@ class DistributedQuantumComputer:
         """
         Execute a circuit in distributed mode.
 
+        Each sub-circuit is executed independently on its QPU.
+        Results are combined by tensor product of partial results.
+
         Returns:
             Combined measurement counts
         """
         subcircuits = self.distribute_circuit(circuit)
 
-        combined_counts = {}
+        if len(subcircuits) == 1:
+            qpu_id, sub_circ = subcircuits[0]
+            result = sub_circ.run(shots=shots)
+            return result.get("counts", {})
+
+        partial_results = []
         for qpu_id, sub_circ in subcircuits:
-            # Execute on each QPU (simulated)
-            for _ in range(shots):
-                # Simulate measurement
-                outcome = 0
-                combined_counts[outcome] = combined_counts.get(outcome, 0) + 1
+            result = sub_circ.run(shots=shots)
+            counts = result.get("counts", {})
+            partial_results.append(counts)
+
+        combined_counts: Dict[str, int] = {}
+        from itertools import product as iter_product
+        partial_lists = []
+        for counts in partial_results:
+            if counts:
+                partial_lists.append(list(counts.items()))
+            else:
+                partial_lists.append([("0" * max(1, subcircuits[0][1].num_qubits), shots)])
+
+        for combo in iter_product(*partial_lists):
+            full_bitstring = ""
+            total_weight = 1
+            for bitstring, count in combo:
+                full_bitstring += bitstring
+                total_weight *= count
+            combined_counts[full_bitstring] = combined_counts.get(full_bitstring, 0) + total_weight
 
         return combined_counts

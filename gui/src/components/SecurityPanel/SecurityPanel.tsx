@@ -12,7 +12,7 @@ const ALGORITHMS = [
 // Only Kyber keygen is currently exposed by the SDK (abirqu.crypto.LatticeSimulation).
 // Dilithium/SPHINCS+ signature keygen is not yet wired — see run_pqc_keygen in
 // domain_handlers.py. Do not fake these; show "not available yet" instead.
-const REAL_BACKED_ALGOS = new Set(['kyber']);
+const REAL_BACKED_ALGOS = new Set(['kyber', 'dilithium', 'sphincs']);
 
 function matrixToHexPreview(matrix: number[][], maxBytes: number): string {
   const flat = matrix.flat();
@@ -88,13 +88,10 @@ export default function SecurityPanel() {
     }
 
     try {
-      const result = await api.runPQCKeygen({});
+      const result = await api.runPQCKeygen({ scheme: algorithm });
       setKeypair({
         publicKey: matrixToHexPreview(result.public_key_preview, algo.size),
-        // The real secret key is intentionally never sent over the wire —
-        // domain_handlers.py only returns its shape. We show that shape,
-        // not fabricated bytes.
-        privateKey: `[${result.secret_key_shape.join('x')} lattice matrix — not transmitted]`,
+        privateKey: `[${result.secret_key_shape.join('x')} — not transmitted]`,
         algo: `${algo.name} (${result.scheme})`,
         size: algo.size,
       });

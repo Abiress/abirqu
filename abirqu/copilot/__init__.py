@@ -1,13 +1,15 @@
 """
 LLM Copilot Circuit Design
 ===========================
-Natural-language to quantum-circuit translation using template matching
-and keyword extraction — no external LLM required.
+Natural-language to quantum-circuit translation using template matching,
+keyword extraction, and optional LLM integration for advanced generation.
 """
 
 from __future__ import annotations
 
+import json
 import math
+import os
 import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
@@ -306,24 +308,41 @@ class NLParser:
 class QuantumCopilot:
     """Natural-language to quantum-circuit copilot.
 
-    Uses template matching and keyword extraction — no external LLM.
+    Uses template matching and keyword extraction by default.
+    Optionally integrates with LLM APIs for advanced circuit generation.
 
     Example::
 
         copilot = QuantumCopilot()
         circuit = copilot.generate_circuit("Create a 4-qubit GHZ state")
+
+        # With LLM integration:
+        copilot = QuantumCopilot(llm_api_key="your-key")
+        circuit = copilot.generate_circuit("Create a quantum circuit for portfolio optimization")
     """
 
     def __init__(
-        self, templates: Optional[List[CircuitTemplate]] = None
+        self,
+        templates: Optional[List[CircuitTemplate]] = None,
+        llm_api_key: Optional[str] = None,
+        llm_model: str = "gpt-4",
+        llm_provider: str = "openai",
     ) -> None:
         self.templates = templates or list(_TEMPLATE_LIBRARY)
         self.parser = NLParser()
+        self.llm_api_key = llm_api_key or os.environ.get("OPENAI_API_KEY")
+        self.llm_model = llm_model
+        self.llm_provider = llm_provider
+        self._llm_available = self.llm_api_key is not None
 
     # -- generate -----------------------------------------------------------
 
     def generate_circuit(self, description: str) -> Circuit:
-        """Generate a circuit from a natural-language *description*."""
+        """Generate a circuit from a natural-language *description*.
+
+        First tries template matching. If no template matches and LLM is
+        available, uses LLM for advanced generation.
+        """
         spec = self.parser.parse(description)
         template_name = spec["template"]
         num_qubits = spec["num_qubits"]
@@ -333,8 +352,103 @@ class QuantumCopilot:
             if tmpl.name == template_name:
                 return tmpl.build(num_qubits, **params)
 
-        # Fallback: create a generic superposition circuit
+        if self._llm_available:
+            try:
+                return self._llm_generate(description)
+            except Exception:
+                pass
+
         return self._generic_circuit(num_qubits)
+
+    def _llm_generate(self, description: str) -> Circuit:
+        """Use LLM to generate a circuit from natural language."""
+        import urllib.request
+
+        prompt = f"""You are a quantum computing expert. Convert this description into a quantum circuit.
+
+Description: {description}
+
+Return ONLY a JSON object with this structure:
+{{
+  "num_qubits": <int>,
+  "gates": [
+    {{"name": "H", "qubits": [0]}},
+    {{"name": "CNOT", "qubits": [0, 1]}},
+    {{"name": "RZ", "qubits": [0], "params": [0.5]}},
+    ...
+  ]
+}}
+
+Valid gate names: H, X, Y, Z, S, S_DAG, T, T_DAG, RX, RY, RZ, CNOT, CZ, SWAP, TOFFOLI, ECR, ISWAP
+"""
+
+        payload = json.dumps({
+            "model": self.llm_model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.2,
+            "max_tokens": 1000,
+        }).encode()
+
+        req = urllib.request.Request(
+            "https://api.openai.com/v1/chat/completions",
+            data=payload,
+            headers={
+                "Authorization": f"Bearer {self.llm_api_key}",
+                "Content-Type": "application/json",
+            },
+        )
+
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read().decode())
+
+        content = data["choices"][0]["message"]["content"]
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        if not json_match:
+            raise ValueError("LLM response did not contain valid JSON")
+
+        circuit_spec = json.loads(json_match.group())
+        return self._build_from_spec(circuit_spec)
+
+    def _build_from_spec(self, spec: Dict[str, Any]) -> Circuit:
+        """Build a circuit from a JSON spec dict."""
+        n_qubits = spec.get("num_qubits", 2)
+        circuit = Circuit(n_qubits, "llm_generated")
+
+        for gate_spec in spec.get("gates", []):
+            name = gate_spec.get("name", "H").upper()
+            qubits = gate_spec.get("qubits", [0])
+            params = gate_spec.get("params", [])
+
+            if name == "H":
+                circuit.h(qubits[0])
+            elif name == "X":
+                circuit.x(qubits[0])
+            elif name == "Y":
+                circuit.y(qubits[0])
+            elif name == "Z":
+                circuit.z(qubits[0])
+            elif name == "S":
+                circuit.s(qubits[0])
+            elif name == "S_DAG":
+                circuit.s_dag(qubits[0])
+            elif name == "T":
+                circuit.t(qubits[0])
+            elif name == "T_DAG":
+                circuit.t_dag(qubits[0])
+            elif name == "RX":
+                circuit.rx(qubits[0], params[0] if params else 0.0)
+            elif name == "RY":
+                circuit.ry(qubits[0], params[0] if params else 0.0)
+            elif name == "RZ":
+                circuit.rz(qubits[0], params[0] if params else 0.0)
+            elif name == "CNOT":
+                circuit.cnot(qubits[0], qubits[1] if len(qubits) > 1 else 0)
+            elif name == "CZ":
+                circuit.cz(qubits[0], qubits[1] if len(qubits) > 1 else 0)
+            elif name == "SWAP":
+                circuit.swap(qubits[0], qubits[1] if len(qubits) > 1 else 1)
+
+        return circuit
 
     def _generic_circuit(self, n: int) -> Circuit:
         c = Circuit(n, "generic_superposition")

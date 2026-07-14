@@ -2,14 +2,14 @@
   <img src="assets/logo.png" alt="AbirQu Logo" width="320"/>
 </p>
 
-<h1 align="center">AbirQu Quantum SDK v1.2.2</h1>
+<h1 align="center">AbirQu Quantum SDK v1.2.3</h1>
 
 <p align="center">
   <b>Created by Abir Maheshwari</b> &nbsp;|&nbsp; abhirsxn@gmail.com &nbsp;|&nbsp; <a href="https://aqdi.world">aqdi.world</a> &nbsp;|&nbsp; Indian Quantum Mission Support Enabled
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.2.2-blue?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-1.2.3-blue?style=for-the-badge" alt="Version"/>
   <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" alt="Build"/>
   <img src="https://img.shields.io/badge/tests-702%20PASS-brightgreen?style=for-the-badge" alt="Tests"/>
   <img src="https://img.shields.io/badge/backends-12%20Real-purple?style=for-the-badge" alt="Backends"/>
@@ -538,6 +538,7 @@ Test Files:
 
 | Version | Date | Key Additions |
 |---------|------|---------------|
+| **v1.2.3** | 2026-07-15 | **Full SDK Fixes** — Shor's algorithm: full quantum modular exponentiation with continued fractions. Security: real Kyber-768/1024 KEM, Dilithium-2/3/5 signatures, SPHINCS+-128f/256f signatures. HHL Solver: proper multi-controlled rotation, all eigenvalues used. Agentic: DistributedQC now executes real circuits. Hybrid MPS-Clifford: improved tableau↔MPS conversions. Copilot: optional LLM integration (OpenAI). Amplitude estimation added. All 702 tests passing. |
 | **v1.2.2** | 2026-07-13 | **GUI Fully Wired** — All 14 panels use real SDK backend (no mock data). ExplorerPanel filesystem, PluginsPanel real listing, Console job polling, QCommPanel/DomainPanel error states, SecurityPanel key passing, BlochSphere multi-qubit fix, TTN bug fix. |
 | **v1.2.1** | 2026-07-07 | **Core SDK Completion** — TTN Simulator (200+ qubits), Cross-SDK Inbound (Qiskit/Cirq/PennyLane), Job Orchestration (SQLite, 4 schedulers), Auto-differentiation (parameter-shift/adjoint), Dynamical Decoupling (XY4/XY8/CPMG/UDD), Union-Find Decoder, Distributed Simulation (MPI). 75 new tests (627→702). |
 | **v1.2.0** | 2026-07-07 | **Full Quantum IDE** — 14 panels: Circuit Editor, Python/QASM, Explorer, QEC Lab, Quantum Comm, Domain Modules (Chemistry/OSINT/Crypto/Space/QPINN/Agentic), Security, Plugins, Ask Quantum (NL2Q), Settings. Framework integration (Qiskit/Cirq/OQTOPUS/D-Wave), resizable panels, noise simulation, export reports, Bloch sphere. **Backend fixes**: All handlers verified and fixed (QEC 7 code types, Chemistry VQE, Grover, QPINN, Crypto lattice, Agentic). **GUI wiring**: All panels use real SDK implementations (QCommPanel, DomainPanel OSINT, SecurityPanel Circuit). Cross-platform installers built and tested. |
@@ -559,7 +560,6 @@ Honest listing of areas for improvement:
 
 - **No peer review** — no independent validation of results against literature values
 - **QEC decoders** — MWPM decoder uses iterative greedy with re-weighting; production use requires PyMatching or blossom algorithm for optimal matching
-- **Transpiler routing** — basic SWAP insertion via BFS shortest path; Sabre routing not yet implemented
 - **Pulse-level control** — waveforms are generated but not sent to hardware
 - **IBM token required for hardware** — IBM Quantum backend needs a real API token
 
@@ -635,6 +635,7 @@ rbac.assign_role("user@example.com", "operator")
 - **QEC** — Surface/Color/Stabilizer codes, 6 decoders (MWPM + Union-Find), magic state distillation
 - **7 QKD protocols** — BB84, E91, CV-QKD, DI-QKD, satellite, repeaters, network
 - **6 domain modules** — Chemistry, OSINT, Crypto, Space, QPINN, Agentic
+- **Post-quantum security** — Kyber-768/1024 KEM, Dilithium-2/3/5 signatures, SPHINCS+-128f/256f signatures
 - **AI integration** — MCP protocol, LLM copilot, PyTorch/JAX/TensorFlow layers
 - **Full desktop IDE** — 14 panels, circuit editor, code editors, Bloch sphere, export reports
 - **8 language bindings** — Python, JavaScript, Go, Java, .NET, Swift, Kotlin, WebAssembly

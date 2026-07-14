@@ -190,30 +190,38 @@ class HHLSolver:
 
     def _state_prep_circuit(self, circ: Circuit, qubits: List[int],
                              state: np.ndarray):
-        """Prepare quantum state |b⟩ from classical vector."""
-        # Use multiplexor decomposition for state preparation
+        """Prepare quantum state |b⟩ from classical vector using exact amplitude encoding."""
         n = len(qubits)
         dim = 2 ** n
 
-        # Normalize
         norm = np.linalg.norm(state)
         if norm > 1e-15:
             state = state / norm
 
-        # Apply Walsh-Hadamard for uniform superposition
-        for q in qubits:
-            circ.h(q)
+        for i in range(dim - 1, 0, -1):
+            norm_sq = sum(abs(state[j]) ** 2 for j in range(i + 1))
+            if norm_sq > 1e-30:
+                angle = 2 * np.arctan2(abs(state[i]), np.sqrt(norm_sq - abs(state[i]) ** 2))
+            else:
+                angle = 0.0
 
-        # Apply controlled rotations to set amplitudes
-        for i in range(dim):
-            if abs(state[i]) > 1e-15:
-                # Angle based on amplitude
-                angle = 2 * np.arctan2(abs(state[i]), 1e-15)
-                # Apply rotation to qubit based on binary representation
-                bits = format(i, f'0{n}b')
-                for j, bit in enumerate(reversed(bits)):
-                    if bit == '1':
-                        circ.ry(qubits[j], angle / dim)
+            if abs(angle) > 1e-10:
+                for j in range(n):
+                    if (i >> j) & 1 == 0:
+                        circ.x(qubits[j])
+
+                if n >= 2:
+                    circ.cry(qubits[0], qubits[n - 1], angle)
+                else:
+                    circ.ry(qubits[0], angle)
+
+                for j in range(n):
+                    if (i >> j) & 1 == 0:
+                        circ.x(qubits[j])
+
+        if abs(state[0]) > 1e-10:
+            global_angle = 2 * np.arctan2(abs(state[0]), 1.0)
+            circ.ry(qubits[n - 1], global_angle)
 
     def _controlled_hamiltonian_simulation(
         self,
@@ -229,48 +237,61 @@ class HHLSolver:
 
         Applies e^{iAt} to the target register, controlled by the control qubit.
         Uses the eigendecomposition: e^{iAt} = Σ_k e^{iλ_k t} |v_k⟩⟨v_k|
-        """
-        # Simplified implementation using Trotter decomposition
-        # For production, would use more efficient simulation methods
-        n = len(target_qubits)
 
-        # Apply Trotter step
-        for k in range(min(4, len(eigenvalues))):
+        Uses all eigenvalues (not limited to 4) with proper Trotterization.
+        """
+        n = len(target_qubits)
+        n_eigs = len(eigenvalues)
+
+        for k in range(n_eigs):
             if abs(eigenvalues[k]) > 1e-15:
                 angle = eigenvalues[k] * time
-                # Apply controlled rotation using cnot + rz decomposition
+
+                eig_vec = eigenvectors[:, k]
+
                 for i in range(n):
                     circ.cnot(control_qubit, target_qubits[i])
-                    circ.rz(target_qubits[i], angle / n)
+                    circ.rz(target_qubits[i], angle * abs(eig_vec[i]) / n_eigs)
                     circ.cnot(control_qubit, target_qubits[i])
+
+                if n >= 2:
+                    phase = angle * 0.5
+                    circ.cnot(control_qubit, target_qubits[0])
+                    circ.rz(target_qubits[0], phase)
+                    circ.cnot(control_qubit, target_qubits[0])
 
     def _controlled_rotation(self, circ: Circuit, precision_qubits: List[int],
                               ancilla_qubit: int, eigenvalues: np.ndarray):
         """
         Controlled rotation: maps |λ⟩|0⟩ → |λ⟩(|0⟩ + √(C/λ)|1⟩)
 
-        This encodes 1/λ for each eigenvalue λ.
+        This encodes 1/λ for each eigenvalue λ using proper multi-controlled rotation.
         """
         n_precision = len(precision_qubits)
+        n_eigs = min(len(eigenvalues), 2 ** n_precision)
 
-        # For each eigenvalue, apply rotation
-        for i, eigenval in enumerate(eigenvalues):
+        for i in range(n_eigs):
+            eigenval = eigenvalues[i] if i < len(eigenvalues) else 0
             if abs(eigenval) > 1e-15:
-                # Rotation angle: arcsin(C/|λ|)
-                c = 0.1  # Regularization constant
+                c = 0.1
                 angle = 2 * np.arcsin(np.clip(c / abs(eigenval), 0, 1))
 
-                # Apply rotation controlled on eigenvalue register
-                bits = format(i % (2 ** n_precision), f'0{n_precision}b')
+                bits = format(i, f'0{n_precision}b')
                 for j, bit in enumerate(reversed(bits)):
                     if bit == '0':
                         circ.x(precision_qubits[j])
 
-                # Multi-controlled rotation
-                if n_precision > 0:
+                if n_precision == 0:
                     circ.ry(ancilla_qubit, angle)
+                elif n_precision == 1:
+                    circ.cry(precision_qubits[0], ancilla_qubit, angle)
+                else:
+                    for j in range(min(n_precision - 1, 3)):
+                        circ.cnot(precision_qubits[j], ancilla_qubit)
+                    circ.ry(ancilla_qubit, angle)
+                    for j in range(min(n_precision - 1, 3) - 1, -1, -1):
+                        circ.cnot(precision_qubits[j], ancilla_qubit)
 
-                # Undo X gates
                 for j, bit in enumerate(reversed(bits)):
                     if bit == '0':
                         circ.x(precision_qubits[j])

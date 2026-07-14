@@ -168,6 +168,11 @@ class NumPySimulator:
             elif len(qubits) == 3:
                 if name == 'TOFFOLI':
                     self.toffoli(qubits[0], qubits[1], qubits[2])
+            else:
+                # Custom multi-qubit gate: apply matrix directly
+                matrix = getattr(gate, 'matrix', None)
+                if matrix is not None:
+                    self._apply_custom_unitary(matrix, qubits)
         
         probs = np.abs(self.state) ** 2
         return {
@@ -184,3 +189,39 @@ class NumPySimulator:
     
     def get_state_vector(self) -> np.ndarray:
         return self.state.copy()
+    
+    def _apply_custom_unitary(self, matrix: np.ndarray, qubits: list):
+        """Apply an arbitrary unitary matrix to specified qubits."""
+        n_qubits = len(qubits)
+        dim = 2 ** n_qubits
+        
+        if matrix.shape != (dim, dim):
+            raise ValueError(f"Unitary matrix shape {matrix.shape} doesn't match {n_qubits} qubits")
+        
+        # Create the full state vector permutation for these qubits
+        # We need to apply the matrix to the subspace defined by these qubits
+        new_state = np.zeros_like(self.state)
+        
+        # Iterate over all basis states
+        for i in range(2 ** self.n):
+            # Extract the bits for the target qubits
+            subspace_idx = 0
+            for j, q in enumerate(qubits):
+                if (i >> q) & 1:
+                    subspace_idx |= (1 << j)
+            
+            # Apply the unitary to this component
+            for k in range(dim):
+                if abs(matrix[k, subspace_idx]) > 1e-15:
+                    # Compute the output state index
+                    output_idx = i
+                    # Clear the target qubit bits
+                    for j, q in enumerate(qubits):
+                        output_idx &= ~(1 << q)
+                    # Set the new bits from the matrix output
+                    for j, q in enumerate(qubits):
+                        if (k >> j) & 1:
+                            output_idx |= (1 << q)
+                    new_state[output_idx] += matrix[k, subspace_idx] * self.state[i]
+        
+        self.state = new_state

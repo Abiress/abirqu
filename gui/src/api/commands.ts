@@ -108,7 +108,7 @@ export const api = {
   runQCommBB84: (params: BB84Params) =>
     invoke<BB84Result>('run_qcomm_bb84', { params }),
 
-  runPQCKeygen: (params: Record<string, never> = {}) =>
+  runPQCKeygen: (params: { scheme?: string; security_level?: number } = {}) =>
     invoke<PQCKeygenResult>('run_pqc_keygen', { params }),
 
   runPQCAssess: (params: Record<string, never> = {}) =>

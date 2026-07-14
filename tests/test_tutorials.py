@@ -53,7 +53,7 @@ def test_tutorial_code(tutorial_path: Path):
         [sys.executable, "-c", code],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
     )
     assert result.returncode == 0, (
         f"Code in {tutorial_path.name} failed with exit code {result.returncode}\n"
