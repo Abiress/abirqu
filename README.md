@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.2.3-blue?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-1.2.4-blue?style=for-the-badge" alt="Version"/>
   <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" alt="Build"/>
   <img src="https://img.shields.io/badge/tests-702%20PASS-brightgreen?style=for-the-badge" alt="Tests"/>
   <img src="https://img.shields.io/badge/backends-12%20Real-purple?style=for-the-badge" alt="Backends"/>
@@ -287,9 +287,9 @@ Full-featured quantum IDE built with **Tauri 2.x** (Rust + React + TypeScript). 
 
 | Platform | Installer | Size | Download |
 |----------|-----------|------|----------|
-| Linux (Debian/Ubuntu) | `AbirQu_1.2.2_amd64.deb` | 4.2 MB | [Download](installers/AbirQu_1.2.2_amd64.deb) |
-| Linux (Fedora/RHEL) | `AbirQu-1.2.2-1.x86_64.rpm` | 4.2 MB | [Download](installers/AbirQu-1.2.2-1.x86_64.rpm) |
-| Linux (Universal) | `AbirQu_1.2.2_amd64.AppImage` | 80 MB | [Download](installers/AbirQu_1.2.2_amd64.AppImage) |
+| Linux (Debian/Ubuntu) | `AbirQu_1.2.4_amd64.deb` | 4.2 MB | [Download](installers/AbirQu_1.2.4_amd64.deb) |
+| Linux (Fedora/RHEL) | `AbirQu-1.2.4-1.x86_64.rpm` | 4.2 MB | [Download](installers/AbirQu-1.2.4-1.x86_64.rpm) |
+| Linux (Universal) | `AbirQu_1.2.4_amd64.AppImage` | 80 MB | [Download](installers/AbirQu_1.2.4_amd64.AppImage) |
 | Binary (any Linux) | `abirqu-gui` | 14 MB | [Download](installers/abirqu-gui) |
 
 ### All 14 Panels
@@ -335,22 +335,22 @@ npx @tauri-apps/cli build
 
 ```bash
 # Debian/Ubuntu
-sudo dpkg -i AbirQu_1.2.2_amd64.deb
+sudo dpkg -i AbirQu_1.2.4_amd64.deb
 
 # Fedora/RHEL
-sudo rpm -i AbirQu-1.2.2-1.x86_64.rpm
+sudo rpm -i AbirQu-1.2.4-1.x86_64.rpm
 
 # Any Linux (portable)
-chmod +x AbirQu_1.2.2_amd64.AppImage && ./AbirQu_1.2.2_amd64.AppImage
+chmod +x AbirQu_1.2.4_amd64.AppImage && ./AbirQu_1.2.4_amd64.AppImage
 ```
 
 ### Install (Windows)
 
-Download `AbirQu_1.2.2_x64-setup.exe` from [Releases](https://github.com/Abiress/abirqu/releases) and run the installer.
+Download `AbirQu_1.2.4_x64-setup.exe` from [Releases](https://github.com/Abiress/abirqu/releases) and run the installer.
 
 ### Install (macOS)
 
-Download `AbirQu_1.2.2_aarch64.dmg` (Apple Silicon) or `AbirQu_1.2.2_x64.dmg` (Intel) from [Releases](https://github.com/Abiress/abirqu/releases), open the DMG, and drag AbirQu to Applications.
+Download `AbirQu_1.2.4_aarch64.dmg` (Apple Silicon) or `AbirQu_1.2.4_x64.dmg` (Intel) from [Releases](https://github.com/Abiress/abirqu/releases), open the DMG, and drag AbirQu to Applications.
 
 ### Pre-built Binaries
 
@@ -538,7 +538,7 @@ Test Files:
 
 | Version | Date | Key Additions |
 |---------|------|---------------|
-| **v1.2.4** | 2026-07-15 | **Full SDK Fixes** — Shor's algorithm: full quantum modular exponentiation with continued fractions. Security: real Kyber-768/1024 KEM, Dilithium-2/3/5 signatures, SPHINCS+-128f/256f signatures. HHL Solver: proper multi-controlled rotation, all eigenvalues used. Agentic: DistributedQC now executes real circuits. Hybrid MPS-Clifford: improved tableau↔MPS conversions. Copilot: optional LLM integration (OpenAI). Amplitude estimation added. All 702 tests passing. |
+| **v1.2.4** | 2026-07-15 | **VQE Fix + GUI Overhaul** — Fixed vqe_uccsd/vqe_hardware_efficient `parameters` kwarg bug. SettingsPanel accent color and font size now apply to CSS variables. Library/Hardware panels show clear fallback when server not ready. Hardware sidebar shows active backend details. Plugins panel merges builtin plugins with backend response. Theme-aware colors across all 20+ components (zero hardcoded `border-white/5`). PythonBridge BufReader fix. All 10 backend actions verified. |
 | **v1.2.2** | 2026-07-13 | **GUI Fully Wired** — All 14 panels use real SDK backend (no mock data). ExplorerPanel filesystem, PluginsPanel real listing, Console job polling, QCommPanel/DomainPanel error states, SecurityPanel key passing, BlochSphere multi-qubit fix, TTN bug fix. |
 | **v1.2.1** | 2026-07-07 | **Core SDK Completion** — TTN Simulator (200+ qubits), Cross-SDK Inbound (Qiskit/Cirq/PennyLane), Job Orchestration (SQLite, 4 schedulers), Auto-differentiation (parameter-shift/adjoint), Dynamical Decoupling (XY4/XY8/CPMG/UDD), Union-Find Decoder, Distributed Simulation (MPI). 75 new tests (627→702). |
 | **v1.2.0** | 2026-07-07 | **Full Quantum IDE** — 14 panels: Circuit Editor, Python/QASM, Explorer, QEC Lab, Quantum Comm, Domain Modules (Chemistry/OSINT/Crypto/Space/QPINN/Agentic), Security, Plugins, Ask Quantum (NL2Q), Settings. Framework integration (Qiskit/Cirq/OQTOPUS/D-Wave), resizable panels, noise simulation, export reports, Bloch sphere. **Backend fixes**: All handlers verified and fixed (QEC 7 code types, Chemistry VQE, Grover, QPINN, Crypto lattice, Agentic). **GUI wiring**: All panels use real SDK implementations (QCommPanel, DomainPanel OSINT, SecurityPanel Circuit). Cross-platform installers built and tested. |
