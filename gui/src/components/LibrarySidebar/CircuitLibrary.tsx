@@ -62,6 +62,16 @@ export default function LibrarySidebar({ serverReady = false }: Props) {
     }
   };
 
+  if (!serverReady) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)] p-4">
+        <span className="text-2xl mb-2 opacity-30">📚</span>
+        <span className="text-[11px] font-medium text-[var(--text-secondary)] mb-1">Server not connected</span>
+        <span className="text-[10px] text-center opacity-60">The Python backend is starting up. Library templates will appear once connected.</span>
+      </div>
+    );
+  }
+
   if (loading && serverReady) {
     return (
       <div className="flex items-center justify-center h-full text-[var(--text-muted)]">

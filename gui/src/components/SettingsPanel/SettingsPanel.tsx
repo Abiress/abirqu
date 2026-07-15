@@ -150,6 +150,25 @@ export default function SettingsPanel() {
     }
   }, [appearance.theme, setTheme]);
 
+  const ACCENT_MAP: Record<AccentColor, { primary: string; secondary: string }> = {
+    blue: { primary: '#3b82f6', secondary: '#60a5fa' },
+    green: { primary: '#22c55e', secondary: '#4ade80' },
+    purple: { primary: '#8b5cf6', secondary: '#a78bfa' },
+    amber: { primary: '#f59e0b', secondary: '#fbbf24' },
+    rose: { primary: '#f43f5e', secondary: '#fb7185' },
+  };
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const colors = ACCENT_MAP[appearance.accentColor] || ACCENT_MAP.purple;
+    root.style.setProperty('--accent-primary', colors.primary);
+    root.style.setProperty('--accent-secondary', colors.secondary);
+  }, [appearance.accentColor]);
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${appearance.fontSize}px`;
+  }, [appearance.fontSize]);
+
   const updateGeneral = useCallback((patch: Partial<GeneralSettings>) => {
     setGeneral((prev) => ({ ...prev, ...patch }));
   }, []);

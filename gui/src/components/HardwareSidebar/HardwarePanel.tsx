@@ -34,6 +34,16 @@ export default function HardwareSidebar({ serverReady = false }: Props) {
 
   const providers = [...new Set(backends.map((b) => b.provider))];
 
+  if (!serverReady) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)] p-4">
+        <span className="text-2xl mb-2 opacity-30">⚡</span>
+        <span className="text-[11px] font-medium text-[var(--text-secondary)] mb-1">Server not connected</span>
+        <span className="text-[10px] text-center opacity-60">Starting Python backend. Backends will appear once connected.</span>
+      </div>
+    );
+  }
+
   if (loading && serverReady) {
     return (
       <div className="flex items-center justify-center h-full text-[var(--text-muted)]">
@@ -95,6 +105,18 @@ export default function HardwareSidebar({ serverReady = false }: Props) {
           </div>
         )}
       </div>
+
+      {selectedBackend && (
+        <div className="p-2 border-t border-[var(--border)] bg-[var(--bg-panel)]">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-success)]" />
+            <span className="text-[10px] font-semibold text-[var(--text-primary)]">Active: {selectedBackend}</span>
+          </div>
+          <div className="text-[9px] text-[var(--text-muted)]">
+            {backends.find(b => b.name === selectedBackend)?.num_qubits} qubits · {backends.find(b => b.name === selectedBackend)?.provider}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

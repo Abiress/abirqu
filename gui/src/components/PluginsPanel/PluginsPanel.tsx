@@ -408,7 +408,9 @@ export default function PluginsPanel() {
         // Merge: installed plugins that aren't in marketplace get added
         const marketplaceNames = new Set(marketplace.map(p => p.name));
         const extraInstalled = installed.filter(p => !marketplaceNames.has(p.name));
-        setPlugins([...extraInstalled, ...marketplace]);
+        const existingNames = new Set([...extraInstalled.map(p => p.name), ...marketplace.map(p => p.name)]);
+        const builtin = INITIAL_PLUGINS.filter(p => !existingNames.has(p.name));
+        setPlugins([...extraInstalled, ...marketplace, ...builtin]);
       } catch {
         if (!cancelled) setPlugins([]);
       } finally {

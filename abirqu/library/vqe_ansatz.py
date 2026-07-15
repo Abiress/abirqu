@@ -14,7 +14,8 @@ from .n_local import efficient_su2, real_amplitudes
 
 def vqe_hardware_efficient(num_qubits: int, depth: int = 2,
                            entanglement: str = "linear",
-                           prefix: str = "θ") -> Circuit:
+                           prefix: str = "θ",
+                           parameters: Optional[List[float]] = None) -> Circuit:
     """
     Hardware-efficient VQE ansatz.
 
@@ -26,7 +27,7 @@ def vqe_hardware_efficient(num_qubits: int, depth: int = 2,
 
 
 def vqe_uccsd(num_qubits: int, num_electrons: Optional[int] = None,
-              prefix: str = "θ") -> Circuit:
+              prefix: str = "θ", parameters: Optional[List[float]] = None) -> Circuit:
     """
     UCCSD (Unitary Coupled Cluster Singles and Doubles) ansatz.
 
@@ -49,7 +50,8 @@ def vqe_uccsd(num_qubits: int, num_electrons: Optional[int] = None,
             c.add_gate("H", i, [])
             c.add_gate("H", j, [])
             c.add_gate("CNOT", [i, j])
-            c.add_gate("RY", j, [float(param_idx)])
+            angle = float(parameters[param_idx]) if parameters and param_idx < len(parameters) else float(param_idx)
+            c.add_gate("RY", j, [angle])
             c.add_gate("CNOT", [i, j])
             c.add_gate("H", i, [])
             c.add_gate("H", j, [])
