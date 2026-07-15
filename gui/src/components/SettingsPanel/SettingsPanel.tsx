@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../../api/commands';
+import { useThemeStore } from '../../stores/themeStore';
 
 type Tab = 'general' | 'simulation' | 'hardware' | 'appearance' | 'about';
 type SimulationEngine = 'numpy' | 'gpu' | 'clifford' | 'mps' | 'montecarlo';
@@ -136,18 +137,18 @@ export default function SettingsPanel() {
   useEffect(() => { saveSettings('hardware', hardware); }, [hardware]);
   useEffect(() => { saveSettings('appearance', appearance); }, [appearance]);
 
+  const { setTheme } = useThemeStore();
+
   useEffect(() => {
-    const root = document.documentElement;
     if (appearance.theme === 'dark') {
-      root.removeAttribute('data-theme');
+      setTheme('dark');
     } else if (appearance.theme === 'light') {
-      root.setAttribute('data-theme', 'light');
+      setTheme('light');
     } else {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      root.removeAttribute('data-theme');
-      if (!prefersDark) root.setAttribute('data-theme', 'light');
+      setTheme(prefersDark ? 'dark' : 'light');
     }
-  }, [appearance.theme]);
+  }, [appearance.theme, setTheme]);
 
   const updateGeneral = useCallback((patch: Partial<GeneralSettings>) => {
     setGeneral((prev) => ({ ...prev, ...patch }));
@@ -223,7 +224,7 @@ export default function SettingsPanel() {
   return (
     <div className="flex flex-col h-full animate-fade-in">
       {/* Tab bar */}
-      <div className="flex border-b border-white/5 bg-[var(--bg-panel)]">
+      <div className="flex border-b border-[var(--border)] bg-[var(--bg-panel)]">
         {TABS.map((tab) => (
           <button
             key={tab.key}
@@ -300,7 +301,7 @@ function GeneralTab({
         <select
           value={settings.defaultBackend}
           onChange={(e) => onUpdate({ defaultBackend: e.target.value })}
-          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-input)] border border-white/5 text-[var(--text-primary)] text-[11px] outline-none focus:border-[var(--accent-primary)] transition-colors"
+          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-primary)] text-[11px] outline-none focus:border-[var(--accent-primary)] transition-colors"
         >
           <option value="local_simulator">Local Simulator (AbirQu)</option>
           <option value="qiskit_aer">Qiskit Aer</option>
@@ -339,10 +340,10 @@ function GeneralTab({
       <div className="space-y-2">
         <label className="text-[11px] font-medium text-[var(--text-primary)]">Project Directory</label>
         <div className="flex items-center gap-2">
-          <div className="flex-1 px-3 py-2 rounded-lg bg-[var(--bg-input)] border border-white/5 text-[10px] font-mono text-[var(--text-secondary)] truncate">
+          <div className="flex-1 px-3 py-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-[10px] font-mono text-[var(--text-secondary)] truncate">
             {settings.projectDirectory}
           </div>
-          <button className="px-3 py-2 rounded-lg bg-[var(--bg-input)] border border-white/5 text-[10px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-white/10 transition-all">
+          <button className="px-3 py-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-[10px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all">
             Browse
           </button>
         </div>
@@ -371,7 +372,7 @@ function SimulationTab({
               className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-all ${
                 settings.engine === eng.key
                   ? 'bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 shadow-sm'
-                  : 'bg-[var(--bg-input)] border border-white/5 hover:bg-white/[0.03]'
+                  : 'bg-[var(--bg-input)] border border-[var(--border)] hover:bg-[var(--bg-hover)]'
               }`}
             >
               <div
@@ -444,7 +445,7 @@ function SimulationTab({
           step={256}
           value={settings.memoryLimit}
           onChange={(e) => onUpdate({ memoryLimit: e.target.value })}
-          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-input)] border border-white/5 text-[11px] text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)] transition-colors font-mono"
+          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-[11px] text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)] transition-colors font-mono"
         />
         <div className="text-[9px] text-[var(--text-muted)]">
           Recommended: 4096 MB for circuits up to 20 qubits
@@ -575,7 +576,7 @@ function HardwareTab({
                     value={field.value}
                     onChange={(e) => field.onChange(e.target.value)}
                     placeholder={field.placeholder}
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--bg-input)] border border-white/5 text-[11px] text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)] transition-colors font-mono"
+                    className="w-full px-3 py-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-[11px] text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)] transition-colors font-mono"
                   />
                   {field.isPassword && field.toggleShow && (
                     <button
@@ -598,7 +599,7 @@ function HardwareTab({
                   ? 'border-[var(--accent-warning)]/30 bg-[var(--accent-warning)]/5 text-[var(--accent-warning)] cursor-wait'
                   : status === 'connected'
                   ? 'border-[var(--accent-success)]/30 bg-[var(--accent-success)]/5 text-[var(--accent-success)]'
-                  : 'border-white/5 bg-[var(--bg-input)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-white/10'
+                  : 'border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]'
               }`}
             >
               {status === 'testing' ? (
@@ -614,7 +615,7 @@ function HardwareTab({
             </button>
 
             {/* Divider */}
-            <div className="border-b border-white/5 pt-2" />
+            <div className="border-b border-[var(--border)] pt-2" />
           </div>
         );
       })}
@@ -642,14 +643,14 @@ function AppearanceTab({
               className={`flex flex-col items-center gap-1 p-2.5 rounded-lg text-center transition-all ${
                 settings.theme === t.key
                   ? 'bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 shadow-sm'
-                  : 'bg-[var(--bg-input)] border border-white/5 hover:bg-white/[0.03]'
+                  : 'bg-[var(--bg-input)] border border-[var(--border)] hover:bg-[var(--bg-hover)]'
               }`}
             >
               <span
                 className={`w-6 h-6 rounded-full border-2 transition-colors ${
                   settings.theme === t.key
                     ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)]/20'
-                    : 'border-white/10 bg-[var(--bg-primary)]'
+                    : 'border-[var(--border-strong)] bg-[var(--bg-primary)]'
                 }`}
               />
               <span className="text-[10px] font-medium text-[var(--text-primary)]">{t.label}</span>
@@ -692,8 +693,8 @@ function AppearanceTab({
               onClick={() => onUpdate({ accentColor: c.key })}
               className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
                 settings.accentColor === c.key
-                  ? 'bg-white/5 ring-2 ring-white/20'
-                  : 'hover:bg-white/[0.03]'
+                  ? 'bg-[var(--bg-input)] ring-2 ring-white/20'
+                  : 'hover:bg-[var(--bg-hover)]'
               }`}
             >
               <div
@@ -733,7 +734,7 @@ function AppearanceTab({
       {/* Preview */}
       <div className="space-y-2">
         <label className="text-[11px] font-medium text-[var(--text-primary)]">Preview</label>
-        <div className="p-3 rounded-lg bg-[var(--bg-input)] border border-white/5 space-y-2">
+        <div className="p-3 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] space-y-2">
           <div className="text-[11px] text-[var(--text-primary)]" style={{ fontSize: settings.fontSize }}>
             Sample text at {settings.fontSize}px
           </div>
@@ -745,7 +746,7 @@ function AppearanceTab({
             <span className="text-[9px] text-[var(--text-muted)]">Accent color preview</span>
           </div>
           {settings.showGrid && (
-            <div className="h-12 rounded border border-white/5 bg-[var(--bg-primary)]" style={{ backgroundImage: 'linear-gradient(rgba(148,163,184,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.05) 1px, transparent 1px)', backgroundSize: '10px 10px' }} />
+            <div className="h-12 rounded border border-[var(--border)] bg-[var(--bg-primary)]" style={{ backgroundImage: 'linear-gradient(rgba(148,163,184,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.05) 1px, transparent 1px)', backgroundSize: '10px 10px' }} />
           )}
         </div>
       </div>
@@ -766,7 +767,7 @@ function AboutTab({ onReset }: { onReset: () => void }) {
       </div>
 
       {/* Version info */}
-      <div className="bg-[var(--bg-input)] rounded-lg border border-white/5 divide-y divide-white/5">
+      <div className="bg-[var(--bg-input)] rounded-lg border border-[var(--border)] divide-y divide-white/5">
         <div className="flex items-center justify-between px-3 py-2">
           <span className="text-[11px] text-[var(--text-muted)]">Version</span>
           <span className="text-[11px] font-mono text-[var(--text-secondary)]">1.2.3</span>
@@ -800,7 +801,7 @@ function AboutTab({ onReset }: { onReset: () => void }) {
             href={link.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between px-3 py-2 rounded-lg bg-[var(--bg-input)] border border-white/5 text-[11px] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:border-[var(--accent-primary)]/20 transition-all"
+            className="flex items-center justify-between px-3 py-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-[11px] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:border-[var(--accent-primary)]/20 transition-all"
           >
             <span>{link.label}</span>
             <span className="text-[9px] text-[var(--text-muted)]">↗</span>
@@ -819,7 +820,7 @@ function AboutTab({ onReset }: { onReset: () => void }) {
       </div>
 
       {/* Reset */}
-      <div className="pt-2 border-t border-white/5">
+      <div className="pt-2 border-t border-[var(--border)]">
         <button
           onClick={() => {
             if (window.confirm('Reset all settings to defaults? This cannot be undone.')) {

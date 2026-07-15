@@ -5,11 +5,11 @@ export default function JobDashboard() {
   const { jobs, activeJobId, setActiveJob } = useJobStore();
 
   const statusConfig: Record<string, { icon: string; color: string; bg: string }> = {
-    completed: { icon: '✓', color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
-    running: { icon: '⟳', color: 'text-amber-400', bg: 'bg-amber-400/10' },
-    failed: { icon: '✗', color: 'text-red-400', bg: 'bg-red-400/10' },
-    cancelled: { icon: '⊘', color: 'text-slate-400', bg: 'bg-slate-400/10' },
-    pending: { icon: '○', color: 'text-slate-500', bg: 'bg-slate-500/10' },
+    completed: { icon: '✓', color: 'text-[var(--accent-success)]', bg: 'bg-[var(--accent-success)]/10' },
+    running: { icon: '⟳', color: 'text-[var(--accent-warning)]', bg: 'bg-[var(--accent-warning)]/10' },
+    failed: { icon: '✗', color: 'text-[var(--accent-error)]', bg: 'bg-[var(--accent-error)]/10' },
+    cancelled: { icon: '⊘', color: 'text-[var(--text-muted)]', bg: 'bg-[var(--text-muted)]/10' },
+    pending: { icon: '○', color: 'text-[var(--text-muted)]', bg: 'bg-[var(--text-muted)]/10' },
   };
 
   return (
@@ -47,13 +47,13 @@ export default function JobDashboard() {
                   {job.status === 'running' && (
                     <div className="mt-1.5 h-1 bg-[var(--bg-input)] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-300"
+                        className="h-full bg-gradient-to-r from-[var(--accent-warning)] to-[var(--accent-warning)]/70 rounded-full transition-all duration-300"
                         style={{ width: `${job.progress * 100}%` }}
                       />
                     </div>
                   )}
                   {job.error && (
-                    <div className="mt-1 text-[10px] text-red-400 truncate">{job.error}</div>
+                    <div className="mt-1 text-[10px] text-[var(--accent-error)] truncate">{job.error}</div>
                   )}
                 </button>
               );
@@ -63,10 +63,10 @@ export default function JobDashboard() {
       </div>
 
       {jobs.length > 0 && (
-        <div className="p-2 border-t border-white/5">
+        <div className="p-2 border-t border-[var(--border)]">
           <button
             onClick={() => useJobStore.getState().clearJobs()}
-            className="w-full text-[10px] text-[var(--text-muted)] hover:text-red-400 transition-colors"
+            className="w-full text-[10px] text-[var(--text-muted)] hover:text-[var(--accent-error)] transition-colors"
           >
             Clear all
           </button>

@@ -230,7 +230,7 @@ export default function BlochSphere() {
           className="cursor-grab active:cursor-grabbing"
         />
       </div>
-      <div className="px-3 py-2 border-t border-white/5 w-full">
+      <div className="px-3 py-2 border-t border-[var(--border)] w-full">
         <div className="flex justify-between text-[10px] text-[var(--text-muted)] font-mono">
           <span>θ = {theta.toFixed(3)}</span>
           <span>φ = {phi.toFixed(3)}</span>

@@ -56,8 +56,8 @@ export default function Console() {
 
   const colors = {
     info: 'text-[var(--text-secondary)]',
-    error: 'text-red-400',
-    success: 'text-emerald-400',
+    error: 'text-[var(--accent-error)]',
+    success: 'text-[var(--accent-success)]',
   };
 
   return (

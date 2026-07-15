@@ -148,7 +148,7 @@ function Stars({ rating, size = 'text-[10px]' }: { rating: number; size?: string
   const half = rating - full >= 0.5;
   const empty = 5 - full - (half ? 1 : 0);
   return (
-    <span className={`${size} text-amber-400 tracking-tight`}>
+    <span className={`${size} text-[var(--accent-warning)] tracking-tight`}>
       {'★'.repeat(full)}
       {half && '½'}
       {'☆'.repeat(empty)}
@@ -160,20 +160,20 @@ function Stars({ rating, size = 'text-[10px]' }: { rating: number; size?: string
 function StatusBadge({ status }: { status: PluginStatus }) {
   if (status === 'installed') {
     return (
-      <span className="px-1.5 py-0.5 rounded-full text-[9px] font-medium text-emerald-400 bg-emerald-400/10 border border-emerald-500/20">
+      <span className="px-1.5 py-0.5 rounded-full text-[9px] font-medium text-[var(--accent-success)] bg-[var(--accent-success)]/10 border border-[var(--accent-success)]/20">
         Installed
       </span>
     );
   }
   if (status === 'update') {
     return (
-      <span className="px-1.5 py-0.5 rounded-full text-[9px] font-medium text-amber-400 bg-amber-400/10 border border-amber-500/20">
+      <span className="px-1.5 py-0.5 rounded-full text-[9px] font-medium text-[var(--accent-warning)] bg-[var(--accent-warning)]/10 border border-[var(--accent-warning)]/20">
         Update
       </span>
     );
   }
   return (
-    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-medium text-[var(--text-muted)] bg-[var(--bg-input)] border border-white/5">
+    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-medium text-[var(--text-muted)] bg-[var(--bg-input)] border border-[var(--border)]">
       Available
     </span>
   );
@@ -191,10 +191,10 @@ function PluginCard({
   return (
     <button
       onClick={() => onSelect(plugin)}
-      className="w-full text-left p-2.5 rounded-xl border border-white/5 hover:bg-white/[0.03] hover:border-white/10 transition-all animate-fade-in"
+      className="w-full text-left p-2.5 rounded-xl border border-[var(--border)] hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)] transition-all animate-fade-in"
     >
       <div className="flex items-start gap-2.5">
-        <span className="w-9 h-9 rounded-lg bg-[var(--bg-input)] border border-white/5 flex items-center justify-center text-base flex-shrink-0">
+        <span className="w-9 h-9 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] flex items-center justify-center text-base flex-shrink-0">
           {plugin.icon}
         </span>
         <div className="flex-1 min-w-0">
@@ -221,9 +221,9 @@ function PluginCard({
             }}
             className={`px-3 py-1 rounded-lg text-[10px] font-semibold transition-all ${
               plugin.status === 'installed'
-                ? 'text-red-400 bg-red-400/10 border border-red-500/20 hover:bg-red-400/20'
+                ? 'text-[var(--accent-error)] bg-[var(--accent-error)]/10 border border-[var(--accent-error)]/20 hover:bg-[var(--accent-error)]/20'
                 : plugin.status === 'update'
-                ? 'text-amber-400 bg-amber-400/10 border border-amber-500/20 hover:bg-amber-400/20'
+                ? 'text-[var(--accent-warning)] bg-[var(--accent-warning)]/10 border border-[var(--accent-warning)]/20 hover:bg-[var(--accent-warning)]/20'
                 : 'text-white bg-[var(--accent-primary)] hover:shadow-lg hover:shadow-[var(--accent-primary)]/20'
             }`}
           >
@@ -250,7 +250,7 @@ function PluginDetail({
 }) {
   return (
     <div className="flex flex-col h-full animate-fade-in">
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--border)]">
         <button
           onClick={onBack}
           className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors text-sm"
@@ -263,7 +263,7 @@ function PluginDetail({
 
       <div className="flex-1 overflow-auto p-3 space-y-3">
         <div className="flex items-center gap-3">
-          <span className="w-12 h-12 rounded-xl bg-[var(--bg-input)] border border-white/5 flex items-center justify-center text-xl flex-shrink-0">
+          <span className="w-12 h-12 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] flex items-center justify-center text-xl flex-shrink-0">
             {plugin.icon}
           </span>
           <div>
@@ -281,7 +281,7 @@ function PluginDetail({
           {plugin.tags.map((tag) => (
             <span
               key={tag}
-              className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-[var(--bg-input)] border border-white/5 text-[var(--text-muted)]"
+              className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-muted)]"
             >
               {tag}
             </span>
@@ -289,7 +289,7 @@ function PluginDetail({
         </div>
 
         {plugin.status === 'installed' && (
-          <div className="space-y-2 border-t border-white/5 pt-3">
+          <div className="space-y-2 border-t border-[var(--border)] pt-3">
             <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-medium">
               Configuration
             </div>
@@ -335,7 +335,7 @@ function PluginDetail({
                     value={String(field.value)}
                     placeholder={field.placeholder}
                     onChange={(e) => onConfigChange(plugin.id, field.key, field.type === 'number' ? e.target.value : e.target.value)}
-                    className="w-full px-2 py-1.5 rounded-lg text-[11px] bg-[var(--bg-input)] border border-white/5 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--accent-primary)]/50 transition-colors font-mono"
+                    className="w-full px-2 py-1.5 rounded-lg text-[11px] bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--accent-primary)]/50 transition-colors font-mono"
                   />
                 )}
               </div>
@@ -344,14 +344,14 @@ function PluginDetail({
         )}
       </div>
 
-      <div className="px-3 py-2 border-t border-white/5">
+      <div className="px-3 py-2 border-t border-[var(--border)]">
         <button
           onClick={() => onToggleInstall(plugin)}
           className={`w-full py-2 rounded-xl text-[11px] font-semibold transition-all ${
             plugin.status === 'installed'
-              ? 'text-red-400 bg-red-400/10 border border-red-500/20 hover:bg-red-400/20'
+              ? 'text-[var(--accent-error)] bg-[var(--accent-error)]/10 border border-[var(--accent-error)]/20 hover:bg-[var(--accent-error)]/20'
               : plugin.status === 'update'
-              ? 'text-amber-400 bg-amber-400/10 border border-amber-500/20 hover:bg-amber-400/20'
+              ? 'text-[var(--accent-warning)] bg-[var(--accent-warning)]/10 border border-[var(--accent-warning)]/20 hover:bg-[var(--accent-warning)]/20'
               : 'text-white bg-[var(--accent-primary)] hover:shadow-lg hover:shadow-[var(--accent-primary)]/20'
           }`}
         >
@@ -509,17 +509,17 @@ export default function PluginsPanel() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-2 border-b border-white/5">
+      <div className="p-2 border-b border-[var(--border)]">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search plugins..."
-          className="w-full px-2.5 py-1.5 rounded-lg text-[11px] bg-[var(--bg-input)] border border-white/5 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--accent-primary)]/50 transition-colors"
+          className="w-full px-2.5 py-1.5 rounded-lg text-[11px] bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--accent-primary)]/50 transition-colors"
         />
       </div>
 
-      <div className="flex border-b border-white/5 bg-[var(--bg-panel)]">
+      <div className="flex border-b border-[var(--border)] bg-[var(--bg-panel)]">
         <button
           onClick={() => setActiveTab('marketplace')}
           className={`flex-1 px-3 py-2 text-[11px] font-medium transition-all border-b-2 ${

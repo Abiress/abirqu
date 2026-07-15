@@ -84,7 +84,7 @@ export default function FrameworkPanel() {
   return (
     <div className="flex flex-col h-full">
       {/* Framework tabs */}
-      <div className="flex border-b border-white/5 bg-[var(--bg-panel)]">
+      <div className="flex border-b border-[var(--border)] bg-[var(--bg-panel)]">
         {(Object.keys(FRAMEWORK_INFO) as Framework[]).map((key) => {
           const f = FRAMEWORK_INFO[key];
           const installed = key === 'abirqu' || frameworkStatus[key]?.installed !== false;
@@ -106,14 +106,14 @@ export default function FrameworkPanel() {
                 {f.icon}
               </span>
               {f.name}
-              {!installed && <span className="text-[8px] text-amber-400">!</span>}
+              {!installed && <span className="text-[8px] text-[var(--accent-warning)]">!</span>}
             </button>
           );
         })}
       </div>
 
       {/* Framework info + run */}
-      <div className="p-3 space-y-3 border-b border-white/5">
+      <div className="p-3 space-y-3 border-b border-[var(--border)]">
         <div className="flex items-center gap-2">
           <span
             className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black text-white"
@@ -158,8 +158,8 @@ export default function FrameworkPanel() {
               key={name}
               className={`px-2 py-0.5 rounded-full text-[9px] font-medium border ${
                 info.installed
-                  ? 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10'
-                  : 'text-[var(--text-muted)] border-white/5 bg-[var(--bg-input)]'
+                  ? 'text-[var(--accent-success)] border-[var(--accent-success)]/20 bg-[var(--accent-success)]/10'
+                  : 'text-[var(--text-muted)] border-[var(--border)] bg-[var(--bg-input)]'
               }`}
             >
               {info.installed ? '●' : '○'} {name}
@@ -172,7 +172,7 @@ export default function FrameworkPanel() {
       {lastResult && (
         <div className="flex-1 overflow-auto p-3 space-y-2">
           {lastResult.error ? (
-            <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-[11px]">
+            <div className="p-2 rounded-lg bg-[var(--accent-error)]/10 border border-[var(--accent-error)]/20 text-[var(--accent-error)] text-[11px]">
               {lastResult.error}
             </div>
           ) : counts ? (

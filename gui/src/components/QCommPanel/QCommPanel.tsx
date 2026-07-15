@@ -170,7 +170,7 @@ function SecurityIndicator({ secure }: { secure: boolean }) {
       />
       <span
         className={`text-[10px] font-semibold ${
-          secure ? 'text-emerald-400' : 'text-red-400'
+          secure ? 'text-[var(--accent-success)]' : 'text-[var(--accent-error)]'
         }`}
       >
         {secure ? 'SECURE' : 'INSECURE'}
@@ -305,7 +305,7 @@ export default function QCommPanel() {
                 type="number"
                 value={params.bb84Bits}
                 onChange={(e) => updateParams({ bb84Bits: parseInt(e.target.value) || 1024 })}
-                className="w-20 text-[10px] text-right bg-[var(--bg-input)] border border-white/5 rounded px-1.5 py-0.5 text-[var(--text-primary)] font-mono"
+                className="w-20 text-[10px] text-right bg-[var(--bg-input)] border border-[var(--border)] rounded px-1.5 py-0.5 text-[var(--text-primary)] font-mono"
               />
             </div>
             <div className="flex items-center justify-between">
@@ -334,7 +334,7 @@ export default function QCommPanel() {
                 type="number"
                 value={params.e91Pairs}
                 onChange={(e) => updateParams({ e91Pairs: parseInt(e.target.value) || 2048 })}
-                className="w-20 text-[10px] text-right bg-[var(--bg-input)] border border-white/5 rounded px-1.5 py-0.5 text-[var(--text-primary)] font-mono"
+                className="w-20 text-[10px] text-right bg-[var(--bg-input)] border border-[var(--border)] rounded px-1.5 py-0.5 text-[var(--text-primary)] font-mono"
               />
             </div>
             <div className="flex items-center justify-between">
@@ -371,7 +371,7 @@ export default function QCommPanel() {
                 type="number"
                 value={params.cvqkdModVar}
                 onChange={(e) => updateParams({ cvqkdModVar: parseInt(e.target.value) || 16 })}
-                className="w-20 text-[10px] text-right bg-[var(--bg-input)] border border-white/5 rounded px-1.5 py-0.5 text-[var(--text-primary)] font-mono"
+                className="w-20 text-[10px] text-right bg-[var(--bg-input)] border border-[var(--border)] rounded px-1.5 py-0.5 text-[var(--text-primary)] font-mono"
               />
             </div>
           </>
@@ -384,7 +384,7 @@ export default function QCommPanel() {
               type="number"
               value={params.diqkdRounds}
               onChange={(e) => updateParams({ diqkdRounds: parseInt(e.target.value) || 512 })}
-              className="w-20 text-[10px] text-right bg-[var(--bg-input)] border border-white/5 rounded px-1.5 py-0.5 text-[var(--text-primary)] font-mono"
+              className="w-20 text-[10px] text-right bg-[var(--bg-input)] border border-[var(--border)] rounded px-1.5 py-0.5 text-[var(--text-primary)] font-mono"
             />
           </div>
         );
@@ -397,7 +397,7 @@ export default function QCommPanel() {
                 type="number"
                 value={params.satAltitude}
                 onChange={(e) => updateParams({ satAltitude: parseInt(e.target.value) || 550 })}
-                className="w-20 text-[10px] text-right bg-[var(--bg-input)] border border-white/5 rounded px-1.5 py-0.5 text-[var(--text-primary)] font-mono"
+                className="w-20 text-[10px] text-right bg-[var(--bg-input)] border border-[var(--border)] rounded px-1.5 py-0.5 text-[var(--text-primary)] font-mono"
               />
             </div>
             <div className="flex items-center justify-between">
@@ -427,7 +427,7 @@ export default function QCommPanel() {
               type="number"
               value={params.repeaterHops}
               onChange={(e) => updateParams({ repeaterHops: parseInt(e.target.value) || 3 })}
-              className="w-20 text-[10px] text-right bg-[var(--bg-input)] border border-white/5 rounded px-1.5 py-0.5 text-[var(--text-primary)] font-mono"
+              className="w-20 text-[10px] text-right bg-[var(--bg-input)] border border-[var(--border)] rounded px-1.5 py-0.5 text-[var(--text-primary)] font-mono"
             />
           </div>
         );
@@ -440,7 +440,7 @@ export default function QCommPanel() {
                 type="number"
                 value={params.networkNodes}
                 onChange={(e) => updateParams({ networkNodes: Math.max(2, parseInt(e.target.value) || 6) })}
-                className="w-20 text-[10px] text-right bg-[var(--bg-input)] border border-white/5 rounded px-1.5 py-0.5 text-[var(--text-primary)] font-mono"
+                className="w-20 text-[10px] text-right bg-[var(--bg-input)] border border-[var(--border)] rounded px-1.5 py-0.5 text-[var(--text-primary)] font-mono"
               />
             </div>
             <div className="flex items-center justify-between">
@@ -486,7 +486,7 @@ export default function QCommPanel() {
               className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
                 protocol === p
                   ? 'bg-[var(--accent-primary)] text-white shadow-sm'
-                  : 'bg-[var(--bg-input)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.06] border border-white/5'
+                  : 'bg-[var(--bg-input)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] border border-[var(--border)]'
               }`}
             >
               {p}
@@ -500,7 +500,7 @@ export default function QCommPanel() {
         <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-widest font-semibold px-1">
           Parameters
         </span>
-        <div className="space-y-2 p-2 bg-[var(--bg-panel)] rounded-lg border border-white/5">
+        <div className="space-y-2 p-2 bg-[var(--bg-panel)] rounded-lg border border-[var(--border)]">
           {renderProtocolParams()}
         </div>
       </div>
@@ -531,7 +531,7 @@ export default function QCommPanel() {
             Results
           </span>
 
-          <div className="p-2 bg-[var(--bg-panel)] rounded-lg border border-white/5 space-y-2">
+          <div className="p-2 bg-[var(--bg-panel)] rounded-lg border border-[var(--border)] space-y-2">
             {/* Security indicator */}
             <div className="flex items-center justify-between">
               <SecurityIndicator secure={result.secure} />
@@ -555,10 +555,10 @@ export default function QCommPanel() {
                 <span
                   className={`text-[10px] font-mono font-semibold ${
                     result.qber < 0.05
-                      ? 'text-emerald-400'
+                      ? 'text-[var(--accent-success)]'
                       : result.qber < 0.1
-                        ? 'text-amber-400'
-                        : 'text-red-400'
+                        ? 'text-[var(--accent-warning)]'
+                        : 'text-[var(--accent-error)]'
                   }`}
                 >
                   {(result.qber * 100).toFixed(2)}%
@@ -594,7 +594,7 @@ export default function QCommPanel() {
 
           {/* Network topology for Quantum Network */}
           {protocol === 'Quantum Network' && (
-            <div className="p-2 bg-[var(--bg-panel)] rounded-lg border border-white/5">
+            <div className="p-2 bg-[var(--bg-panel)] rounded-lg border border-[var(--border)]">
               <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-widest font-semibold">
                 Network Topology
               </span>
@@ -608,7 +608,7 @@ export default function QCommPanel() {
           )}
 
           {/* Key material */}
-          <div className="p-2 bg-[var(--bg-panel)] rounded-lg border border-white/5 space-y-1">
+          <div className="p-2 bg-[var(--bg-panel)] rounded-lg border border-[var(--border)] space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-widest font-semibold">
                 Key Material

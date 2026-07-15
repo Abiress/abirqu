@@ -161,7 +161,7 @@ export default function QECPanel() {
   return (
     <div className="h-full flex flex-col text-[var(--text-primary)] overflow-hidden animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-2 border-b border-white/5 bg-[var(--bg-panel)]">
+      <div className="flex items-center gap-3 px-4 py-2 border-b border-[var(--border)] bg-[var(--bg-panel)]">
         <span className="text-[11px] font-semibold text-[var(--accent-primary)]">QEC Lab</span>
         <span className="text-[9px] text-[var(--text-muted)]">Real abirqu.qec encode → syndrome → decode</span>
       </div>
@@ -183,7 +183,7 @@ export default function QECPanel() {
               setEncodeError(null);
               setDecodeError(null);
             }}
-            className="w-full px-2 py-1.5 rounded-md bg-[var(--bg-input)] border border-white/5 text-[11px] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
+            className="w-full px-2 py-1.5 rounded-md bg-[var(--bg-input)] border border-[var(--border)] text-[11px] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
           >
             {CODES.map((c) => (
               <option key={c.id} value={c.id}>
@@ -215,7 +215,7 @@ export default function QECPanel() {
                   className={`flex-1 px-2 py-1 rounded-md text-[10px] font-mono font-bold border transition-all ${
                     (selectedSize ?? code.defaultSize) === s
                       ? 'bg-[var(--accent-primary)]/10 border-[var(--accent-primary)]/40 text-[var(--accent-primary)]'
-                      : 'bg-[var(--bg-input)] border-white/5 text-[var(--text-muted)] hover:border-white/10'
+                      : 'bg-[var(--bg-input)] border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'
                   }`}
                 >
                   {s}
@@ -227,15 +227,15 @@ export default function QECPanel() {
 
         {/* Code Properties */}
         <div className="flex gap-2 animate-fade-in">
-          <div className="flex-1 rounded-md bg-[var(--bg-input)] border border-white/5 px-2 py-1.5 text-center">
+          <div className="flex-1 rounded-md bg-[var(--bg-input)] border border-[var(--border)] px-2 py-1.5 text-center">
             <div className="text-[9px] text-[var(--text-muted)]">n (physical)</div>
             <div className="text-[11px] font-mono font-bold text-[var(--accent-primary)]">{(displayOverhead as any).n}</div>
           </div>
-          <div className="flex-1 rounded-md bg-[var(--bg-input)] border border-white/5 px-2 py-1.5 text-center">
+          <div className="flex-1 rounded-md bg-[var(--bg-input)] border border-[var(--border)] px-2 py-1.5 text-center">
             <div className="text-[9px] text-[var(--text-muted)]">k (logical)</div>
             <div className="text-[11px] font-mono font-bold text-[var(--accent-primary)]">{(displayOverhead as any).k}</div>
           </div>
-          <div className="flex-1 rounded-md bg-[var(--bg-input)] border border-white/5 px-2 py-1.5 text-center">
+          <div className="flex-1 rounded-md bg-[var(--bg-input)] border border-[var(--border)] px-2 py-1.5 text-center">
             <div className="text-[9px] text-[var(--text-muted)]">d (distance)</div>
             <div className="text-[11px] font-mono font-bold text-[var(--accent-primary)]">{(displayOverhead as any).d}</div>
           </div>
@@ -281,14 +281,14 @@ export default function QECPanel() {
                 </div>
               </div>
             </div>
-            <div className="rounded-md bg-[var(--bg-input)] border border-white/5 p-2">
+            <div className="rounded-md bg-[var(--bg-input)] border border-[var(--border)] p-2">
               <div className="flex flex-wrap gap-1 justify-center">
                 {Array.from({ length: n }, (_, i) => i).map((qid) => {
                   const hasError = hasDecoded ? residualErrorQubits.has(qid) : qubitErrorSet.has(qid);
                   return (
                     <div
                       key={qid}
-                      className="w-8 h-8 rounded-md border border-white/10 flex flex-col items-center justify-center transition-all duration-300"
+                      className="w-8 h-8 rounded-md border border-[var(--border-strong)] flex flex-col items-center justify-center transition-all duration-300"
                       style={{
                         backgroundColor: `${hasError ? 'var(--accent-error)' : 'var(--accent-success)'}15`,
                       }}
@@ -312,7 +312,7 @@ export default function QECPanel() {
         {cycleResult && (
           <div className="space-y-1.5 animate-fade-in">
             <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Syndrome</label>
-            <div className="rounded-md bg-[var(--bg-input)] border border-white/5 p-2">
+            <div className="rounded-md bg-[var(--bg-input)] border border-[var(--border)] p-2">
               <div className="flex flex-wrap gap-1 mb-1.5">
                 {cycleResult.syndrome.map((bit, i) => (
                   <span
@@ -320,7 +320,7 @@ export default function QECPanel() {
                     className={`inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-mono font-bold border ${
                       bit === 1
                         ? 'bg-[var(--accent-error)]/15 border-[var(--accent-error)]/40 text-[var(--accent-error)]'
-                        : 'bg-white/[0.02] border-white/5 text-[var(--text-muted)]'
+                        : 'bg-[var(--bg-hover)] border-[var(--border)] text-[var(--text-muted)]'
                     }`}
                   >
                     {bit}
@@ -350,7 +350,7 @@ export default function QECPanel() {
                   className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-medium border transition-all ${
                     selectedDecoder === d.id
                       ? 'bg-[var(--accent-primary)]/15 border-[var(--accent-primary)]/40 text-[var(--accent-primary)]'
-                      : 'bg-[var(--bg-input)] border-white/5 text-[var(--text-muted)] hover:border-white/10'
+                      : 'bg-[var(--bg-input)] border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'
                   }`}
                 >
                   {d.name}
@@ -388,7 +388,7 @@ export default function QECPanel() {
         {hasDecoded && cycleResult && (
           <div className="space-y-1.5 animate-fade-in">
             <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Correction Result</label>
-            <div className="rounded-md bg-[var(--bg-input)] border border-white/5 p-2">
+            <div className="rounded-md bg-[var(--bg-input)] border border-[var(--border)] p-2">
               <div className="flex items-center gap-2 mb-1.5">
                 <span
                   className={`w-2 h-2 rounded-full ${
@@ -423,7 +423,7 @@ export default function QECPanel() {
         {/* Magic State Distillation */}
         <div className="space-y-1.5">
           <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Magic State Distillation</label>
-          <div className="rounded-md bg-[var(--bg-input)] border border-white/5 p-2 space-y-2">
+          <div className="rounded-md bg-[var(--bg-input)] border border-[var(--border)] p-2 space-y-2">
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-[var(--text-secondary)]">Rounds:</span>
               {[1, 2, 3, 4, 5].map((r) => (
@@ -433,7 +433,7 @@ export default function QECPanel() {
                   className={`w-6 h-6 rounded text-[10px] font-mono font-bold border transition-all ${
                     distillRound === r
                       ? 'bg-[var(--accent-primary)]/15 border-[var(--accent-primary)]/40 text-[var(--accent-primary)]'
-                      : 'border-white/5 text-[var(--text-muted)] hover:border-white/10'
+                      : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'
                   }`}
                 >
                   {r}
@@ -442,7 +442,7 @@ export default function QECPanel() {
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <div className="rounded border border-white/5 p-2">
+              <div className="rounded border border-[var(--border)] p-2">
                 <div className="text-[10px] text-[var(--text-muted)] mb-1">T-State (abirqu.qec.TStateFactory)</div>
                 <div className="text-[11px] font-mono text-[var(--text-primary)]">
                   {distillResults[0] ? (
@@ -458,7 +458,7 @@ export default function QECPanel() {
                   )}
                 </div>
               </div>
-              <div className="rounded border border-white/5 p-2">
+              <div className="rounded border border-[var(--border)] p-2">
                 <div className="text-[10px] text-[var(--text-muted)] mb-1">H-State (abirqu.qec.HStateDistiller)</div>
                 <div className="text-[11px] font-mono text-[var(--text-primary)]">
                   {distillResults[1] ? (
@@ -499,7 +499,7 @@ export default function QECPanel() {
         {stats.totalRuns > 0 && (
           <div className="space-y-1.5">
             <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Statistics</label>
-            <div className="rounded-md bg-[var(--bg-input)] border border-white/5 p-2">
+            <div className="rounded-md bg-[var(--bg-input)] border border-[var(--border)] p-2">
               <div className="grid grid-cols-3 gap-2 mb-2">
                 <div>
                   <div className="text-[9px] text-[var(--text-muted)]">Total Runs</div>
@@ -538,7 +538,7 @@ export default function QECPanel() {
       </div>
 
       {/* Footer */}
-      <div className="px-3 py-1.5 border-t border-white/5 text-[9px] text-[var(--text-muted)] flex items-center gap-2">
+      <div className="px-3 py-1.5 border-t border-[var(--border)] text-[9px] text-[var(--text-muted)] flex items-center gap-2">
         <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-success)]" />
         <span>
           {code.name} · {n}q · Decoder: {DECODERS.find((d) => d.id === selectedDecoder)?.name} · Live abirqu.qec

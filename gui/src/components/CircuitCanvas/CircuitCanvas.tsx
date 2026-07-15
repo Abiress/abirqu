@@ -281,8 +281,8 @@ export default function CircuitCanvas() {
   return (
     <div className="flex flex-col h-full relative">
       {/* Gate Palette */}
-      <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 border-b border-white/5 bg-gradient-to-r from-slate-900/80 to-slate-800/50 backdrop-blur-sm">
-        <span className="text-[10px] text-slate-500 uppercase tracking-wider mr-1">Gates</span>
+      <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 border-b border-[var(--border)] bg-[var(--bg-panel)] backdrop-blur-sm">
+        <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider mr-1">Gates</span>
         {GATE_PALETTE.map((g) => (
           <div
             key={g.name}

@@ -90,8 +90,8 @@ export default function MeasurementResults({ compact = false }: Props) {
                     }}
                   />
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-[9px] font-mono">
-                    <span className="text-emerald-400 font-medium">{(p0 * 100).toFixed(0)}%</span>
-                    <span className="text-red-400 font-medium">{(p1 * 100).toFixed(0)}%</span>
+                    <span className="text-[var(--accent-success)] font-medium">{(p0 * 100).toFixed(0)}%</span>
+                    <span className="text-[var(--accent-error)] font-medium">{(p1 * 100).toFixed(0)}%</span>
                   </div>
                 </div>
               </div>
@@ -115,7 +115,7 @@ export default function MeasurementResults({ compact = false }: Props) {
 
 function StatCard({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5">
+    <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)]">
       <div className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider">{label}</div>
       <div className={`text-xs font-medium mt-0.5 ${highlight ? 'text-[var(--accent-primary)]' : 'text-[var(--text-primary)]'}`}>
         {value}

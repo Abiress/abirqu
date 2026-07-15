@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=AbirQu
+Comment=Quantum Computing IDE
+Exec=env GDK_BACKEND=x11 /opt/AbirQu/abirqu-gui %F
+Icon=abirqu
+Type=Application
+Categories=Development;Science;Quantum;
+MimeType=text/x-python;
+Terminal=false
+StartupWMClass=abirqu-gui

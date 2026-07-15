@@ -17,10 +17,10 @@ export default function NoisePanel() {
   };
 
   return (
-    <div className="border border-white/5 rounded-xl overflow-hidden">
+    <div className="border border-[var(--border)] rounded-xl overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/[0.02] transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-[var(--bg-hover)] transition-colors"
       >
         <span className={`w-2 h-2 rounded-full ${noiseConfig.enabled ? 'bg-amber-400' : 'bg-emerald-400'}`} />
         <span className="text-[11px] font-medium text-[var(--text-primary)]">Noise Model</span>
@@ -54,7 +54,7 @@ export default function NoisePanel() {
               <button
                 key={p.name}
                 onClick={() => setNoiseConfig(p.config)}
-                className="px-2 py-0.5 rounded text-[9px] font-medium bg-[var(--bg-input)] border border-white/5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-white/10 transition-all"
+                className="px-2 py-0.5 rounded text-[9px] font-medium bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all"
               >
                 {p.name}
               </button>

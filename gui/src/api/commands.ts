@@ -22,7 +22,6 @@ export interface JobInfo {
 }
 
 export interface HardwareInfo {
-  backend_id: string;
   name: string;
   backend_type: string;
   num_qubits: number;
@@ -72,6 +71,9 @@ export const api = {
     invoke<CircuitData>('load_circuit_from_library', { templateId }),
 
   getServerStats: () => invoke<any>('get_server_stats'),
+
+  saveCircuitToLibrary: (template: CircuitTemplate) =>
+    invoke<string>('save_circuit_to_library', { template }),
 
   convertCircuit: (circuit: CircuitData, target: string) =>
     invoke<any>('convert_circuit', { circuit, target }),

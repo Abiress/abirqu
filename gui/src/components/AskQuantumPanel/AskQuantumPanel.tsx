@@ -110,7 +110,7 @@ function generatePipeline(question: string): PipelineStep[] {
               The ground-state energy of H₂ is <span className="text-[var(--accent-primary)] font-semibold">−1.1372 Hartree</span> (≈ −30.96 eV).
               This was computed using VQE with a UCCSD ansatz on 4 qubits in the STO-3G basis.
             </div>
-            <div className="text-[9px] text-[var(--text-muted)] border-t border-white/5 pt-1">
+            <div className="text-[9px] text-[var(--text-muted)] border-t border-[var(--border)] pt-1">
               Citations: [1] Peruzzo et al., Nature Comm. 5, 4213 (2014) · [2] IBM Qiskit Nature tutorial
             </div>
           </div>
@@ -207,7 +207,7 @@ function generatePipeline(question: string): PipelineStep[] {
               91 = <span className="text-[var(--accent-primary)] font-semibold">7 × 13</span>.
               Shor's algorithm found period r = 6 for a = 5 mod 91, yielding factors gcd(5³+1, 91) = 14 and gcd(5³−1, 91) = 42, then gcd(14, 91) = 7 and gcd(42, 91) = 13.
             </div>
-            <div className="text-[9px] text-[var(--text-muted)] border-t border-white/5 pt-1">
+            <div className="text-[9px] text-[var(--text-muted)] border-t border-[var(--border)] pt-1">
               Citations: [1] Shor, SIAM J. Comp. 26(5), 1484 (1997)
             </div>
           </div>
@@ -302,7 +302,7 @@ function generatePipeline(question: string): PipelineStep[] {
               Partition: {'S = {0, 3, 5}, T̄ = {1, 2, 4}'}.
               QAOA (p=3) found this with probability 64% across 4096 shots.
             </div>
-            <div className="text-[9px] text-[var(--text-muted)] border-t border-white/5 pt-1">
+            <div className="text-[9px] text-[var(--text-muted)] border-t border-[var(--border)] pt-1">
               Citations: [1] Farhi et al., arXiv:1411.4028 (2014) · [2] Google Quantum AI, Nature 574, 505 (2019)
             </div>
           </div>
@@ -402,7 +402,7 @@ function generatePipeline(question: string): PipelineStep[] {
               <br /><br />
               <span className="font-semibold">Recommendation:</span> Migrate to NIST-approved post-quantum algorithms (CRYSTALS-Kyber, CRYSTALS-Dilithium) now, as "harvest now, decrypt later" attacks are a real threat.
             </div>
-            <div className="text-[9px] text-[var(--text-muted)] border-t border-white/5 pt-1">
+            <div className="text-[9px] text-[var(--text-muted)] border-t border-[var(--border)] pt-1">
               Citations: [1] Gidney & Ekerå, Quantum 5, 433 (2021) · [2] NIST SP 800-208 · [3] Mosca, Cybersecurity 2018
             </div>
           </div>
@@ -686,7 +686,7 @@ export default function AskQuantumPanel() {
   return (
     <div className="flex flex-col h-full bg-[var(--bg-panel)]">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5 bg-[var(--bg-panel)]">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--border)] bg-[var(--bg-panel)]">
         <span className="text-[var(--accent-primary)] text-sm font-bold">Q</span>
         <span className="text-[11px] font-medium text-[var(--text-primary)]">Ask Quantum</span>
         <span className="text-[9px] text-[var(--text-muted)] bg-[var(--bg-input)] px-1.5 py-0.5 rounded-full">NL2Q</span>
@@ -694,7 +694,7 @@ export default function AskQuantumPanel() {
         {activePipeline && (
           <button
             onClick={exportReport}
-            className="px-2 py-0.5 rounded text-[9px] font-medium bg-[var(--bg-input)] border border-white/5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-white/10 transition-all"
+            className="px-2 py-0.5 rounded text-[9px] font-medium bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all"
           >
             Export Report
           </button>
@@ -717,7 +717,7 @@ export default function AskQuantumPanel() {
                 <button
                   key={eq}
                   onClick={() => handleSubmit(eq)}
-                  className="px-2.5 py-1 rounded-lg text-[9px] font-medium bg-[var(--bg-input)] border border-white/5 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:border-[var(--accent-primary)]/30 hover:bg-[var(--accent-primary)]/5 transition-all"
+                  className="px-2.5 py-1 rounded-lg text-[9px] font-medium bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:border-[var(--accent-primary)]/30 hover:bg-[var(--accent-primary)]/5 transition-all"
                 >
                   {eq}
                 </button>
@@ -732,7 +732,7 @@ export default function AskQuantumPanel() {
               className={`max-w-[85%] rounded-xl px-3 py-2 text-[11px] ${
                 msg.role === 'user'
                   ? 'bg-[var(--accent-primary)] text-white rounded-br-sm'
-                  : 'bg-[var(--bg-input)] text-[var(--text-primary)] border border-white/5 rounded-bl-sm'
+                  : 'bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border)] rounded-bl-sm'
               }`}
             >
               {msg.text}
@@ -756,13 +756,13 @@ export default function AskQuantumPanel() {
                     isRunning
                       ? 'border-[var(--accent-primary)]/30 bg-[var(--accent-primary)]/5'
                       : isDone
-                      ? 'border-white/5 bg-[var(--bg-input)]'
-                      : 'border-white/5 bg-[var(--bg-panel)]'
+                      ? 'border-[var(--border)] bg-[var(--bg-input)]'
+                      : 'border-[var(--border)] bg-[var(--bg-panel)]'
                   }`}
                 >
                   <button
                     onClick={() => toggleStep(step.id)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/[0.02] transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-[var(--bg-hover)] transition-colors"
                   >
                     <span
                       className={`w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold ${
@@ -770,7 +770,7 @@ export default function AskQuantumPanel() {
                           ? 'bg-[var(--accent-primary)] text-white animate-pulse'
                           : isDone
                           ? 'bg-[var(--accent-success)] text-white'
-                          : 'bg-[var(--bg-input)] text-[var(--text-muted)] border border-white/5'
+                          : 'bg-[var(--bg-input)] text-[var(--text-muted)] border border-[var(--border)]'
                       }`}
                     >
                       {isRunning ? '...' : isDone ? '✓' : step.id}
@@ -781,7 +781,7 @@ export default function AskQuantumPanel() {
                     {step.editable && isDone && (
                       <button
                         onClick={(e) => { e.stopPropagation(); }}
-                        className="ml-1 px-1.5 py-0.5 rounded text-[8px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all"
+                        className="ml-1 px-1.5 py-0.5 rounded text-[8px] font-medium bg-[var(--accent-warning)]/10 text-[var(--accent-warning)] border border-[var(--accent-warning)]/20 hover:bg-[var(--accent-warning)]/20 transition-all"
                       >
                         Edit
                       </button>
@@ -823,7 +823,7 @@ export default function AskQuantumPanel() {
               <div className="flex justify-center pt-1 animate-fade-in">
                 <button
                   onClick={copyAnswer}
-                  className="px-3 py-1 rounded-lg text-[10px] font-medium bg-[var(--bg-input)] border border-white/5 text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:border-[var(--accent-primary)]/30 transition-all"
+                  className="px-3 py-1 rounded-lg text-[10px] font-medium bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:border-[var(--accent-primary)]/30 transition-all"
                 >
                   Copy Answer
                 </button>
@@ -836,8 +836,8 @@ export default function AskQuantumPanel() {
       </div>
 
       {/* Input bar */}
-      <div className="border-t border-white/5 bg-[var(--bg-panel)] p-2">
-        <div className="flex items-center gap-2 bg-[var(--bg-input)] rounded-xl border border-white/5 px-3 py-1.5 focus-within:border-[var(--accent-primary)]/30 transition-colors">
+      <div className="border-t border-[var(--border)] bg-[var(--bg-panel)] p-2">
+        <div className="flex items-center gap-2 bg-[var(--bg-input)] rounded-xl border border-[var(--border)] px-3 py-1.5 focus-within:border-[var(--accent-primary)]/30 transition-colors">
           <input
             ref={inputRef}
             type="text"
@@ -853,7 +853,7 @@ export default function AskQuantumPanel() {
             className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
               inputValue.trim()
                 ? 'bg-[var(--accent-primary)] text-white hover:shadow-lg hover:scale-105'
-                : 'bg-[var(--bg-input)] text-[var(--text-muted)] border border-white/5'
+                : 'bg-[var(--bg-input)] text-[var(--text-muted)] border border-[var(--border)]'
             }`}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

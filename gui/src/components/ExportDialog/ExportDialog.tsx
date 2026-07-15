@@ -59,15 +59,22 @@ export default function ExportDialog({ open, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="w-[520px] max-h-[80vh] bg-[var(--bg-panel)] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      <div className="w-[520px] max-h-[80vh] bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
           <div>
             <div className="text-sm font-bold text-[var(--text-primary)]">Export Research Report</div>
             <div className="text-[10px] text-[var(--text-muted)]">Circuit + results for publications, sharing, or backup</div>
           </div>
           <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-lg">✕</button>
         </div>
+
+        {/* Warning when no results */}
+        {!activeResult && (
+          <div className="mx-4 mt-3 p-2 rounded-lg bg-[var(--accent-warning)]/10 border border-[var(--accent-warning)]/20 text-[10px] text-[var(--accent-warning)]">
+            No results yet. Run a circuit first to include measurement data in the export.
+          </div>
+        )}
 
         {/* Format selector */}
         <div className="p-4 space-y-2">
@@ -78,7 +85,7 @@ export default function ExportDialog({ open, onClose }: Props) {
               className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
                 selectedFormat === f.key
                   ? 'bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/30 shadow-sm'
-                  : 'border border-white/5 hover:bg-white/[0.02]'
+                  : 'border border-[var(--border)] hover:bg-[var(--bg-hover)]'
               }`}
             >
               <span className="text-lg">{f.icon}</span>
@@ -92,7 +99,7 @@ export default function ExportDialog({ open, onClose }: Props) {
 
         {/* Preview */}
         {preview && (
-          <div className="mx-4 mb-3 p-2 rounded-lg bg-[var(--bg-editor)] border border-white/5 max-h-40 overflow-auto">
+          <div className="mx-4 mb-3 p-2 rounded-lg bg-[var(--bg-editor)] border border-[var(--border)] max-h-40 overflow-auto">
             <pre className="text-[10px] text-[var(--text-secondary)] font-mono whitespace-pre-wrap">
               {preview.slice(0, 1000)}
             </pre>
@@ -100,10 +107,10 @@ export default function ExportDialog({ open, onClose }: Props) {
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-white/5">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--border)]">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-lg text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-all"
+            className="px-4 py-1.5 rounded-lg text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all"
           >
             Cancel
           </button>

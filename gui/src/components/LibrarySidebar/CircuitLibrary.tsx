@@ -3,20 +3,43 @@ import { useCircuitStore } from '../../stores/circuitStore';
 import { api, CircuitTemplate } from '../../api/commands';
 
 const DIFF_COLORS: Record<string, string> = {
-  beginner: 'text-emerald-400 bg-emerald-400/10',
-  intermediate: 'text-amber-400 bg-amber-400/10',
-  advanced: 'text-red-400 bg-red-400/10',
+  beginner: 'text-[var(--accent-success)] bg-[var(--accent-success)]/10',
+  intermediate: 'text-[var(--accent-warning)] bg-[var(--accent-warning)]/10',
+  advanced: 'text-[var(--accent-error)] bg-[var(--accent-error)]/10',
 };
 
-export default function LibrarySidebar() {
+interface Props {
+  serverReady?: boolean;
+}
+
+export default function LibrarySidebar({ serverReady = false }: Props) {
   const [templates, setTemplates] = useState<CircuitTemplate[]>([]);
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const { loadFromTemplate } = useCircuitStore();
 
   useEffect(() => {
-    api.listLibraryCircuits().then(setTemplates).catch(console.error);
-  }, []);
+    if (!serverReady) return;
+    let cancelled = false;
+    const load = async () => {
+      for (let i = 0; i < 5; i++) {
+        try {
+          const data = await api.listLibraryCircuits();
+          if (!cancelled) {
+            setTemplates(data);
+            setLoading(false);
+          }
+          return;
+        } catch {
+          await new Promise((r) => setTimeout(r, 800));
+        }
+      }
+      if (!cancelled) setLoading(false);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [serverReady]);
 
   const categories = [...new Set(templates.map((t) => t.category))];
 
@@ -39,10 +62,19 @@ export default function LibrarySidebar() {
     }
   };
 
+  if (loading && serverReady) {
+    return (
+      <div className="flex items-center justify-center h-full text-[var(--text-muted)]">
+        <span className="w-3 h-3 border-2 border-[var(--accent-primary)] border-t-transparent rounded-full animate-spin mr-2" />
+        <span className="text-[10px]">Loading library...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Search */}
-      <div className="p-2 border-b border-white/5">
+      <div className="p-2 border-b border-[var(--border)]">
         <div className="relative">
           <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs">🔍</span>
           <input
@@ -50,13 +82,13 @@ export default function LibrarySidebar() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search circuits..."
-            className="w-full pl-7 pr-2 py-1.5 rounded-lg text-xs bg-[var(--bg-input)] text-[var(--text-primary)] border border-white/5 focus:border-[var(--border-focus)] focus:outline-none transition-colors placeholder:text-[var(--text-muted)]"
+            className="w-full pl-7 pr-2 py-1.5 rounded-lg text-xs bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border)] focus:border-[var(--border-focus)] focus:outline-none transition-colors placeholder:text-[var(--text-muted)]"
           />
         </div>
       </div>
 
       {/* Categories */}
-      <div className="flex gap-1 px-2 py-1.5 border-b border-white/5 overflow-x-auto">
+      <div className="flex gap-1 px-2 py-1.5 border-b border-[var(--border)] overflow-x-auto">
         <CatBtn active={!selectedCat} onClick={() => setSelectedCat(null)} label="All" count={templates.length} />
         {categories.map((cat) => (
           <CatBtn
@@ -102,6 +134,12 @@ export default function LibrarySidebar() {
             </div>
           </button>
         ))}
+        {filtered.length === 0 && (
+          <div className="text-center py-8 text-[var(--text-muted)]">
+            <span className="text-2xl block mb-2 opacity-30">📚</span>
+            <span className="text-[10px]">No circuits found</span>
+          </div>
+        )}
       </div>
     </div>
   );

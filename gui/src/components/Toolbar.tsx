@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useEffect } from 'react';
 import { useCircuitStore } from '../stores/circuitStore';
 import { useJobStore } from '../stores/jobStore';
 import { useHardwareStore } from '../stores/hardwareStore';
@@ -14,8 +14,15 @@ export default function Toolbar({ onExport }: ToolbarProps) {
   const { addJob, updateJob, setResults } = useJobStore();
   const { selectedBackend, backends, noiseConfig } = useHardwareStore();
   const { theme, toggleTheme } = useThemeStore();
-  const [running, setRunning] = useState(false);
-  const [shots, setShots] = useState(1024);
+  const [running, setRunning] = React.useState(false);
+  const [shots, setShots] = React.useState(1024);
+  const pollRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearTimeout(pollRef.current);
+    };
+  }, []);
 
   const handleRun = useCallback(async () => {
     if (running) return;
@@ -25,7 +32,6 @@ export default function Toolbar({ onExport }: ToolbarProps) {
       const job = await api.executeCircuit(circuit, selectedBackend, shots, noiseConfig);
       addJob(job);
 
-      // Poll for completion
       const poll = async () => {
         try {
           const status = await api.getJobStatus(job.job_id);
@@ -37,13 +43,13 @@ export default function Toolbar({ onExport }: ToolbarProps) {
           } else if (status.status === 'failed') {
             setRunning(false);
           } else {
-            setTimeout(poll, 200);
+            pollRef.current = window.setTimeout(poll, 200);
           }
         } catch {
           setRunning(false);
         }
       };
-      setTimeout(poll, 300);
+      pollRef.current = window.setTimeout(poll, 300);
     } catch (err) {
       console.error('Execute failed:', err);
       setRunning(false);
@@ -51,15 +57,28 @@ export default function Toolbar({ onExport }: ToolbarProps) {
   }, [running, selectedBackend, shots, noiseConfig, getCircuitData, addJob, updateJob, setResults]);
 
   const handleStop = useCallback(() => {
+    if (pollRef.current) {
+      clearTimeout(pollRef.current);
+      pollRef.current = null;
+    }
     const { activeJobId } = useJobStore.getState();
     if (activeJobId) {
       api.cancelJob(activeJobId).catch(() => {});
-      setRunning(false);
     }
+    setRunning(false);
   }, []);
 
+  const handleSave = useCallback(async () => {
+    try {
+      const circuit = getCircuitData();
+      await api.exportCircuit(circuit, 'json');
+    } catch (err) {
+      console.error('Save failed:', err);
+    }
+  }, [getCircuitData]);
+
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-panel)] border-b border-white/5">
+    <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-panel)] border-b border-[var(--border)]">
       {/* Logo */}
       <div className="flex items-center gap-2 mr-2">
         <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
@@ -70,14 +89,14 @@ export default function Toolbar({ onExport }: ToolbarProps) {
         </span>
       </div>
 
-      <div className="w-px h-5 bg-white/5" />
+      <div className="w-px h-5 bg-[var(--border)]" />
 
       {/* File actions */}
       <ToolBtn label="New" onClick={clearCircuit} icon="📄" />
-      <ToolBtn label="Save" onClick={() => {}} icon="💾" />
+      <ToolBtn label="Save" onClick={handleSave} icon="💾" />
       <ToolBtn label="Export" onClick={onExport || (() => {})} icon="📤" />
 
-      <div className="w-px h-5 bg-white/5" />
+      <div className="w-px h-5 bg-[var(--border)]" />
 
       {/* Run controls */}
       <button
@@ -85,12 +104,12 @@ export default function Toolbar({ onExport }: ToolbarProps) {
         disabled={running}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
           running
-            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse'
-            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/10'
+            ? 'bg-[var(--accent-warning)]/20 text-[var(--accent-warning)] border border-[var(--accent-warning)]/30 animate-pulse'
+            : 'bg-[var(--accent-success)]/20 text-[var(--accent-success)] border border-[var(--accent-success)]/30 hover:bg-[var(--accent-success)]/30 hover:shadow-lg hover:shadow-[var(--accent-success)]/10'
         }`}
       >
         {running ? (
-          <span className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+          <span className="w-3 h-3 border-2 border-[var(--accent-warning)] border-t-transparent rounded-full animate-spin" />
         ) : (
           <span className="text-[10px]">▶</span>
         )}
@@ -100,13 +119,13 @@ export default function Toolbar({ onExport }: ToolbarProps) {
       <button
         onClick={handleStop}
         disabled={!running}
-        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[var(--accent-error)]/10 text-[var(--accent-error)] border border-[var(--accent-error)]/20 hover:bg-[var(--accent-error)]/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
       >
         <span className="text-[10px]">■</span>
         Stop
       </button>
 
-      <div className="w-px h-5 bg-white/5" />
+      <div className="w-px h-5 bg-[var(--border)]" />
 
       {/* Qubits */}
       <div className="flex items-center gap-1.5">
@@ -114,7 +133,7 @@ export default function Toolbar({ onExport }: ToolbarProps) {
         <select
           value={numQubits}
           onChange={(e) => setNumQubits(Number(e.target.value))}
-          className="bg-[var(--bg-input)] text-[var(--text-primary)] border border-white/5 rounded-md px-2 py-1 text-xs focus:border-[var(--border-focus)] focus:outline-none transition-colors"
+          className="bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border)] rounded-md px-2 py-1 text-xs focus:border-[var(--border-focus)] focus:outline-none transition-colors"
         >
           {[1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 16].map((n) => (
             <option key={n} value={n}>{n}</option>
@@ -128,7 +147,7 @@ export default function Toolbar({ onExport }: ToolbarProps) {
         <select
           value={shots}
           onChange={(e) => setShots(Number(e.target.value))}
-          className="bg-[var(--bg-input)] text-[var(--text-primary)] border border-white/5 rounded-md px-2 py-1 text-xs focus:border-[var(--border-focus)] focus:outline-none transition-colors"
+          className="bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border)] rounded-md px-2 py-1 text-xs focus:border-[var(--border-focus)] focus:outline-none transition-colors"
         >
           {[64, 128, 256, 512, 1024, 2048, 4096, 8192].map((n) => (
             <option key={n} value={n}>{n}</option>
@@ -144,7 +163,7 @@ export default function Toolbar({ onExport }: ToolbarProps) {
         <select
           value={selectedBackend}
           onChange={(e) => useHardwareStore.getState().selectBackend(e.target.value)}
-          className="bg-[var(--bg-input)] text-[var(--text-primary)] border border-white/5 rounded-md px-2 py-1 text-xs max-w-[180px] focus:border-[var(--border-focus)] focus:outline-none transition-colors"
+          className="bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border)] rounded-md px-2 py-1 text-xs max-w-[180px] focus:border-[var(--border-focus)] focus:outline-none transition-colors"
         >
           {backends.map((b) => (
             <option key={b.name} value={b.name}>{b.name}</option>
@@ -152,12 +171,12 @@ export default function Toolbar({ onExport }: ToolbarProps) {
         </select>
       </div>
 
-      <div className="w-px h-5 bg-white/5" />
+      <div className="w-px h-5 bg-[var(--border)]" />
 
       {/* Theme */}
       <button
         onClick={toggleTheme}
-        className="w-7 h-7 rounded-lg flex items-center justify-center text-sm bg-[var(--bg-input)] border border-white/5 hover:bg-[var(--border)] hover:border-white/10 transition-all"
+        className="w-7 h-7 rounded-lg flex items-center justify-center text-sm bg-[var(--bg-input)] border border-[var(--border)] hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)] transition-all"
       >
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>

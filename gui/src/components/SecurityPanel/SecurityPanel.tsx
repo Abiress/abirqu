@@ -188,7 +188,7 @@ export default function SecurityPanel() {
   return (
     <div className="flex flex-col h-full">
       {/* Tab bar */}
-      <div className="flex border-b border-white/5 bg-[var(--bg-panel)]">
+      <div className="flex border-b border-[var(--border)] bg-[var(--bg-panel)]">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -224,7 +224,7 @@ export default function SecurityPanel() {
                     className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all border ${
                       algorithm === algo.id
                         ? 'bg-[var(--accent-primary)]/10 border-[var(--accent-primary)]/30 text-[var(--accent-primary)]'
-                        : 'bg-[var(--bg-input)] border-white/5 text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-white/10'
+                        : 'bg-[var(--bg-input)] border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-[var(--border-strong)]'
                     }`}
                   >
                     <div className="truncate">{algo.name}</div>
@@ -271,7 +271,7 @@ export default function SecurityPanel() {
                     <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-success)]" />
                     <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider">Public Key</span>
                   </div>
-                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5">
+                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)]">
                     <code className="text-[10px] text-[var(--accent-success)] font-mono break-all">
                       {truncateHex(keypair.publicKey)}
                     </code>
@@ -292,7 +292,7 @@ export default function SecurityPanel() {
                       {showPrivateKey ? 'Hide' : 'Show'}
                     </button>
                   </div>
-                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5">
+                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)]">
                     <code className="text-[10px] text-[var(--accent-error)] font-mono break-all">
                       {showPrivateKey
                         ? truncateHex(keypair.privateKey, 64)
@@ -407,11 +407,11 @@ export default function SecurityPanel() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-2">
-                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5 text-center">
+                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-center">
                     <div className="text-[9px] text-[var(--text-muted)]">Raw Bits</div>
                     <div className="text-[11px] font-mono text-[var(--text-primary)]">{qkdResult.rawBits}</div>
                   </div>
-                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5 text-center">
+                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-center">
                     <div className="text-[9px] text-[var(--text-muted)]">QBER</div>
                     <div
                       className={`text-[11px] font-mono ${
@@ -421,7 +421,7 @@ export default function SecurityPanel() {
                       {qkdResult.qber}%
                     </div>
                   </div>
-                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5 text-center">
+                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-center">
                     <div className="text-[9px] text-[var(--text-muted)]">Sifted</div>
                     <div className="text-[11px] font-mono text-[var(--text-primary)]">
                       {Math.floor(qkdResult.rawBits * 0.5)}
@@ -435,7 +435,7 @@ export default function SecurityPanel() {
                     <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                     <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider">Sifted Key</span>
                   </div>
-                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5">
+                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)]">
                     <code className="text-[10px] text-cyan-400 font-mono break-all">
                       {truncateHex(qkdResult.siftedKey)}
                     </code>
@@ -448,7 +448,7 @@ export default function SecurityPanel() {
                     <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]" />
                     <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider">Key Material</span>
                   </div>
-                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5">
+                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)]">
                     <code className="text-[10px] text-[var(--accent-primary)] font-mono break-all">
                       {qkdResult.keyMaterial}
                     </code>
@@ -472,7 +472,7 @@ export default function SecurityPanel() {
               <textarea
                 value={circuitInput}
                 onChange={(e) => setCircuitInput(e.target.value)}
-                className="w-full h-32 p-2 rounded-lg bg-[var(--bg-input)] border border-white/5 text-[10px] text-[var(--text-secondary)] font-mono resize-none focus:outline-none focus:border-[var(--accent-primary)]/30 transition-colors"
+                className="w-full h-32 p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-[10px] text-[var(--text-secondary)] font-mono resize-none focus:outline-none focus:border-[var(--accent-primary)]/30 transition-colors"
                 spellCheck={false}
               />
             </div>
@@ -501,7 +501,7 @@ export default function SecurityPanel() {
                     <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-success)]" />
                     <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider">Encrypted Output</span>
                   </div>
-                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5">
+                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)]">
                     <code className="text-[10px] text-[var(--accent-success)] font-mono break-all">
                       {truncateHex(encryptedOutput, 96)}
                     </code>
@@ -510,7 +510,7 @@ export default function SecurityPanel() {
 
                 {/* Metadata */}
                 {encMetadata && (
-                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5 space-y-1.5">
+                  <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] text-[var(--text-muted)]">Algorithm</span>
                       <span className="text-[10px] text-[var(--text-secondary)] font-mono">{encMetadata.algorithm}</span>
@@ -541,7 +541,7 @@ export default function SecurityPanel() {
                       <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-success)]" />
                       <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider">Decrypted Circuit</span>
                     </div>
-                    <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5">
+                    <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)]">
                       <pre className="text-[10px] text-[var(--text-secondary)] font-mono whitespace-pre-wrap">
                         {decryptResult}
                       </pre>

@@ -91,3 +91,14 @@ dotnet/**/obj/
 kotlin/.gradle/
 kotlin/build/
 .gradle/
+
+# QDCG files (local only)
+QDCG_*.txt
+QDCG_*.md
+QDCG_IBM_HARDWARE.md
+qdcg_*.py
+qdcg_*.json
+benchmark_results.json
+
+# Agent wiring docs
+new updates/

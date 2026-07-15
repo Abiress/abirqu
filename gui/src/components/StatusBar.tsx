@@ -10,31 +10,31 @@ export default function StatusBar() {
   const activeJob = jobs.find((j) => j.job_id === activeJobId);
 
   return (
-    <div className="flex items-center gap-4 px-3 py-1 bg-[var(--bg-panel)] border-t border-white/5 text-[10px]">
+    <div className="flex items-center gap-4 px-3 py-1 bg-[var(--bg-panel)] border-t border-[var(--border)] text-[10px]">
       <StatusItem
         icon="⚡"
         label="Backend"
         value={selectedBackend}
-        color="text-violet-400"
+        color="text-[var(--accent-primary)]"
       />
       <StatusItem icon="◻" label="Qubits" value={String(numQubits)} />
       <StatusItem icon="⊞" label="Gates" value={String(gates.length)} />
 
       {activeJob && (
         <>
-          <div className="w-px h-3 bg-white/5" />
+          <div className="w-px h-3 bg-[var(--border)]" />
           <StatusItem
             icon={activeJob.status === 'running' ? '⟳' : activeJob.status === 'completed' ? '✓' : '○'}
             label="Job"
             value={`${activeJob.job_id.slice(0, 8)} · ${activeJob.status}`}
             color={
-              activeJob.status === 'completed' ? 'text-emerald-400' :
-              activeJob.status === 'running' ? 'text-amber-400' :
-              activeJob.status === 'failed' ? 'text-red-400' : ''
+              activeJob.status === 'completed' ? 'text-[var(--accent-success)]' :
+              activeJob.status === 'running' ? 'text-[var(--accent-warning)]' :
+              activeJob.status === 'failed' ? 'text-[var(--accent-error)]' : ''
             }
           />
           {activeJob.status === 'running' && (
-            <span className="text-amber-400">{Math.round(activeJob.progress * 100)}%</span>
+            <span className="text-[var(--accent-warning)]">{Math.round(activeJob.progress * 100)}%</span>
           )}
         </>
       )}

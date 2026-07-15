@@ -139,7 +139,7 @@ function TreeNode({ node, depth, selectedId, expandedIds, onSelect, onToggle, on
         className={`flex items-center gap-1 px-2 py-0.5 cursor-pointer select-none transition-colors ${
           isSelected
             ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]'
-            : 'text-[var(--text-secondary)] hover:bg-white/[0.03] hover:text-[var(--text-primary)]'
+            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
         }`}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
         onClick={handleClick}
@@ -387,19 +387,19 @@ export default function ExplorerPanel() {
   return (
     <div className="flex flex-col h-full select-none">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-white/5">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border)]">
         <span className="text-[11px] font-medium text-[var(--text-primary)]">Explorer</span>
         <div className="flex gap-1">
           <button
             onClick={() => { setCreatingType('file'); setIsCreating(true); }}
-            className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-[var(--bg-input)] border border-white/5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-white/10 transition-all"
+            className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all"
             title="New File"
           >
             + File
           </button>
           <button
             onClick={() => { setCreatingType('folder'); setIsCreating(true); }}
-            className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-[var(--bg-input)] border border-white/5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-white/10 transition-all"
+            className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all"
             title="New Folder"
           >
             + Folder
@@ -409,7 +409,7 @@ export default function ExplorerPanel() {
 
       {/* New file input */}
       {isCreating && (
-        <div className="px-2 py-1.5 border-b border-white/5 animate-fade-in">
+        <div className="px-2 py-1.5 border-b border-[var(--border)] animate-fade-in">
           <div className="flex items-center gap-1">
             <span className="text-xs">{creatingType === 'folder' ? '📁' : '📄'}</span>
             <input
@@ -428,7 +428,7 @@ export default function ExplorerPanel() {
                 if (!newFileName.trim()) setIsCreating(false);
               }}
               placeholder={creatingType === 'folder' ? 'folder name' : 'filename.ext'}
-              className="flex-1 px-1.5 py-0.5 rounded text-[11px] bg-[var(--bg-input)] text-[var(--text-primary)] border border-white/5 focus:border-[var(--accent-primary)] focus:outline-none transition-colors placeholder:text-[var(--text-muted)]"
+              className="flex-1 px-1.5 py-0.5 rounded text-[11px] bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border)] focus:border-[var(--accent-primary)] focus:outline-none transition-colors placeholder:text-[var(--text-muted)]"
             />
           </div>
         </div>
@@ -463,7 +463,7 @@ export default function ExplorerPanel() {
 
       {/* Status bar */}
       {selectedNode && (
-        <div className="px-3 py-1.5 border-t border-white/5 bg-[var(--bg-primary)]">
+        <div className="px-3 py-1.5 border-t border-[var(--border)] bg-[var(--bg-primary)]">
           <div className="flex items-center gap-2">
             <span className="text-xs">{getFileIcon(selectedNode.name, selectedNode.type)}</span>
             <span className="text-[10px] text-[var(--text-primary)] truncate">{selectedNode.name}</span>
@@ -483,32 +483,32 @@ export default function ExplorerPanel() {
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="bg-[var(--bg-panel)] border border-white/10 rounded-lg shadow-xl py-1 min-w-[140px]">
+          <div className="bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-lg shadow-xl py-1 min-w-[140px]">
             <button
               onClick={() => contextMenuAction('new-file')}
-              className="w-full text-left px-3 py-1.5 text-[11px] text-[var(--text-secondary)] hover:bg-white/[0.05] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2"
+              className="w-full text-left px-3 py-1.5 text-[11px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2"
             >
               <span className="text-xs">📄</span>
               New File
             </button>
             <button
               onClick={() => contextMenuAction('new-folder')}
-              className="w-full text-left px-3 py-1.5 text-[11px] text-[var(--text-secondary)] hover:bg-white/[0.05] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2"
+              className="w-full text-left px-3 py-1.5 text-[11px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2"
             >
               <span className="text-xs">📁</span>
               New Folder
             </button>
-            <div className="my-1 border-t border-white/5" />
+            <div className="my-1 border-t border-[var(--border)]" />
             <button
               onClick={() => contextMenuAction('rename')}
-              className="w-full text-left px-3 py-1.5 text-[11px] text-[var(--text-secondary)] hover:bg-white/[0.05] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2"
+              className="w-full text-left px-3 py-1.5 text-[11px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2"
             >
               <span className="text-xs">✏️</span>
               Rename
             </button>
             <button
               onClick={() => contextMenuAction('delete')}
-              className="w-full text-left px-3 py-1.5 text-[11px] text-[var(--accent-error)] hover:bg-white/[0.05] transition-colors flex items-center gap-2"
+              className="w-full text-left px-3 py-1.5 text-[11px] text-[var(--accent-error)] hover:bg-[var(--bg-hover)] transition-colors flex items-center gap-2"
             >
               <span className="text-xs">🗑️</span>
               Delete
@@ -520,7 +520,7 @@ export default function ExplorerPanel() {
       {/* Inline rename */}
       {renamingId && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
-          <div className="bg-[var(--bg-panel)] border border-white/10 rounded-lg p-3 shadow-xl animate-fade-in">
+          <div className="bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-lg p-3 shadow-xl animate-fade-in">
             <div className="text-[11px] text-[var(--text-primary)] mb-2 font-medium">Rename</div>
             <input
               ref={renameRef}
@@ -532,7 +532,7 @@ export default function ExplorerPanel() {
                 if (e.key === 'Escape') setRenamingId(null);
               }}
               onBlur={handleRenameConfirm}
-              className="w-56 px-2 py-1 rounded text-[11px] bg-[var(--bg-input)] text-[var(--text-primary)] border border-white/5 focus:border-[var(--accent-primary)] focus:outline-none transition-colors"
+              className="w-56 px-2 py-1 rounded text-[11px] bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border)] focus:border-[var(--accent-primary)] focus:outline-none transition-colors"
             />
             <div className="flex gap-1 mt-2 justify-end">
               <button

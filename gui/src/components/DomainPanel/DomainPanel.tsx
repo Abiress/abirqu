@@ -17,7 +17,7 @@ export default function DomainPanel() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex border-b border-white/5 bg-[var(--bg-panel)]">
+      <div className="flex border-b border-[var(--border)] bg-[var(--bg-panel)]">
         {DOMAINS.map((d) => (
           <button
             key={d.key}
@@ -72,7 +72,7 @@ function Btn({ onClick, color, children, disabled }: { onClick: () => void; colo
 
 function ResultBox({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
-    <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5 animate-fade-in">
+    <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] animate-fade-in">
       <div className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider mb-0.5">{label}</div>
       <div className="text-[11px] font-mono font-semibold" style={{ color: color || 'var(--text-primary)' }}>{value}</div>
     </div>
@@ -84,7 +84,7 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full px-2 py-1.5 rounded-lg text-[11px] bg-[var(--bg-input)] border border-white/5 text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)] transition-colors cursor-pointer"
+      className="w-full px-2 py-1.5 rounded-lg text-[11px] bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)] transition-colors cursor-pointer"
     >
       {options.map((o) => (
         <option key={o} value={o}>{o}</option>
@@ -223,7 +223,7 @@ function ChemistryTab() {
       {result && (
         <div className="space-y-2 animate-fade-in">
           <ResultBox label="Ground State Energy" value={`${result.energy.toFixed(6)} Hartree`} color="#22c55e" />
-          <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5">
+          <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)]">
             <div className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider mb-1">Energy Convergence</div>
             <MiniLineChart data={result.convergence} color="#22c55e" height={56} />
             <div className="flex justify-between text-[8px] text-[var(--text-muted)] mt-0.5">
@@ -302,7 +302,7 @@ function OsintTab() {
         <Select value={problem} onChange={setProblem} options={['Max-Cut', 'MIS', 'MVC', 'Coloring', 'Community', 'Anomaly']} />
       </div>
 
-      <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5">
+      <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)]">
         <svg viewBox="0 0 100 100" className="w-full" style={{ height: 80 }}>
           {graphData.edges.map(([a, b], i) => (
             <line key={i} x1={graphData.nodes[a].x} y1={graphData.nodes[a].y} x2={graphData.nodes[b].x} y2={graphData.nodes[b].y} stroke="rgba(148,163,184,0.15)" strokeWidth="0.5" />
@@ -415,7 +415,7 @@ function CryptoTab() {
               type="number"
               value={shorN}
               onChange={(e) => setShorN(parseInt(e.target.value) || 15)}
-              className="w-full px-2 py-1.5 rounded-lg text-[11px] bg-[var(--bg-input)] border border-white/5 text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)] font-mono"
+              className="w-full px-2 py-1.5 rounded-lg text-[11px] bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)] font-mono"
             />
           </div>
           <Btn onClick={handleShor} color="#eab308" disabled={running}>
@@ -523,7 +523,7 @@ function SpaceTab() {
           {result && (
             <div className="space-y-2 animate-fade-in">
               <ResultBox label="Residual Norm ‖Ax−b‖" value={result.residualNorm!.toExponential(3)} color="#8b5cf6" />
-              <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5">
+              <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)]">
                 <div className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider mb-1">Solution Vector x</div>
                 <div className="font-mono text-[10px] text-[var(--text-secondary)] break-all">
                   [{result.solution!.map((v) => v.toFixed(4)).join(', ')}]
@@ -545,7 +545,7 @@ function SpaceTab() {
           {result && (
             <div className="space-y-2 animate-fade-in">
               <ResultBox label="Residual Norm" value={result.residualNorm!.toExponential(3)} color="#8b5cf6" />
-              <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5">
+              <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)]">
                 <div className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider mb-1">Velocity Field (sample)</div>
                 <MiniBarChart
                   data={result.solution!.map((v, i) => ({ label: `u${i}`, value: Math.abs(v) }))}
@@ -627,7 +627,7 @@ function QpinnTab() {
       )}
 
       {lossCurve.length > 1 && (
-        <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-white/5 animate-fade-in">
+        <div className="p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] animate-fade-in">
           <div className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider mb-1">Loss Curve</div>
           <MiniLineChart data={lossCurve} color="#f97316" height={56} />
         </div>
@@ -687,7 +687,7 @@ function AgenticTab() {
           value={params}
           onChange={(e) => setParams(e.target.value)}
           rows={4}
-          className="w-full px-2 py-1.5 rounded-lg text-[10px] font-mono bg-[var(--bg-input)] border border-white/5 text-[var(--text-secondary)] outline-none focus:border-[var(--accent-primary)] resize-none"
+          className="w-full px-2 py-1.5 rounded-lg text-[10px] font-mono bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-secondary)] outline-none focus:border-[var(--accent-primary)] resize-none"
         />
       </div>
 
@@ -699,7 +699,7 @@ function AgenticTab() {
         <div className="space-y-1.5 animate-fade-in">
           <SectionLabel>Task Board</SectionLabel>
           {tasks.map((t) => (
-            <div key={t.id} className="flex items-center gap-2 p-2 rounded-lg bg-[var(--bg-input)] border border-white/5">
+            <div key={t.id} className="flex items-center gap-2 p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)]">
               <span
                 className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{ backgroundColor: statusColors[t.status] || '#475569' }}

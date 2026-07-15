@@ -116,7 +116,7 @@ export default function CodePanel() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 bg-[var(--bg-panel)]">
+      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-[var(--border)] bg-[var(--bg-panel)]">
         <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-medium">Python</span>
         <div className="flex-1" />
         <button

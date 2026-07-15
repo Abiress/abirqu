@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import Toolbar from './components/Toolbar';
 import StatusBar from './components/StatusBar';
 import CircuitCanvas from './components/CircuitCanvas/CircuitCanvas';
@@ -24,9 +24,10 @@ import AskQuantumPanel from './components/AskQuantumPanel/AskQuantumPanel';
 import SettingsPanel from './components/SettingsPanel/SettingsPanel';
 import { useJobStore } from './stores/jobStore';
 import { useHardwareStore } from './stores/hardwareStore';
+import { useThemeStore } from './stores/themeStore';
 import { api } from './api/commands';
 
-type LeftTab = 'circuit' | 'code' | 'qasm' | 'library' | 'framework' | 'explorer' | 'qec' | 'qcomm' | 'domain' | 'security' | 'plugins' | 'askq' | 'settings';
+export type LeftTab = 'circuit' | 'code' | 'qasm' | 'library' | 'framework' | 'explorer' | 'qec' | 'qcomm' | 'domain' | 'security' | 'plugins' | 'askq' | 'settings';
 type RightPanel = 'measurement' | 'state' | 'bloch';
 type SideTab = 'hardware' | 'jobs' | 'noise';
 type BottomTab = 'console' | 'results';
@@ -41,24 +42,44 @@ export default function App() {
   const [rightWidth, setRightWidth] = useState(320);
   const [bottomHeight, setBottomHeight] = useState(140);
   const [exportOpen, setExportOpen] = useState(false);
-  const { noiseConfig, setNoiseConfig } = useHardwareStore();
+  const [serverReady, setServerReady] = useState(false);
+  const { noiseConfig } = useHardwareStore();
   const { activeJobId } = useJobStore();
+  const { theme } = useThemeStore();
 
   useEffect(() => {
-    api.startServer().catch(console.error);
+    if (theme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    api.startServer()
+      .then(() => setServerReady(true))
+      .catch(console.error);
   }, []);
 
-  const handleDrag = (e: React.MouseEvent, setter: (v: number) => void, min: number, max: number, axis: 'x' | 'y') => {
+  const handleDrag = useCallback((
+    e: React.MouseEvent,
+    setter: (v: number) => void,
+    min: number,
+    max: number,
+    axis: 'x' | 'y',
+    initialValue: number,
+    direction: 1 | -1 = 1
+  ) => {
     e.preventDefault();
     const start = axis === 'x' ? e.clientX : e.clientY;
     const onMove = (ev: MouseEvent) => {
       const delta = (axis === 'x' ? ev.clientX : ev.clientY) - start;
-      setter(Math.max(min, Math.min(max, start + delta)));
+      setter(Math.max(min, Math.min(max, initialValue + direction * delta)));
     };
     const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-  };
+  }, []);
 
   return (
     <div className="h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] select-none">
@@ -68,14 +89,14 @@ export default function App() {
         <div className="flex-1 flex overflow-hidden min-h-0">
 
           {/* Left Sidebar */}
-          <div className="flex flex-col border-r border-white/5 bg-[var(--bg-panel)]" style={{ width: sidebarWidth }}>
-            <div className="flex border-b border-white/5">
+          <div className="flex flex-col border-r border-[var(--border)] bg-[var(--bg-panel)]" style={{ width: sidebarWidth }}>
+            <div className="flex border-b border-[var(--border)]">
               <SideTabBtn active={sideTab === 'hardware'} onClick={() => setSideTab('hardware')} icon="⚡" label="HW" />
               <SideTabBtn active={sideTab === 'jobs'} onClick={() => setSideTab('jobs')} icon="📋" label="Jobs" />
               <SideTabBtn active={sideTab === 'noise'} onClick={() => setSideTab('noise')} icon="〰" label="Noise" />
             </div>
             <div className="flex-1 overflow-hidden">
-              {sideTab === 'hardware' && <HardwareSidebar />}
+              {sideTab === 'hardware' && <HardwareSidebar serverReady={serverReady} />}
               {sideTab === 'jobs' && <JobDashboard />}
               {sideTab === 'noise' && (
                 <div className="p-2">
@@ -86,13 +107,13 @@ export default function App() {
           </div>
 
           <div
-            onMouseDown={(e) => handleDrag(e, setSidebarWidth, 160, 400, 'x')}
-            className="w-1 flex-shrink-0 cursor-col-resize group hover:bg-[var(--accent-primary)]/20 bg-white/5 transition-colors"
+            onMouseDown={(e) => handleDrag(e, setSidebarWidth, 160, 400, 'x', sidebarWidth, 1)}
+            className="w-1 flex-shrink-0 cursor-col-resize group hover:bg-[var(--accent-primary)]/20 bg-[var(--border)] transition-colors"
           />
 
           {/* Center Editor */}
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-            <div className="flex items-center border-b border-white/5 bg-[var(--bg-panel)] overflow-x-auto">
+            <div className="flex items-center border-b border-[var(--border)] bg-[var(--bg-panel)] overflow-x-auto">
               <EditorTab active={leftTab === 'circuit'} onClick={() => setLeftTab('circuit')} icon="⚡" label="Circuit" />
               <EditorTab active={leftTab === 'code'} onClick={() => setLeftTab('code')} icon="{ }" label="Python" />
               <EditorTab active={leftTab === 'qasm'} onClick={() => setLeftTab('qasm')} icon="⟨⟩" label="QASM" />
@@ -109,7 +130,7 @@ export default function App() {
               <div className="flex-1" />
               <div className="px-3 text-[10px] text-[var(--text-muted)] flex items-center gap-2">
                 {noiseConfig.enabled && (
-                  <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px]">
+                  <span className="px-1.5 py-0.5 rounded bg-[var(--accent-warning)]/10 text-[var(--accent-warning)] border border-[var(--accent-warning)]/20 text-[9px]">
                     Noise ON
                   </span>
                 )}
@@ -126,7 +147,7 @@ export default function App() {
               {leftTab === 'circuit' && <CircuitCanvas />}
               {leftTab === 'code' && <CodePanel />}
               {leftTab === 'qasm' && <OpenQASMPanel />}
-              {leftTab === 'library' && <LibrarySidebar />}
+              {leftTab === 'library' && <LibrarySidebar serverReady={serverReady} />}
               {leftTab === 'framework' && <FrameworkPanel />}
               {leftTab === 'explorer' && <ExplorerPanel />}
               {leftTab === 'qec' && <QECPanel />}
@@ -141,14 +162,14 @@ export default function App() {
 
           {!rightCollapsed && (
             <div
-              onMouseDown={(e) => handleDrag(e, setRightWidth, 200, 600, 'x')}
-              className="w-1 flex-shrink-0 cursor-col-resize group hover:bg-[var(--accent-primary)]/20 bg-white/5 transition-colors"
+              onMouseDown={(e) => handleDrag(e, setRightWidth, 200, 600, 'x', rightWidth, -1)}
+              className="w-1 flex-shrink-0 cursor-col-resize group hover:bg-[var(--accent-primary)]/20 bg-[var(--border)] transition-colors"
             />
           )}
 
           {!rightCollapsed ? (
-            <div className="flex flex-col border-l border-white/5 bg-[var(--bg-panel)] animate-slide-in" style={{ width: rightWidth }}>
-              <div className="flex items-center border-b border-white/5">
+            <div className="flex flex-col border-l border-[var(--border)] bg-[var(--bg-panel)] animate-slide-in" style={{ width: rightWidth }}>
+              <div className="flex items-center border-b border-[var(--border)]">
                 <RightTab active={rightPanel === 'measurement'} onClick={() => setRightPanel('measurement')} label="Results" />
                 <RightTab active={rightPanel === 'state'} onClick={() => setRightPanel('state')} label="States" />
                 <RightTab active={rightPanel === 'bloch'} onClick={() => setRightPanel('bloch')} label="Bloch" />
@@ -168,7 +189,7 @@ export default function App() {
           ) : (
             <button
               onClick={() => setRightCollapsed(false)}
-              className="w-6 flex items-center justify-center border-l border-white/5 bg-[var(--bg-panel)] hover:bg-[var(--bg-input)] text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs transition-colors"
+              className="w-6 flex items-center justify-center border-l border-[var(--border)] bg-[var(--bg-panel)] hover:bg-[var(--bg-input)] text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs transition-colors"
             >
               ⟨
             </button>
@@ -176,12 +197,12 @@ export default function App() {
         </div>
 
         <div
-          onMouseDown={(e) => handleDrag(e, setBottomHeight, 60, 400, 'y')}
-          className="h-1 flex-shrink-0 cursor-row-resize group hover:bg-[var(--accent-primary)]/20 bg-white/5 transition-colors"
+          onMouseDown={(e) => handleDrag(e, setBottomHeight, 60, 400, 'y', bottomHeight, -1)}
+          className="h-1 flex-shrink-0 cursor-row-resize group hover:bg-[var(--accent-primary)]/20 bg-[var(--border)] transition-colors"
         />
 
-        <div className="flex flex-col border-t border-white/5 bg-[var(--bg-panel)]" style={{ height: bottomHeight }}>
-          <div className="flex items-center border-b border-white/5 px-2">
+        <div className="flex flex-col border-t border-[var(--border)] bg-[var(--bg-panel)]" style={{ height: bottomHeight }}>
+          <div className="flex items-center border-b border-[var(--border)] px-2">
             <BottomTab active={bottomTab === 'console'} onClick={() => setBottomTab('console')} label="Console" />
             <BottomTab active={bottomTab === 'results'} onClick={() => setBottomTab('results')} label="Results" />
           </div>
@@ -204,7 +225,7 @@ function SideTabBtn({ active, onClick, icon, label }: { active: boolean; onClick
       className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[10px] transition-all ${
         active
           ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)] bg-[var(--accent-primary)]/5'
-          : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+          : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-input)]'
       }`}
     >
       <span>{icon}</span>
@@ -220,7 +241,7 @@ function EditorTab({ active, onClick, icon, label }: { active: boolean; onClick:
       className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all whitespace-nowrap ${
         active
           ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)] bg-[var(--accent-primary)]/5'
-          : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-white/[0.02]'
+          : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-input)]'
       }`}
     >
       <span className="text-[11px]">{icon}</span>

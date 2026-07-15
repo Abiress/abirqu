@@ -1,15 +1,47 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHardwareStore } from '../../stores/hardwareStore';
 import { api } from '../../api/commands';
 
-export default function HardwareSidebar() {
+interface Props {
+  serverReady?: boolean;
+}
+
+export default function HardwareSidebar({ serverReady = false }: Props) {
   const { backends, selectedBackend, setBackends, selectBackend } = useHardwareStore();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.listHardware().then(setBackends).catch(console.error);
-  }, [setBackends]);
+    if (!serverReady) return;
+    let cancelled = false;
+    const load = async () => {
+      for (let i = 0; i < 5; i++) {
+        try {
+          const data = await api.listHardware();
+          if (!cancelled) {
+            setBackends(data);
+            setLoading(false);
+          }
+          return;
+        } catch {
+          await new Promise((r) => setTimeout(r, 800));
+        }
+      }
+      if (!cancelled) setLoading(false);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [serverReady, setBackends]);
 
   const providers = [...new Set(backends.map((b) => b.provider))];
+
+  if (loading && serverReady) {
+    return (
+      <div className="flex items-center justify-center h-full text-[var(--text-muted)]">
+        <span className="w-3 h-3 border-2 border-[var(--accent-primary)] border-t-transparent rounded-full animate-spin mr-2" />
+        <span className="text-[10px]">Loading backends...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -34,8 +66,8 @@ export default function HardwareSidebar() {
                   <div className="flex items-center gap-2">
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
-                        b.status === 'online' ? 'bg-emerald-400' :
-                        b.status === 'offline' ? 'bg-red-400' : 'bg-amber-400'
+                        b.status === 'online' ? 'bg-[var(--accent-success)]' :
+                        b.status === 'offline' ? 'bg-[var(--accent-error)]' : 'bg-[var(--accent-warning)]'
                       }`}
                     />
                     <span className="font-medium text-[var(--text-primary)] truncate">
@@ -46,7 +78,7 @@ export default function HardwareSidebar() {
                     <span>{b.num_qubits}q</span>
                     <span>·</span>
                     <span className={
-                      b.backend_type === 'real' ? 'text-amber-400' :
+                      b.backend_type === 'real' ? 'text-[var(--accent-warning)]' :
                       b.backend_type === 'hybrid' ? 'text-cyan-400' : ''
                     }>
                       {b.backend_type}
@@ -56,6 +88,12 @@ export default function HardwareSidebar() {
               ))}
           </div>
         ))}
+        {backends.length === 0 && !loading && (
+          <div className="text-center py-8 text-[var(--text-muted)]">
+            <span className="text-2xl block mb-2 opacity-30">⚡</span>
+            <span className="text-[10px]">No backends available</span>
+          </div>
+        )}
       </div>
     </div>
   );

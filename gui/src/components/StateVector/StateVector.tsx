@@ -48,7 +48,7 @@ export default function StateVector() {
           </div>
         ))}
       </div>
-      <div className="px-3 py-1.5 border-t border-white/5 text-[10px] text-[var(--text-muted)]">
+      <div className="px-3 py-1.5 border-t border-[var(--border)] text-[10px] text-[var(--text-muted)]">
         {entries.length} states · {total} shots
       </div>
     </div>
