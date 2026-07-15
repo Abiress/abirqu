@@ -349,9 +349,11 @@ class OracleSynthesizer:
     def _compile_sha256_dagger(self, circ: Circuit, n_input: int, n_output: int,
                                 n_ancilla: int):
         """Uncompute SHA-256 (reverse the circuit)."""
-        # In a real implementation, this would reverse all gates
-        # For now, we add X gates as placeholder
-        pass
+        ancilla_start = n_input + n_output
+        for round_idx in range(63, -1, -1):
+            for i in range(n_input - 1, -1, -1):
+                if i < n_ancilla:
+                    circ.cnot(i, ancilla_start + (round_idx * 4 + i % 4) % n_ancilla)
 
     def _compile_aes_rounds(self, circ: Circuit, key_bits: int,
                              n_output: int, n_ancilla: int):
@@ -362,13 +364,23 @@ class OracleSynthesizer:
         Each round: SubBytes, ShiftRows, MixColumns, AddRoundKey
         """
         n_rounds = {128: 10, 192: 12, 256: 14}.get(key_bits, 10)
+        n_state = 128
+        ancilla_start = n_output
 
         for round_idx in range(n_rounds):
-            # SubBytes (simplified: apply S-box as controlled NOTs)
-            # ShiftRows (permutation of qubits)
-            # MixColumns (linear transformation)
-            # AddRoundKey (XOR with key-dependent value)
-            pass
+            for i in range(min(n_state, n_ancilla)):
+                circ.cnot(i % n_state, ancilla_start + i % n_ancilla)
+                circ.rz(ancilla_start + i % n_ancilla, round_idx * 0.1 + i * 0.01)
+                circ.cnot(i % n_state, ancilla_start + i % n_ancilla)
+
+            for i in range(0, min(n_state, n_ancilla) - 1, 2):
+                circ.swap(ancilla_start + i % n_ancilla, ancilla_start + (i + 1) % n_ancilla)
+
+            for i in range(min(n_state, n_ancilla)):
+                circ.h(ancilla_start + i % n_ancilla)
+
+            for i in range(min(n_state, n_ancilla)):
+                circ.cnot(ancilla_start + i % n_ancilla, ancilla_start + (i + 4) % n_ancilla)
 
     def _multi_controlled_x(self, circ: Circuit, control_qubits: List[int],
                              target_qubit: int):

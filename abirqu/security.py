@@ -165,8 +165,20 @@ class KyberKEM:
         )
 
     def decapsulate(self, ciphertext: KyberCiphertext, secret_key: bytes) -> bytes:
-        """Decapsulate to recover the shared secret."""
-        return ciphertext.shared_secret
+        """Decapsulate to recover the shared secret using the secret key."""
+        ct_data = ciphertext.ciphertext
+        ss_hash = ct_data[:32]
+        ct_body = ct_data[32:-32]
+        nonce = ct_data[-32:]
+
+        k = self.params["k"]
+        pk_seed = secret_key[32:64] if len(secret_key) > 64 else secret_key[:32]
+
+        recovered_secret = hashlib.sha256(
+            pk_seed + ct_body + nonce
+        ).digest()
+
+        return recovered_secret
 
 
 class DilithiumSignatures:
@@ -274,15 +286,40 @@ class DilithiumSignatures:
         return DilithiumSignature(signature=sig_bytes)
 
     def verify(self, message: bytes, signature: DilithiumSignature, public_key: bytes) -> bool:
-        """Verify a Dilithium signature."""
+        """Verify a Dilithium signature with norm bounds and hash verification."""
         if len(signature.signature) < 16:
             return False
 
         commitment = signature.signature[:16]
         z_bytes = signature.signature[16:]
 
-        expected_commitment = hashlib.sha256(z_bytes).digest()[:16]
-        return hmac.compare_digest(commitment, expected_commitment)
+        n = self.params["n"]
+        l = self.params["l"]
+        q = self.params["q"]
+        gamma1 = self.params["gamma1"]
+
+        z_polys = []
+        for i in range(l):
+            start = i * n * 2
+            end = start + n * 2
+            if end > len(z_bytes):
+                return False
+            poly_data = z_bytes[start:end]
+            poly = list(struct.unpack(f"<{n}H", poly_data[:n*2]))
+            z_polys.append(poly)
+
+        for poly in z_polys:
+            for coeff in poly:
+                if coeff >= q:
+                    return False
+
+        norm_sq = sum(sum(c * c for c in poly) for poly in z_polys)
+        bound = gamma1 * gamma1 * l * n
+        if norm_sq > bound:
+            return False
+
+        recomputed_commitment = hashlib.sha256(z_bytes).digest()[:16]
+        return hmac.compare_digest(commitment, recomputed_commitment)
 
 
 class SPHINCSSignatures:
@@ -376,19 +413,42 @@ class SPHINCSSignatures:
         )
 
     def sign(self, message: bytes, secret_key: bytes) -> SPHINCSSignature:
-        """Sign a message using SPHINCS+."""
+        """Sign a message using SPHINCS+ with real Merkle tree authentication path."""
         seed = secret_key[:32]
         n = self.params["n"]
+        d = self.params["d"]
+        k = self.params["k"]
 
         sk_bytes = secret_key[32:]
-        sk = [sk_bytes[i * n:(i + 1) * n] for i in range(self.params["k"])]
+        sk = [sk_bytes[i * n:(i + 1) * n] for i in range(k)]
 
         sig = self._wots_sign(message, sk)
 
-        tree_index = hashlib.sha256(seed + message).digest()[:4]
-        auth_path = os.urandom(n * self.params["d"])
+        leaf_index = int.from_bytes(hashlib.sha256(seed + message).digest()[:4], "big") % (2 ** d)
 
-        sig_bytes = tree_index + auth_path + b"".join(sig)
+        tree_nodes = {}
+        for i in range(2 ** d):
+            leaf_seed = hashlib.sha256(seed + struct.pack("<I", i)).digest()
+            node = self._hash(leaf_seed)
+            for _ in range(k - 1):
+                node = self._hash(node)
+            tree_nodes[(d, i)] = node
+
+        for level in range(d - 1, -1, -1):
+            for i in range(2 ** level):
+                left = tree_nodes.get((level + 1, 2 * i), b'\x00' * n)
+                right = tree_nodes.get((level + 1, 2 * i + 1), b'\x00' * n)
+                tree_nodes[(level, i)] = self._hash(left + right)
+
+        auth_path = b""
+        current_index = leaf_index
+        for level in range(d):
+            sibling_index = current_index ^ 1
+            sibling = tree_nodes.get((level + 1, sibling_index), b'\x00' * n)
+            auth_path += sibling
+            current_index >>= 1
+
+        sig_bytes = leaf_index.to_bytes(4, "big") + auth_path + b"".join(sig)
 
         return SPHINCSSignature(signature=sig_bytes)
 

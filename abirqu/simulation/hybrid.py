@@ -269,8 +269,11 @@ class HybridSimulator:
                                   if not ((i >> (self.n_qubits - 1 - q1)) & 1)
                                   and ((i >> (self.n_qubits - 1 - q2)) & 1))
                         p10 = sum(probs[i] for i in range(len(sv))
-                                  and ((i >> (self.n_qubits - 1 - q1)) & 1)
+                                  if ((i >> (self.n_qubits - 1 - q1)) & 1)
                                   and not ((i >> (self.n_qubits - 1 - q2)) & 1))
+                        p11 = sum(probs[i] for i in range(len(sv))
+                                  if ((i >> (self.n_qubits - 1 - q1)) & 1)
+                                  and ((i >> (self.n_qubits - 1 - q2)) & 1))
 
                         corr = abs(p00 + p11 - p01 - p10)
                         if corr > 0.9:
