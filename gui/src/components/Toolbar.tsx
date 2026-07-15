@@ -12,7 +12,7 @@ interface ToolbarProps {
 export default function Toolbar({ onExport }: ToolbarProps) {
   const { numQubits, setNumQubits, clearCircuit, getCircuitData } = useCircuitStore();
   const { addJob, updateJob, setResults } = useJobStore();
-  const { selectedBackend, backends } = useHardwareStore();
+  const { selectedBackend, backends, noiseConfig } = useHardwareStore();
   const { theme, toggleTheme } = useThemeStore();
   const [running, setRunning] = useState(false);
   const [shots, setShots] = useState(1024);
@@ -22,7 +22,7 @@ export default function Toolbar({ onExport }: ToolbarProps) {
     setRunning(true);
     try {
       const circuit = getCircuitData();
-      const job = await api.executeCircuit(circuit, selectedBackend, shots);
+      const job = await api.executeCircuit(circuit, selectedBackend, shots, noiseConfig);
       addJob(job);
 
       // Poll for completion
@@ -48,7 +48,7 @@ export default function Toolbar({ onExport }: ToolbarProps) {
       console.error('Execute failed:', err);
       setRunning(false);
     }
-  }, [running, selectedBackend, shots, getCircuitData, addJob, updateJob, setResults]);
+  }, [running, selectedBackend, shots, noiseConfig, getCircuitData, addJob, updateJob, setResults]);
 
   const handleStop = useCallback(() => {
     const { activeJobId } = useJobStore.getState();

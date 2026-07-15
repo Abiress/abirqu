@@ -5,7 +5,6 @@ interface CircuitState {
   numQubits: number;
   gates: GateData[];
   selectedGate: string | null;
-  selectedQubit: number | null;
   hoveredCell: { qubit: number; col: number } | null;
 
   setNumQubits: (n: number) => void;
@@ -22,7 +21,6 @@ export const useCircuitStore = create<CircuitState>((set, get) => ({
   numQubits: 3,
   gates: [],
   selectedGate: null,
-  selectedQubit: null,
   hoveredCell: null,
 
   setNumQubits: (n) => set({ numQubits: Math.max(1, Math.min(20, n)) }),

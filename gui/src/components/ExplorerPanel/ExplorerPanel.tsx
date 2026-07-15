@@ -202,6 +202,7 @@ export default function ExplorerPanel() {
   });
   const [newFileName, setNewFileName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [creatingType, setCreatingType] = useState<'file' | 'folder'>('file');
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -289,7 +290,7 @@ export default function ExplorerPanel() {
       name,
       type: 'file',
       extension: ext,
-      size: Math.floor(Math.random() * 5000) + 100,
+      size: 0,
     };
 
     setTree((prev) => {
@@ -369,10 +370,12 @@ export default function ExplorerPanel() {
         handleDelete();
         break;
       case 'new-file':
+        setCreatingType('file');
         setIsCreating(true);
         setContextMenu((prev) => ({ ...prev, visible: false }));
         break;
       case 'new-folder':
+        setCreatingType('folder');
         setIsCreating(true);
         setContextMenu((prev) => ({ ...prev, visible: false }));
         break;
@@ -388,14 +391,14 @@ export default function ExplorerPanel() {
         <span className="text-[11px] font-medium text-[var(--text-primary)]">Explorer</span>
         <div className="flex gap-1">
           <button
-            onClick={() => setIsCreating(true)}
+            onClick={() => { setCreatingType('file'); setIsCreating(true); }}
             className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-[var(--bg-input)] border border-white/5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-white/10 transition-all"
             title="New File"
           >
             + File
           </button>
           <button
-            onClick={() => setIsCreating(true)}
+            onClick={() => { setCreatingType('folder'); setIsCreating(true); }}
             className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-[var(--bg-input)] border border-white/5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-white/10 transition-all"
             title="New Folder"
           >
@@ -408,20 +411,23 @@ export default function ExplorerPanel() {
       {isCreating && (
         <div className="px-2 py-1.5 border-b border-white/5 animate-fade-in">
           <div className="flex items-center gap-1">
-            <span className="text-xs">📄</span>
+            <span className="text-xs">{creatingType === 'folder' ? '📁' : '📄'}</span>
             <input
               ref={inputRef}
               type="text"
               value={newFileName}
               onChange={(e) => setNewFileName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') handleCreateFile();
+                if (e.key === 'Enter') {
+                  if (creatingType === 'folder') handleCreateFolder();
+                  else handleCreateFile();
+                }
                 if (e.key === 'Escape') setIsCreating(false);
               }}
               onBlur={() => {
                 if (!newFileName.trim()) setIsCreating(false);
               }}
-              placeholder="filename.ext"
+              placeholder={creatingType === 'folder' ? 'folder name' : 'filename.ext'}
               className="flex-1 px-1.5 py-0.5 rounded text-[11px] bg-[var(--bg-input)] text-[var(--text-primary)] border border-white/5 focus:border-[var(--accent-primary)] focus:outline-none transition-colors placeholder:text-[var(--text-muted)]"
             />
           </div>

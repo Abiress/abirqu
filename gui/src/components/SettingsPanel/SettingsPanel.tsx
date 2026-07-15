@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { api } from '../../api/commands';
 
 type Tab = 'general' | 'simulation' | 'hardware' | 'appearance' | 'about';
 type SimulationEngine = 'numpy' | 'gpu' | 'clifford' | 'mps' | 'montecarlo';
@@ -166,18 +167,26 @@ export default function SettingsPanel() {
 
   const testConnection = useCallback(async (provider: string) => {
     updateHardware({ connectionStatus: { ...hardware.connectionStatus, [provider]: 'testing' } });
-    await new Promise((r) => setTimeout(r, 1500));
-    const hasToken =
-      (provider === 'IBM Quantum' && hardware.ibmToken) ||
-      (provider === 'AWS' && hardware.awsAccessKey && hardware.awsSecretKey) ||
-      (provider === 'Azure Quantum' && hardware.azureResourceId) ||
-      (provider === 'IonQ' && hardware.ionqApiKey);
-    updateHardware({
-      connectionStatus: {
-        ...hardware.connectionStatus,
-        [provider]: hasToken ? 'connected' : 'error',
-      },
-    });
+    try {
+      const backends = await api.listHardware();
+      const providerLower = provider.toLowerCase();
+      const found = backends.some(
+        (b) => b.provider.toLowerCase().includes(providerLower) || b.name.toLowerCase().includes(providerLower)
+      );
+      updateHardware({
+        connectionStatus: {
+          ...hardware.connectionStatus,
+          [provider]: found ? 'connected' : 'error',
+        },
+      });
+    } catch {
+      updateHardware({
+        connectionStatus: {
+          ...hardware.connectionStatus,
+          [provider]: 'error',
+        },
+      });
+    }
   }, [hardware, updateHardware]);
 
   const resetAllSettings = useCallback(() => {
@@ -760,7 +769,7 @@ function AboutTab({ onReset }: { onReset: () => void }) {
       <div className="bg-[var(--bg-input)] rounded-lg border border-white/5 divide-y divide-white/5">
         <div className="flex items-center justify-between px-3 py-2">
           <span className="text-[11px] text-[var(--text-muted)]">Version</span>
-          <span className="text-[11px] font-mono text-[var(--text-secondary)]">1.2.0</span>
+          <span className="text-[11px] font-mono text-[var(--text-secondary)]">1.2.3</span>
         </div>
         <div className="flex items-center justify-between px-3 py-2">
           <span className="text-[11px] text-[var(--text-muted)]">Build Date</span>
@@ -772,7 +781,7 @@ function AboutTab({ onReset }: { onReset: () => void }) {
         </div>
         <div className="flex items-center justify-between px-3 py-2">
           <span className="text-[11px] text-[var(--text-muted)]">Platform</span>
-          <span className="text-[11px] font-mono text-[var(--text-secondary)]">OpenCode Agentic</span>
+          <span className="text-[11px] font-mono text-[var(--text-secondary)]">Desktop</span>
         </div>
       </div>
 

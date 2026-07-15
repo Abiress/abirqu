@@ -21,7 +21,7 @@ export default function MeasurementResults({ compact = false }: Props) {
   const entries = Object.entries(counts)
     .map(([state, count]) => ({ state, count, prob: count / total }))
     .sort((a, b) => b.count - a.count);
-  const maxCount = Math.max(...entries.map((e) => e.count));
+  const maxCount = entries.length > 0 ? Math.max(...entries.map((e) => e.count)) : 0;
   const numQubits = entries[0]?.state.length || 0;
 
   // Per-qubit bias

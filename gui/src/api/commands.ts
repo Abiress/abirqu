@@ -50,8 +50,8 @@ export const api = {
   compileCircuit: (circuit: CircuitData, backend?: string) =>
     invoke<any>('compile_circuit', { circuit, backend }),
 
-  executeCircuit: (circuit: CircuitData, backend?: string, shots?: number) =>
-    invoke<JobInfo>('execute_circuit', { circuit, backend, shots }),
+  executeCircuit: (circuit: CircuitData, backend?: string, shots?: number, noise?: { depolarizing: number; amplitudeDamping: number; phaseDamping: number; readoutError: number; enabled: boolean }) =>
+    invoke<JobInfo>('execute_circuit', { circuit, backend, shots, noise }),
 
   getJobStatus: (jobId: string) =>
     invoke<JobInfo>('get_job_status', { jobId }),

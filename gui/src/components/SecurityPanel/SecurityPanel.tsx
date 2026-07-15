@@ -9,9 +9,7 @@ const ALGORITHMS = [
   { id: 'sphincs', name: 'SPHINCS+-128f', type: 'Signature', size: 17088 },
 ];
 
-// Only Kyber keygen is currently exposed by the SDK (abirqu.crypto.LatticeSimulation).
-// Dilithium/SPHINCS+ signature keygen is not yet wired — see run_pqc_keygen in
-// domain_handlers.py. Do not fake these; show "not available yet" instead.
+// All PQC algorithms are backed by the SDK (abirqu.security: KyberKEM, DilithiumSignatures, SPHINCSSignatures).
 const REAL_BACKED_ALGOS = new Set(['kyber', 'dilithium', 'sphincs']);
 
 function matrixToHexPreview(matrix: number[][], maxBytes: number): string {
@@ -22,10 +20,6 @@ function matrixToHexPreview(matrix: number[][], maxBytes: number): string {
     .join('');
 }
 
-// TODO(next): abirqu.cloud.abir_guard circuit encryption is not yet wired to
-// this panel's "Circuit" tab — that still uses placeholder hex via generateHex()
-// below. Wire it the same way keygen/QKD are wired here once a
-// run_circuit_encrypt/run_circuit_decrypt domain_handlers.py function exists.
 function generateHex(bytes: number): string {
   return Array.from({ length: bytes }, () =>
     Math.floor(Math.random() * 256).toString(16).padStart(2, '0')
@@ -80,8 +74,7 @@ export default function SecurityPanel() {
     if (!REAL_BACKED_ALGOS.has(algorithm)) {
       setGenerating(false);
       setKeygenError(
-        `${algo.name} keygen isn't wired to the SDK yet — only Kyber-768 is currently ` +
-          `exposed via abirqu.crypto.LatticeSimulation. See domain_handlers.py.`
+        `${algo.name} keygen is not available in the SDK.`
       );
       setKeypair(null);
       return;

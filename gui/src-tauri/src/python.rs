@@ -1,17 +1,19 @@
 use serde_json::Value;
 use std::io::{BufRead, BufReader, Write};
-use std::process::{Child, Command, Stdio};
+use std::process::{Child, ChildStdout, Command, Stdio};
 use std::sync::Mutex;
 
 /// Manages the Python backend subprocess.
 pub struct PythonBridge {
     child: Mutex<Option<Child>>,
+    stdout: Mutex<Option<BufReader<ChildStdout>>>,
 }
 
 impl PythonBridge {
     pub fn new() -> Self {
         Self {
             child: Mutex::new(None),
+            stdout: Mutex::new(None),
         }
     }
 
@@ -36,30 +38,32 @@ impl PythonBridge {
             .spawn()
             .map_err(|e| format!("Failed to start Python backend: {}", e))?;
 
-        // Consume the "ready" event Python sends on startup
-        {
-            let stdout = child.stdout.as_mut().ok_or("Failed to open stdout for ready event")?;
-            let mut reader = BufReader::new(stdout);
-            let mut line = String::new();
-            reader
-                .read_line(&mut line)
-                .map_err(|e| format!("Failed to read ready event: {}", e))?;
+        // Take ownership of stdout and wrap in a persistent BufReader
+        let child_stdout = child.stdout.take().ok_or("Failed to open stdout")?;
+        let mut reader = BufReader::new(child_stdout);
 
-            let parsed: Result<Value, _> = serde_json::from_str(line.trim());
-            match parsed {
-                Ok(val) if val.get("event").and_then(|v| v.as_str()) == Some("ready") => {
-                    // Ready event consumed, good
-                }
-                Ok(val) => {
-                    // Got something else — store it? For now just log
-                    eprintln!("Unexpected first line from Python: {}", val);
-                }
-                Err(e) => {
-                    eprintln!("Failed to parse ready event '{}': {}", line.trim(), e);
-                }
+        // Consume the "ready" event Python sends on startup
+        let mut line = String::new();
+        reader
+            .read_line(&mut line)
+            .map_err(|e| format!("Failed to read ready event: {}", e))?;
+
+        let parsed: Result<Value, _> = serde_json::from_str(line.trim());
+        match parsed {
+            Ok(val) if val.get("event").and_then(|v| v.as_str()) == Some("ready") => {
+                // Ready event consumed, good
+            }
+            Ok(val) => {
+                eprintln!("Unexpected first line from Python: {}", val);
+            }
+            Err(e) => {
+                eprintln!("Failed to parse ready event '{}': {}", line.trim(), e);
             }
         }
 
+        // Store the persistent BufReader and child
+        let mut stdout_lock = self.stdout.lock().map_err(|e| e.to_string())?;
+        *stdout_lock = Some(reader);
         *child_lock = Some(child);
         Ok(())
     }
@@ -70,6 +74,9 @@ impl PythonBridge {
         if let Some(mut child) = child_lock.take() {
             child.kill().map_err(|e| e.to_string())?;
         }
+        // Clear the stdout reader
+        let mut stdout_lock = self.stdout.lock().map_err(|e| e.to_string())?;
+        *stdout_lock = None;
         Ok(())
     }
 
@@ -86,9 +93,14 @@ impl PythonBridge {
             stdin.flush().map_err(|e| e.to_string())?;
         }
 
-        // Read response (skip any non-response lines)
-        let stdout = child.stdout.as_mut().ok_or("Failed to open stdout")?;
-        let mut reader = BufReader::new(stdout);
+        // Drop child lock before reading from stdout (avoids deadlock)
+        drop(child_lock);
+
+        // Read response from persistent BufReader
+        let mut stdout_lock = self.stdout.lock().map_err(|e| e.to_string())?;
+        let reader = stdout_lock
+            .as_mut()
+            .ok_or("Python backend stdout not available")?;
 
         loop {
             let mut line = String::new();

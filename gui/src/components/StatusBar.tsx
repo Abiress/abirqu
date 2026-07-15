@@ -40,7 +40,7 @@ export default function StatusBar() {
       )}
 
       <div className="flex-1" />
-      <span className="text-[var(--text-muted)]">AbirQu v1.2.0</span>
+      <span className="text-[var(--text-muted)]">AbirQu v1.2.3</span>
     </div>
   );
 }

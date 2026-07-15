@@ -23,6 +23,7 @@ import PluginsPanel from './components/PluginsPanel/PluginsPanel';
 import AskQuantumPanel from './components/AskQuantumPanel/AskQuantumPanel';
 import SettingsPanel from './components/SettingsPanel/SettingsPanel';
 import { useJobStore } from './stores/jobStore';
+import { useHardwareStore } from './stores/hardwareStore';
 import { api } from './api/commands';
 
 type LeftTab = 'circuit' | 'code' | 'qasm' | 'library' | 'framework' | 'explorer' | 'qec' | 'qcomm' | 'domain' | 'security' | 'plugins' | 'askq' | 'settings';
@@ -40,9 +41,7 @@ export default function App() {
   const [rightWidth, setRightWidth] = useState(320);
   const [bottomHeight, setBottomHeight] = useState(140);
   const [exportOpen, setExportOpen] = useState(false);
-  const [noiseConfig, setNoiseConfig] = useState({
-    depolarizing: 0, amplitudeDamping: 0, phaseDamping: 0, readoutError: 0, enabled: false,
-  });
+  const { noiseConfig, setNoiseConfig } = useHardwareStore();
   const { activeJobId } = useJobStore();
 
   useEffect(() => {
@@ -80,7 +79,7 @@ export default function App() {
               {sideTab === 'jobs' && <JobDashboard />}
               {sideTab === 'noise' && (
                 <div className="p-2">
-                  <NoisePanel config={noiseConfig} onChange={setNoiseConfig} />
+                  <NoisePanel />
                 </div>
               )}
             </div>

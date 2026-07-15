@@ -336,7 +336,13 @@ export default function CircuitCanvas() {
           </button>
           <button
             className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-700 hover:text-white"
-            onClick={() => setCtxMenu(null)}
+            onClick={() => {
+              if (ctxMenu.gateIdx >= 0 && ctxMenu.gateIdx < gates.length) {
+                const gate = gates[ctxMenu.gateIdx];
+                navigator.clipboard.writeText(`${gate.name} q${gate.qubits.join(',q')}`).catch(() => {});
+              }
+              setCtxMenu(null);
+            }}
           >
             📋 Copy Gate
           </button>

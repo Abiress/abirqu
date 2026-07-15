@@ -148,12 +148,19 @@ pub async fn execute_circuit(
     circuit: CircuitData,
     backend: Option<String>,
     shots: Option<u32>,
+    noise: Option<Value>,
 ) -> Result<JobInfo, String> {
-    let resp = send_request(&bridge, "execute", json!({
+    let mut params = json!({
         "circuit": circuit,
         "backend": backend.unwrap_or_else(|| "abirqu_simulator".to_string()),
         "shots": shots.unwrap_or(1024),
-    }))?;
+    });
+    if let Some(noise_cfg) = noise {
+        if let Some(obj) = params.as_object_mut() {
+            obj.insert("noise".to_string(), noise_cfg);
+        }
+    }
+    let resp = send_request(&bridge, "execute", params)?;
     let data = extract_data(resp)?;
     Ok(parse_job(&data))
 }
