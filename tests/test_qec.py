@@ -608,3 +608,79 @@ class TestTransversalGateSet:
         tgs = TransversalGateSet(code)
         assert tgs.is_supported('H')
         assert not tgs.is_supported('T')
+
+
+# ==========================================
+# SECTION: ENCODE/DECODE ROUNTRIP TESTS (5 tests)
+# ==========================================
+
+class TestQECRoundtrip:
+    def test_repetition_code_roundtrip(self):
+        code = RepetitionCode(n=3)
+        for logical in [0, 1]:
+            codeword = code.encode(logical)
+            syndrome = code.compute_syndrome(codeword)
+            assert np.all(syndrome == 0), f"No-error syndrome should be zero for logical {logical}"
+
+    def test_steane_code_roundtrip(self):
+        code = SteaneCode()
+        for logical in [0, 1]:
+            codeword = code.encode(logical)
+            syndrome = code.compute_syndrome(codeword)
+            assert np.all(syndrome == 0), f"No-error syndrome should be zero for logical {logical}"
+
+    def test_shor_code_roundtrip(self):
+        code = ShorCode()
+        for logical in [0, 1]:
+            codeword = code.encode(logical)
+            syndrome = code.compute_syndrome(codeword)
+            assert np.all(syndrome == 0), f"No-error syndrome should be zero for logical {logical}"
+
+    def test_surface_code_roundtrip(self):
+        code = SurfaceCode(distance=3)
+        codeword = code.encode(0)
+        syndrome = code.syndrome_measurement(codeword)
+        assert isinstance(syndrome, np.ndarray)
+
+    def test_color_code_roundtrip(self):
+        code = ColorCode(distance=3)
+        codeword = code.encode(0)
+        syndrome = code.syndrome(codeword)
+        assert isinstance(syndrome, np.ndarray)
+
+
+class TestSingleErrorCorrection:
+    def test_repetition_single_error(self):
+        code = RepetitionCode(n=3)
+        codeword = code.encode(0)
+        codeword[0] = 1
+        syndrome = code.compute_syndrome(codeword)
+        assert np.any(syndrome != 0), "Single error should produce non-zero syndrome"
+
+    def test_steane_single_error(self):
+        code = SteaneCode()
+        codeword = code.encode(0)
+        codeword[0] = 1
+        syndrome = code.compute_syndrome(codeword)
+        assert np.any(syndrome != 0), "Single error should produce non-zero syndrome"
+
+    def test_shor_single_error(self):
+        code = ShorCode()
+        codeword = code.encode(0)
+        codeword[0] = 1
+        syndrome = code.compute_syndrome(codeword)
+        assert np.any(syndrome != 0), "Single error should produce non-zero syndrome"
+
+    def test_steane_single_error(self):
+        code = SteaneCode()
+        codeword = code.encode(0)
+        codeword[0] = 1
+        syndrome = code.compute_syndrome(codeword)
+        assert np.any(syndrome != 0), "Single error should produce non-zero syndrome"
+
+    def test_shor_single_error(self):
+        code = ShorCode()
+        codeword = code.encode(0)
+        codeword[0] = 1
+        syndrome = code.compute_syndrome(codeword)
+        assert np.any(syndrome != 0), "Single error should produce non-zero syndrome"

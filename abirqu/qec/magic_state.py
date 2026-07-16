@@ -84,7 +84,7 @@ class MagicStateDistiller:
         eps = 1.0 - input_fidelity
         # Leading order: output error ≈ 35 * eps^3
         output_error = 35.0 * eps ** 3
-        return max(0.5, 1.0 - output_error)
+        return 1.0 - output_error
 
     def estimate_resources(self, target_fidelity: float = 0.99,
                            initial_fidelity: float = 0.9) -> dict:
@@ -147,7 +147,7 @@ class HStateDistiller:
         """
         eps = 1.0 - input_fidelity
         output_error = 140.0 * eps ** 3
-        return max(0.5, 1.0 - output_error)
+        return 1.0 - output_error
 
 
 class TStateFactory:

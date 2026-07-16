@@ -634,6 +634,7 @@ def handle_circuit_decrypt(params: Dict[str, Any]) -> Dict[str, Any]:
 def handle_plugin_list(params: Dict[str, Any]) -> Dict[str, Any]:
     """List available and installed plugins."""
     from abirqu.plugins import PluginDiscovery
+    from abirqu.plugin_market import AbirHubMarketplace
 
     discovery = PluginDiscovery()
     discovered = discovery.discover()
@@ -647,12 +648,15 @@ def handle_plugin_list(params: Dict[str, Any]) -> Dict[str, Any]:
                 "status": "installed",
             })
 
-    marketplace = [
-        {"name": "abirqu-noise-pack", "version": "0.1.0", "description": "Advanced noise models", "tags": ["noise"], "downloads": 1200},
-        {"name": "abirqu-optimizer-zx", "version": "0.1.1", "description": "ZX-calculus optimizer", "tags": ["optimizer"], "downloads": 980},
-        {"name": "abirqu-qml-kernel", "version": "0.1.0", "description": "Quantum ML kernels", "tags": ["qml"], "downloads": 540},
-        {"name": "abirqu-finance-pro", "version": "1.0.0", "description": "Finance workloads", "tags": ["finance"], "downloads": 50},
-    ]
+    try:
+        from abirqu import __version__
+        version = __version__
+    except ImportError:
+        version = "1.2.4"
+
+    marketplace_api = AbirHubMarketplace(core_version=version)
+    search_result = marketplace_api.search()
+    marketplace = search_result.get("results", [])
 
     installed_names = {p["name"] for p in plugins}
     for mp in marketplace:

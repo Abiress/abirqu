@@ -26,6 +26,62 @@ class LDPCCode:
     def compute_syndrome(self, error: np.ndarray) -> np.ndarray:
         return self.parity_matrix @ error % 2
 
+    @property
+    def H(self) -> np.ndarray:
+        """Parity-check matrix (alias)."""
+        return self.parity_matrix
+
+    @property
+    def G(self) -> np.ndarray:
+        """Generator matrix computed from the parity-check matrix.
+
+        Produces systematic form G = [I_k | P^T] from H = [P | I_m].
+        """
+        H = self.parity_matrix.copy()
+        m, n = H.shape
+        k = n - m
+
+        # Gaussian elimination to get H into [P | I_m] form
+        augmented = np.hstack([H.T, np.eye(m, dtype=int)])
+        for col in range(m):
+            pivot_row = None
+            for row in range(col, m):
+                if augmented[row, col] == 1:
+                    pivot_row = row
+                    break
+            if pivot_row is None:
+                continue
+            if pivot_row != col:
+                augmented[[col, pivot_row]] = augmented[[pivot_row, col]]
+            for row in range(col + 1, m):
+                if augmented[row, col] == 1:
+                    augmented[row] = (augmented[row] + augmented[col]) % 2
+
+        # Back substitution to get reduced row echelon form
+        for col in range(m - 1, -1, -1):
+            pivot_row = None
+            for row in range(col + 1):
+                if augmented[row, col] == 1:
+                    pivot_row = row
+                    break
+            if pivot_row is None:
+                continue
+            for row in range(pivot_row):
+                if augmented[row, col] == 1:
+                    augmented[row] = (augmented[row] + augmented[pivot_row]) % 2
+
+        # Extract P from [P | I_m]
+        P = augmented[:, :m].T
+        # G = [I_k | P^T]
+        G = np.hstack([np.eye(k, dtype=int), P[:k].T]) % 2
+        return G
+
+    def encode(self, data: List[int]) -> np.ndarray:
+        """Encode data bits into a codeword using the generator matrix."""
+        G = self.G
+        msg = np.array(data, dtype=int)
+        return (msg @ G) % 2
+
     def __repr__(self):
         return f"LDPCCode(n={self.n}, k={self.k})"
 

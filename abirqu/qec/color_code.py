@@ -76,6 +76,8 @@ class ColorCode:
         self.stabilizers_z = [list(s) for s in set(
             tuple(sorted(s)) for s in self.stabilizers_z)]
 
+        self.num_stabilizers = len(self.stabilizers_x) + len(self.stabilizers_z)
+
     def encode(self, logical_state: int) -> np.ndarray:
         """Encode logical qubit into color code."""
         state = np.zeros(self.n, dtype=int)

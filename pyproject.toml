@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "abirqu"
-version = "1.2.4"
+version = "1.2.5"
 description = "Full-stack quantum computing SDK"
 readme = "README.md"
 license = {text = "MIT"}
@@ -73,8 +73,18 @@ docs = [
     "mkdocstrings[python]>=0.24.0"
 ]
 
+[project.entry-points."abirqu.plugins"]
+visualization = "plugins.visualization.plugin:load"
+ibm_noise = "plugins.ibm_noise.plugin:load"
+google_noise = "plugins.google_noise.plugin:load"
+error_mitigation = "plugins.error_mitigation:activate"
+vqe_advanced = "plugins.vqe_advanced:activate"
+quantum_ml = "plugins.quantum_ml:activate"
+noise_characterization = "plugins.noise_characterization:activate"
+circuit_optimization = "plugins.circuit_optimization:activate"
+
 [tool.setuptools.packages.find]
-include = ["abirqu*"]
+include = ["abirqu*", "plugins*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

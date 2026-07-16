@@ -2,7 +2,7 @@
 
 from packaging.version import Version as _Version
 
-__version__ = "1.2.4"
+__version__ = "1.2.5"
 __author__ = "Abir Maheshwari"
 __email__ = "abhirsxn@gmail.com"
 __url__ = "https://github.com/abirqu/abirqu"

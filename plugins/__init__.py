@@ -1,0 +1,1 @@
+"""AbirQu builtin plugin collection."""

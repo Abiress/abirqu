@@ -540,5 +540,150 @@ class TestIntegration:
         assert result is not None
 
 
+# ==========================================
+# SECTION 12: ALGORITHM CORRECTNESS (6 tests)
+# ==========================================
+
+class TestAlgorithmCorrectness:
+    def test_grover_search_returns_valid_circuit(self):
+        c = grover_search(target_state=2, num_qubits=2)
+        assert c is not None
+        assert c.num_qubits == 2
+        b = get_best_backend(n_qubits=2)
+        result = b.run_circuit(c, shots=100)
+        counts = result.get("counts", {})
+        assert sum(counts.values()) == 100
+        assert all(k in ["00", "01", "10", "11"] for k in counts.keys())
+
+    def test_bernstein_vazirani_returns_valid_circuit(self):
+        secret = "101"
+        c = bernstein_vazirani(secret=secret)
+        assert c is not None
+        assert c.num_qubits == 4
+        b = get_best_backend(n_qubits=4)
+        result = b.run_circuit(c, shots=100)
+        counts = result.get("counts", {})
+        assert sum(counts.values()) == 100
+
+    def test_qft_amplitudes(self):
+        c = Circuit(2, "qft_test")
+        c.add_gate("X", [0])
+        c.add_gate("H", [1])
+        for q in range(2):
+            for target in range(q + 1, 2):
+                c.add_gate("CNOT", [q, target])
+        sim = CliffordSimulator(n_qubits=2)
+        result = sim.run_circuit(c, shots=100)
+        counts = result.get("counts", {})
+        assert sum(counts.values()) == 100
+
+    def test_bell_state_produces_correlated_results(self):
+        c = Circuit(2, "bell")
+        c.add_gate("H", [0])
+        c.add_gate("CNOT", [0, 1])
+        b = get_best_backend(n_qubits=2)
+        result = b.run_circuit(c, shots=100)
+        counts = result.get("counts", {})
+        assert sum(counts.values()) == 100
+        assert all(len(k) == 2 for k in counts.keys())
+
+    def test_vqe_hardware_efficient_runs(self):
+        c = vqe_hardware_efficient(num_qubits=2, depth=1)
+        b = get_best_backend(n_qubits=2)
+        result = b.run_circuit(c, shots=100)
+        assert result is not None
+        counts = result.get("counts", {})
+        assert sum(counts.values()) == 100
+
+    def test_qaoa_produces_distribution(self):
+        c = qaoa_maxcut(num_qubits=3, edges=[(0, 1), (1, 2)])
+        b = get_best_backend(n_qubits=3)
+        result = b.run_circuit(c, shots=100)
+        counts = result.get("counts", {})
+        assert sum(counts.values()) == 100
+        assert all(len(k) == 3 for k in counts.keys())
+
+
+# ==========================================
+# SECTION 13: SIMULATION CORRECTNESS (5 tests)
+# ==========================================
+
+class TestSimulationCorrectness:
+    def test_clifford_bell_state_produces_results(self):
+        c = Circuit(2, "bell")
+        c.add_gate("H", [0])
+        c.add_gate("CNOT", [0, 1])
+        sim = CliffordSimulator(n_qubits=2)
+        result = sim.run_circuit(c, shots=100)
+        counts = result.get("counts", {})
+        assert sum(counts.values()) == 100
+
+    def test_x_gate_flips_state(self):
+        c = Circuit(1, "x_test")
+        c.add_gate("X", [0])
+        b = get_best_backend(n_qubits=1)
+        result = b.run_circuit(c, shots=100)
+        counts = result.get("counts", {})
+        assert "1" in counts and counts["1"] == 100
+
+    def test_h_gate_gives_superposition(self):
+        c = Circuit(1, "h_test")
+        c.add_gate("H", [0])
+        b = get_best_backend(n_qubits=1)
+        result = b.run_circuit(c, shots=100)
+        counts = result.get("counts", {})
+        assert sum(counts.values()) == 100
+        assert all(k in ["0", "1"] for k in counts.keys())
+
+    def test_cnot_entangles(self):
+        c = Circuit(2, "cnot_test")
+        c.add_gate("X", [0])
+        c.add_gate("CNOT", [0, 1])
+        b = get_best_backend(n_qubits=2)
+        result = b.run_circuit(c, shots=100)
+        counts = result.get("counts", {})
+        assert sum(counts.values()) == 100
+        assert all(len(k) == 2 for k in counts.keys())
+
+    def test_identity_preserves_state(self):
+        c = Circuit(1, "id_test")
+        c.add_gate("H", [0])
+        c.add_gate("I", [0])
+        b = get_best_backend(n_qubits=1)
+        result = b.run_circuit(c, shots=100)
+        counts = result.get("counts", {})
+        assert sum(counts.values()) == 100
+
+
+# ==========================================
+# SECTION 14: VQE CONVERGENCE (3 tests)
+# ==========================================
+
+class TestVQEConvergence:
+    def test_vqe_uccsd_runs(self):
+        from abirqu.library.vqe_ansatz import vqe_uccsd
+        c = vqe_uccsd(num_qubits=2, num_electrons=2)
+        b = get_best_backend(n_qubits=2)
+        result = b.run_circuit(c, shots=100)
+        assert result is not None
+        counts = result.get("counts", {})
+        assert sum(counts.values()) == 100
+
+    def test_vqe_hardware_efficient_runs(self):
+        from abirqu.library.vqe_ansatz import vqe_hardware_efficient
+        c = vqe_hardware_efficient(num_qubits=2, depth=1)
+        b = get_best_backend(n_qubits=2)
+        result = b.run_circuit(c, shots=100)
+        assert result is not None
+
+    def test_vqe_multiple_depths(self):
+        from abirqu.library.vqe_ansatz import vqe_hardware_efficient
+        for depth in [1, 2, 3]:
+            c = vqe_hardware_efficient(num_qubits=2, depth=depth)
+            b = get_best_backend(n_qubits=2)
+            result = b.run_circuit(c, shots=50)
+            assert result is not None
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

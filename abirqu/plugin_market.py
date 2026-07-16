@@ -4,7 +4,18 @@ import ast
 import json
 import re
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional, Protocol, Sequence, runtime_checkable
+
+
+@runtime_checkable
+class PluginBase(Protocol):
+    """Protocol that all AbirQu plugins must implement."""
+
+    def activate(self, context: Dict[str, Any]) -> None: ...
+
+    def deactivate(self) -> None: ...
+
+    def get_manifest(self) -> "PluginManifest": ...
 
 
 @dataclass
@@ -169,6 +180,10 @@ class AbirHubMarketplace:
             "abirqu-optimizer-zx": {"name": "abirqu-optimizer-zx", "version": "0.1.1", "author": "core", "description": "ZX optimizer", "tags": ["optimizer"], "requires": ">=0.1.0", "downloads": 980},
             "abirqu-qml-kernel": {"name": "abirqu-qml-kernel", "version": "0.1.0", "author": "labs", "description": "QML kernels", "tags": ["qml"], "requires": ">=0.1.0", "deps": ["abirqu-optimizer-zx"], "downloads": 540},
             "abirqu-finance-pro": {"name": "abirqu-finance-pro", "version": "1.0.0", "author": "ext", "description": "Finance workloads", "tags": ["finance"], "requires": ">=1.0.0", "downloads": 50},
+            "abirqu-error-mitigation": {"name": "abirqu-error-mitigation", "version": "0.1.0", "author": "core", "description": "Error mitigation strategies (ZNE, PEC, CDR)", "tags": ["error-mitigation", "noise"], "requires": ">=1.2.0", "downloads": 850},
+            "abirqu-vqe-advanced": {"name": "abirqu-vqe-advanced", "version": "0.1.0", "author": "core", "description": "Advanced VQE ansatze and optimizers", "tags": ["chemistry", "vqe"], "requires": ">=1.2.0", "downloads": 720},
+            "abirqu-quantum-ml": {"name": "abirqu-quantum-ml", "version": "0.1.0", "author": "core", "description": "Quantum ML kernels and classifiers", "tags": ["qml", "ml"], "requires": ">=1.2.0", "downloads": 610},
+            "abirqu-noise-char": {"name": "abirqu-noise-char", "version": "0.1.0", "author": "core", "description": "Noise characterization and tomography", "tags": ["noise", "characterization"], "requires": ">=1.2.0", "downloads": 430},
         }
         self.installed: Dict[str, Dict[str, Any]] = {}
 
@@ -213,6 +228,7 @@ class AbirHubMarketplace:
 
 
 __all__ = [
+    "PluginBase",
     "PluginManifest",
     "SandboxedNamespace",
     "EventBus",
