@@ -4,6 +4,7 @@ Handles sparse state representation, NVMe memory mapping, and lazy evaluation.
 """
 import math
 
+
 class SparseStateVector:
     def __init__(self, num_qubits=20):
         self.nq = num_qubits
@@ -103,9 +104,3 @@ class SparseStateSimulator:
 
 
 # Re-export phase 40 production implementations.
-from .sparse import (
-    SparseStateVector,
-    NVMeStateMapper,
-    LazyAmplitudeEvaluator,
-    WignerFunctionComputer,
-)

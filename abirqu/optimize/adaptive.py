@@ -4,35 +4,38 @@ Copyright 2026 Abir Maheshwari
 
 Adapts compilation strategy based on circuit characteristics.
 """
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
+
 from abirqu.circuit import Circuit
+
 from .circuit_simplifier import CircuitSimplifier
-from .transpiler import HardwareAwareTranspiler
 from .depth import CircuitDepthMinimizer
+from .transpiler import HardwareAwareTranspiler
+
 
 class AdaptiveCompiler:
     """Adapts compilation strategy based on circuit characteristics."""
-    
+
     STRATEGIES = ['auto', 'aggressive', 'conservative', 'balanced']
-    
+
     def __init__(self, strategy: str = "auto"):
         self.strategy = strategy
         self.metrics: Dict[str, Any] = {}
         self.compilation_history: List[Dict] = []
-        
+
     def compile(self, circuit: Circuit, backend_info: Optional[Dict] = None) -> 'CompiledCircuit':
         """Compile circuit with adaptive strategy."""
         # Analyze circuit
         analysis = self._analyze_circuit(circuit)
-        
+
         # Select strategy if auto
         strategy = self.strategy
         if strategy == 'auto':
             strategy = self._select_strategy(analysis, backend_info)
-            
+
         # Apply compilation passes based on strategy
         compiled = self._apply_strategy(circuit, strategy, backend_info)
-        
+
         # Record metrics
         self.metrics = {
             'strategy': strategy,
@@ -42,14 +45,14 @@ class AdaptiveCompiler:
             'compiled_depth': compiled.circuit.depth(),
             'analysis': analysis
         }
-        
+
         self.compilation_history.append(self.metrics)
         return compiled
-        
+
     def _analyze_circuit(self, circuit: Circuit) -> Dict[str, Any]:
         """Analyze circuit characteristics."""
         gate_counts = self._gate_counts(circuit)
-        
+
         analysis = {
             'num_qubits': circuit.num_qubits,
             'num_gates': len(circuit.gates),
@@ -59,9 +62,9 @@ class AdaptiveCompiler:
             'single_qubit_ratio': sum(gate_counts.get(t, 0) for t in ['X', 'Y', 'Z', 'H', 'S', 'T', 'RX', 'RY', 'RZ']) / max(len(circuit.gates), 1),
             'estimated_error': self._estimate_error(circuit)
         }
-        
+
         return analysis
-        
+
     def _estimate_error(self, circuit: Circuit) -> float:
         """Estimate circuit error (simplified)."""
         gate_counts = self._gate_counts(circuit)
@@ -73,7 +76,7 @@ class AdaptiveCompiler:
             else:
                 error += count * 0.01
         return error
-        
+
     def _select_strategy(self, analysis: Dict, backend_info: Optional[Dict]) -> str:
         """Select best strategy based on analysis."""
         if analysis['depth'] > 50:
@@ -84,44 +87,44 @@ class AdaptiveCompiler:
             return 'balanced'
         else:
             return 'aggressive'
-        
-    def _apply_strategy(self, circuit: Circuit, strategy: str, 
+
+    def _apply_strategy(self, circuit: Circuit, strategy: str,
                        backend_info: Optional[Dict]) -> 'CompiledCircuit':
         """Apply compilation strategy."""
         compiled_circuit = Circuit(circuit.num_qubits, f"{circuit.name}_compiled")
-        
+
         if strategy == 'aggressive':
             # Apply all optimizations
             optimizer = CircuitSimplifier()
             compiled_circuit = optimizer.optimize(circuit)
-            
+
         elif strategy == 'conservative':
             # Minimal optimizations
             compiled_circuit = Circuit(circuit.num_qubits, circuit.name)
             for gate in circuit.gates:
                 compiled_circuit.add_gate(gate.name, gate.qubits, gate.params or None)
-                
+
         elif strategy == 'balanced':
             # Apply some optimizations
             minimizer = CircuitDepthMinimizer()
             result = minimizer.minimize(circuit)
             compiled_circuit = result.minimized
-            
+
         # Transpile if backend info provided
         if backend_info and 'backend' in backend_info:
             transpiler = HardwareAwareTranspiler(backend_info['backend'])
             transpiled = transpiler.transpile(compiled_circuit)
             compiled_circuit = transpiled.transpiled
-            
+
         return CompiledCircuit(circuit, compiled_circuit, strategy)
-        
+
     def set_strategy(self, strategy: str):
         if strategy in self.STRATEGIES:
             self.strategy = strategy
-        
+
     def get_metrics(self) -> Dict[str, Any]:
         return self.metrics.copy()
-        
+
     def get_history(self) -> List[Dict]:
         return self.compilation_history.copy()
 
@@ -138,6 +141,6 @@ class CompiledCircuit:
         self.original = original
         self.circuit = compiled
         self.strategy = strategy
-        
+
     def __repr__(self):
         return f"CompiledCircuit(strategy={self.strategy}, gates={len(self.circuit.gates)}, depth={self.circuit.depth()})"

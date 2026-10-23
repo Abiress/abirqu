@@ -7,10 +7,12 @@ simulation based on circuit structure, achieving better scaling than
 either method alone.
 """
 
+from typing import Any, Dict, List
+
 import numpy as np
-from typing import Any, Dict, List, Tuple, Optional
+
 from abirqu.circuit import Circuit, Gate
-from abirqu.simulation.clifford import StabilizerTableau, CLIFFORD_GATES, is_clifford_only
+from abirqu.simulation.clifford import CLIFFORD_GATES, StabilizerTableau
 from abirqu.simulation.mps import MatrixProductState, MPSSimulator
 
 

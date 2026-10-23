@@ -9,8 +9,8 @@ from __future__ import annotations
 import time
 from typing import Any, Dict, List, Optional
 
+from ..backend import FastBackend, QuantumBackend
 from ..circuit import Circuit
-from ..backend import QuantumBackend, FastBackend
 
 
 class VirtualQPU:

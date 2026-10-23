@@ -307,7 +307,7 @@ def handle_pqc_keygen(params: Dict[str, Any]) -> Dict[str, Any]:
       scheme: "kyber" | "dilithium" | "sphincs"
       security_level: int (optional, depends on scheme)
     """
-    from abirqu.security import KyberKEM, DilithiumSignatures, SPHINCSSignatures
+    from abirqu.security import DilithiumSignatures, KyberKEM, SPHINCSSignatures
 
     scheme = params.get("scheme", "kyber").lower()
 
@@ -490,7 +490,7 @@ def handle_qcomm_satellite(params: Dict[str, Any]) -> Dict[str, Any]:
       num_pulses: float (default 1e6)
       detector_efficiency: float (default 0.9)
     """
-    from abirqu.quantum_communication.satellite import SatelliteQKD, SatelliteLink
+    from abirqu.quantum_communication.satellite import SatelliteLink, SatelliteQKD
 
     link = SatelliteLink(altitude_km=float(params.get("altitude_km", 500)))
     sim = SatelliteQKD(link=link, detector_efficiency=float(params.get("detector_efficiency", 0.9)))
@@ -569,8 +569,8 @@ def handle_circuit_encrypt(params: Dict[str, Any]) -> Dict[str, Any]:
     params:
       circuit_data: dict with num_qubits and gates
     """
-    from abirqu.security import CircuitProtector
     from abirqu.circuit import Circuit
+    from abirqu.security import CircuitProtector
 
     circuit_data = params.get("circuit_data", {})
     num_qubits = circuit_data.get("num_qubits", 2)
@@ -633,8 +633,8 @@ def handle_circuit_decrypt(params: Dict[str, Any]) -> Dict[str, Any]:
 
 def handle_plugin_list(params: Dict[str, Any]) -> Dict[str, Any]:
     """List available and installed plugins."""
-    from abirqu.plugins import PluginDiscovery
     from abirqu.plugin_market import AbirHubMarketplace
+    from abirqu.plugins import PluginDiscovery
 
     discovery = PluginDiscovery()
     discovered = discovery.discover()

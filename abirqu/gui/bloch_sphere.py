@@ -5,8 +5,8 @@ Copyright 2026 Abir Maheshwari
 3D Bloch sphere visualization for single-qubit states.
 """
 import math
-from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass
+from typing import Dict
 
 
 @dataclass

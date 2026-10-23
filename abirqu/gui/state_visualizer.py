@@ -5,8 +5,8 @@ Copyright 2026 Abir Maheshwari
 Real-time state vector visualization with probability bars and phase indicators.
 """
 import math
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
+from typing import Any, Dict, List
 
 
 @dataclass

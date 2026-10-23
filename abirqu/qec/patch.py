@@ -4,11 +4,14 @@ Copyright 2026 Abir Maheshwari
 
 Manages logical qubit patches for lattice surgery operations.
 """
-from typing import List, Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+
 
 class Patch:
     """Represents a logical qubit patch for lattice surgery."""
-    
+
     def __init__(self, patch_id: int, size: int = 3):
         self.id = patch_id
         self.size = size  # Patch dimension (size x size)
@@ -16,7 +19,7 @@ class Patch:
         self.logical_state = 0  # 0 or 1
         self.data_qubits: List[Tuple[int, int]] = self._init_data_qubits()
         self.ancilla_qubits: List[Tuple[int, int]] = self._init_ancilla_qubits()
-        
+
     def _init_data_qubits(self) -> List[Tuple[int, int]]:
         """Initialize data qubit positions."""
         qubits = []
@@ -25,7 +28,7 @@ class Patch:
                 if (i + j) % 2 == 0:  # Data qubits on even parity
                     qubits.append((i, j))
         return qubits
-        
+
     def _init_ancilla_qubits(self) -> List[Tuple[int, int]]:
         """Initialize ancilla qubit positions."""
         qubits = []
@@ -34,7 +37,7 @@ class Patch:
                 if (i + j) % 2 == 1:  # Ancilla qubits on odd parity
                     qubits.append((i, j))
         return qubits
-        
+
     def measure_X_stabilizer(self, i: int, j: int) -> int:
         """Measure X stabilizer at position (i,j) using real quantum measurement."""
         # X stabilizer measures: X ⊗ X on two qubits (simplified to single qubit).
@@ -82,14 +85,14 @@ class Patch:
             result = 1 - result
 
         return result
-        
+
     def merge(self, other: 'Patch') -> 'Patch':
         """Merge two patches for logical operations (CNOT, Bell pair)."""
         merged = Patch(self.id, self.size + other.size)
         merged.state = "merged"
         merged.logical_state = self.logical_state ^ other.logical_state  # Simplified
         return merged
-        
+
     def split(self) -> List['Patch']:
         """Split patch into two smaller patches."""
         half_size = max(3, self.size // 2)
@@ -99,48 +102,48 @@ class Patch:
         patch2.logical_state = 0  # Simplified
         self.state = "split"
         return [patch1, patch2]
-        
+
     def apply_logical_X(self):
         """Apply logical X gate to patch."""
         self.logical_state ^= 1
-        
+
     def apply_logical_Z(self):
         """Apply logical Z gate to patch."""
         # Z gate doesn't change logical state in computational basis
         pass
-        
+
     def measure_logical(self) -> int:
         """Measure logical qubit."""
         return self.logical_state
-        
+
     def get_qubit_count(self) -> int:
         """Return total number of physical qubits in patch."""
         return len(self.data_qubits) + len(self.ancilla_qubits)
-        
+
     def __repr__(self):
         return f"Patch(id={self.id}, size={self.size}x{self.size}, state={self.state})"
 
 class PatchManager:
     """Manages patches for fault-tolerant operations."""
-    
+
     def __init__(self):
         self.patches: List[Patch] = []
         self.next_id = 0
-        
+
     def create_patch(self, size: int = 3) -> Patch:
         """Create a new patch."""
         patch = Patch(self.next_id, size)
         self.patches.append(patch)
         self.next_id += 1
         return patch
-        
+
     def get_patch(self, patch_id: int) -> Optional[Patch]:
         """Get patch by ID."""
         for p in self.patches:
             if p.id == patch_id:
                 return p
         return None
-        
+
     def merge_patches(self, id1: int, id2: int) -> Optional[Patch]:
         """Merge two patches."""
         p1 = self.get_patch(id1)
@@ -152,7 +155,7 @@ class PatchManager:
             self.patches.append(merged)
             return merged
         return None
-        
+
     def split_patch(self, patch_id: int) -> List[Patch]:
         """Split a patch into two."""
         patch = self.get_patch(patch_id)
@@ -162,7 +165,7 @@ class PatchManager:
             self.patches.extend(splits)
             return splits
         return []
-        
+
     def list_patches(self) -> List[Dict]:
         """List all patches with info."""
         return [
@@ -174,7 +177,7 @@ class PatchManager:
             }
             for p in self.patches
         ]
-        
+
     def total_qubits(self) -> int:
         """Get total physical qubits across all patches."""
         return sum(p.get_qubit_count() for p in self.patches)

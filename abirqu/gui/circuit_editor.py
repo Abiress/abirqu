@@ -5,9 +5,8 @@ Copyright 2026 Abir Maheshwari
 Drag-and-drop quantum circuit editor with real-time visualization.
 """
 import json
-from typing import List, Dict, Tuple, Optional, Any
 from dataclasses import dataclass, field
-
+from typing import Any, Dict, List, Optional, Tuple
 
 GATE_COLORS = {
     'H': '#7c3aed', 'X': '#f85149', 'Y': '#d29922', 'Z': '#3fb950',

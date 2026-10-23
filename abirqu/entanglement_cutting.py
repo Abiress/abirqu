@@ -6,8 +6,10 @@ Novel contribution: Analyzes entanglement structure of circuits to find
 optimal cut points that minimize classical communication overhead.
 """
 
+from typing import Dict, List, Optional, Tuple
+
 import numpy as np
-from typing import List, Dict, Tuple, Optional
+
 from abirqu.circuit import Circuit
 
 

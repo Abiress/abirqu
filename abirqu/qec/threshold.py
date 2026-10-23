@@ -6,10 +6,12 @@ error correction threshold — the crossing point where larger codes
 start outperforming smaller ones.
 """
 
-import numpy as np
 from typing import Dict, List
-from ..qec.surface_code import RotatedSurfaceCode
+
+import numpy as np
+
 from ..qec.decoder import SyndromeDecoder
+from ..qec.surface_code import RotatedSurfaceCode
 
 
 def _simulate_error_correction(
@@ -43,7 +45,7 @@ def _simulate_error_correction(
 
         # Decode
         try:
-            correction = dec.decode(syndrome)
+            correction = decoder.decode(syndrome)
 
             # Apply correction and check if errors remain
             corrected_errors = errors.copy()

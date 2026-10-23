@@ -11,10 +11,10 @@ No other quantum SDK has this.  It shows:
 Think of it as a "QR code" for your noise model.
 """
 from __future__ import annotations
+
 import html as _html
 import math
 from typing import Dict, List, Optional, Tuple
-import numpy as np
 
 
 def noise_fingerprint_svg(
@@ -41,7 +41,7 @@ def noise_fingerprint_svg(
 
     svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size + 40}" '
            f'font-family="monospace">']
-    svg.append(f'<rect width="100%" height="100%" fill="#1e1e2e"/>')
+    svg.append('<rect width="100%" height="100%" fill="#1e1e2e"/>')
     svg.append(f'<text x="{cx}" y="20" text-anchor="middle" fill="#cdd6f4" '
                f'font-size="13" font-weight="bold">{_html.escape(title)}</text>')
 
@@ -130,7 +130,7 @@ def circuit_fingerprint_svg(
 
     svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size + 60}" '
            f'font-family="monospace">']
-    svg.append(f'<rect width="100%" height="100%" fill="#1e1e2e"/>')
+    svg.append('<rect width="100%" height="100%" fill="#1e1e2e"/>')
     svg.append(f'<text x="{cx}" y="20" text-anchor="middle" fill="#cdd6f4" '
                f'font-size="13" font-weight="bold">{_html.escape(title)}</text>')
 

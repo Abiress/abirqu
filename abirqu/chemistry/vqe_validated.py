@@ -10,11 +10,11 @@ Reference: H₂ FCI ground state at 0.74 Å ≈ −1.137 Ha.
 Target: Chemical accuracy (< 0.0016 Ha error).
 """
 import math
+from typing import List, Optional, Tuple
+
 import numpy as np
-from typing import List, Tuple, Optional
 
 from abirqu import Circuit
-
 
 # ─────────────────────────────────────────────────────────────
 # H₂ Hamiltonian in STO-3G with Jordan-Wigner mapping (2 qubits)
@@ -165,7 +165,7 @@ def print_vqe_report(
     achieved = error < CHEMICAL_ACCURACY
 
     print(f"\n{'─'*50}")
-    print(f"  VQE Convergence Report")
+    print("  VQE Convergence Report")
     print(f"{'─'*50}")
     print(f"  Best VQE energy   : {best_energy:.6f} Ha")
     print(f"  FCI reference     : {FCI_ENERGY:.6f} Ha")
@@ -176,7 +176,7 @@ def print_vqe_report(
     print(f"{'─'*50}")
 
     if energy_history:
-        print(f"\n  Convergence trajectory:")
+        print("\n  Convergence trajectory:")
         n = len(energy_history)
         checkpoints = [0, n // 4, n // 2, 3 * n // 4, n - 1]
         for i in checkpoints:

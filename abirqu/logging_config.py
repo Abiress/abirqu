@@ -8,7 +8,6 @@ from __future__ import annotations
 import logging
 import sys
 
-
 _DEFAULT_FORMAT = (
     "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
 )

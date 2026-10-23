@@ -4,7 +4,7 @@ Copyright 2026 Abir Maheshwari
 
 Dark/Light theme support for the quantum IDE.
 """
-from typing import Dict, Any
+from typing import Dict
 
 
 class ThemeColors:

@@ -6,8 +6,9 @@ Generates probabilistic bitstreams from probability distributions.
 Bypasses floating-point rotation gates entirely.
 """
 
-import numpy as np
 from typing import List, Optional
+
+import numpy as np
 
 
 class StochasticBitstream:

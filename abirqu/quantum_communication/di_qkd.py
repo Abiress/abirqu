@@ -9,9 +9,10 @@ Most secure form of QKD - even if devices are compromised.
 """
 
 import math
-import numpy as np
-from typing import List, Tuple, Optional, Dict, Any
 from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 
 
 @dataclass

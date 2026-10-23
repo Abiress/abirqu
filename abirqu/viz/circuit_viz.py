@@ -1,14 +1,15 @@
 """Visualization Module for AbirQu. Copyright 2026 Abir Maheshwari"""
-import numpy as np
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Tuple
+
 from ..circuit import Circuit
+
 
 class CircuitVisualizer:
     """Visualizes quantum circuits in various formats."""
-    
+
     def __init__(self):
         self.style = 'text'  # text, ascii, unicode, mpl
-        
+
     def visualize(self, circuit: Circuit, format: str = 'text') -> str:
         """Visualize circuit in specified format."""
         if format == 'text':
@@ -21,43 +22,43 @@ class CircuitVisualizer:
             return circuit.to_qasm()
         else:
             raise ValueError(f"Unknown format: {format}")
-            
+
     def _text_diagram(self, circuit: Circuit) -> str:
         """Generate text-based circuit diagram."""
         lines = []
         lines.append("Circuit: " + circuit.name)
         lines.append("=" * 40)
-        
+
         # Header
         header = "Gate".ljust(10) + "Qubits".ljust(15) + "Details"
         lines.append(header)
         lines.append("-" * 40)
-        
+
         # Gate list
         for i, gate in enumerate(circuit.gates):
             qubits_str = ', '.join(str(q) for q in gate.qubits)
             lines.append(f"{gate.name.ljust(10)} {qubits_str.ljust(15)} (gate {i+1})")
-            
+
         lines.append("=" * 40)
         lines.append(f"Total gates: {len(circuit.gates)}")
         lines.append(f"Depth: {circuit.depth()}")
-        
+
         return '\n'.join(lines)
-        
+
     def _ascii_art(self, circuit: Circuit) -> str:
         """Generate ASCII art circuit diagram."""
         n = circuit.num_qubits
         max_gates = len(circuit.gates)
-        
+
         # Initialize grid
         grid = [['─' for _ in range(max_gates * 2)] for _ in range(n)]
-        
+
         # Place gates
         for i, gate in enumerate(circuit.gates):
             col = i * 2
             name = gate.name.split('(')[0][:3]  # First 3 chars
             qubits = gate.qubits
-            
+
             for q in range(n):
                 if q in qubits:
                     grid[q][col] = name[0] if len(name) > 0 else '●'
@@ -66,18 +67,18 @@ class CircuitVisualizer:
                 else:
                     grid[q][col] = '─'
                     grid[q][col+1] = '─'
-                    
+
         # Build diagram
         lines = []
         lines.append("    " + ' '.join(f"{i%10}" for i in range(max_gates)))
         lines.append("    " + '─' * (max_gates * 2))
-        
+
         for q in range(n):
             line = f"q{q}: │" + '│'.join(grid[q]) + '│'
             lines.append(line)
-            
+
         return '\n'.join(lines)
-        
+
     def _unicode_diagram(self, circuit: Circuit) -> str:
         """Generate Unicode circuit diagram."""
         n = circuit.num_qubits
@@ -85,15 +86,15 @@ class CircuitVisualizer:
         lines.append("╔" + "═" * 40 + "╗")
         lines.append(f"║ Circuit: {circuit.name}")
         lines.append("╠" + "═" * 40 + "╣")
-        
+
         for i, gate in enumerate(circuit.gates):
             gate_str = f"[{gate.name}]"
             qubit_str = f" → qubits {gate.qubits}"
             lines.append(f"║ {i+1:2d}. {gate_str:<20}{qubit_str}")
-            
+
         lines.append("╚" + "═" * 40 + "╝")
         return '\n'.join(lines)
-        
+
     def export_html(self, circuit: Circuit, filepath: str):
         """Export circuit visualization to HTML."""
         html = f"""
@@ -110,12 +111,12 @@ class CircuitVisualizer:
 """
         for i, gate in enumerate(circuit.gates):
             html += f"<li>{gate.name} on qubits {gate.qubits}</li>\n"
-            
+
         html += "</ol></body></html>"
-        
+
         with open(filepath, 'w') as f:
             f.write(html)
-            
+
     def get_gate_colors(self, gate_name: str) -> Tuple[str, str]:
         """Get color scheme for gate (foreground, background)."""
         colors = {

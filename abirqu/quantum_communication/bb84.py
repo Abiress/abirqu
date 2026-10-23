@@ -15,11 +15,11 @@ Protocol:
 Security: Eavesdropping introduces ~25% error rate on intercepted bits.
 """
 
-import numpy as np
-from typing import List, Tuple, Optional, Dict, Any
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-import hashlib
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 
 class Basis(Enum):

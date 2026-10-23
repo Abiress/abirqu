@@ -1,6 +1,7 @@
 import hashlib
-import os
 import math
+import os
+
 
 class EntanglementSwapper:
     def __init__(self, num_relay_nodes, link_fidelity, swap_success_probability):
@@ -19,7 +20,7 @@ class EntanglementSwapper:
 class OrbitalSatelliteNoiseModel:
     def __init__(self, orbit):
         self.orbit = orbit
-        
+
     def compute_channel_model(self):
         models = {
             "LEO": {"altitude_km": 500, "atmospheric_error_rate": 0.05, "doppler_shift_ghz": 0.01, "beam_divergence_loss_db": 20, "background_noise_cps": 1000},
@@ -113,8 +114,4 @@ class EntanglementSensorNetwork:
 # Re-export phase 31 production implementations.
 from .space import (
     EntanglementSwapper,
-    OrbitalSatelliteNoiseModel,
-    DeepSpaceRelay,
-    QKDTelemetryChannel,
-    EntanglementSensorNetwork,
 )

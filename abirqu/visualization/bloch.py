@@ -7,8 +7,10 @@ Unique to AbirQu:
 - Interactive rotation via elevation/azimuth parameters
 """
 from __future__ import annotations
+
 import math
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple
+
 import numpy as np
 
 
@@ -84,7 +86,7 @@ class BlochSphere:
 
         svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" '
                f'font-family="monospace">']
-        svg.append(f'<rect width="100%" height="100%" fill="#1e1e2e"/>')
+        svg.append('<rect width="100%" height="100%" fill="#1e1e2e"/>')
         svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" '
                    f'stroke="#585b70" stroke-width="1.5"/>')
         svg.append(f'<ellipse cx="{cx}" cy="{cy}" rx="{r}" ry="{r * 0.3}" '

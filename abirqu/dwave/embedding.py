@@ -6,7 +6,7 @@ Find minor embeddings for mapping QUBO problems to D-Wave hardware topology.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 class EmbeddingFinder:

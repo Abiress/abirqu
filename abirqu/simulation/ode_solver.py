@@ -19,9 +19,8 @@ References:
 """
 
 import math
-import cmath
-from typing import Callable, Optional, Tuple, List, Dict, Any
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -454,7 +453,7 @@ class TimeEvolutionSolver:
                 terms.append(HamiltonianBuilder.single_qubit_rotation(
                     qubits[0], self.num_qubits,
                     omega=lambda t, a=amp: a,
-                    phi=math.pi / 4, label=f"H"
+                    phi=math.pi / 4, label="H"
                 ))
 
         # Build time-dependent Hamiltonian

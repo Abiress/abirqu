@@ -1,9 +1,12 @@
 
-import os
-import json
 import importlib.metadata
-from typing import Dict, List, Any, Optional
-from pathlib import Path
+import json
+import os
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+if TYPE_CHECKING:
+    from .backend import QuantumBackend
+    from .circuit import Circuit as QuantumCircuit
 
 # ============================================================================
 # C4.2: Auto-discovery via importlib.metadata entry points
@@ -11,11 +14,11 @@ from pathlib import Path
 
 class PluginDiscovery:
     """Auto-discovers plugins via importlib.metadata entry points."""
-    
+
     def __init__(self, entry_group: str = "abirqu.plugins"):
         self.entry_group = entry_group
         self._discovered = None
-    
+
     def discover(self) -> List[Dict[str, Any]]:
         """Discover all installed plugins via entry points."""
         discovered = []
@@ -41,16 +44,16 @@ class PluginDiscovery:
                     })
         except Exception as e:
             discovered.append({"error": str(e), "status": "discovery_failed"})
-        
+
         self._discovered = discovered
         return discovered
-    
+
     def list_names(self) -> List[str]:
         """Return list of discovered plugin names."""
         if self._discovered is None:
             self.discover()
         return [p.get("name", "unknown") for p in self._discovered if "error" not in p]
-    
+
     def get_plugin(self, name: str):
         """Get plugin instance by name."""
         if self._discovered is None:
@@ -63,7 +66,7 @@ class PluginDiscovery:
 
 class PluginLoader:
     """Dynamic module loader for plugins."""
-    
+
     @staticmethod
     def load_from_file(filepath: str):
         """Load plugin from Python file."""
@@ -72,7 +75,7 @@ class PluginLoader:
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         return module
-    
+
     @staticmethod
     def load_from_module(module_path: str):
         """Load plugin from module path (e.g., 'my_plugin.module')."""
@@ -85,27 +88,27 @@ class PluginLoader:
 
 class CredentialManager:
     """Unified configuration for all cloud provider credentials."""
-    
+
     def __init__(self, config_path: Optional[str] = None):
         self.config_path = config_path or os.path.expanduser("~/.abirqu/credentials.json")
         self.credentials = {}
         self._load()
-    
+
     def _load(self):
         """Load credentials from config file."""
         if os.path.exists(self.config_path):
             try:
                 with open(self.config_path, 'r') as f:
                     self.credentials = json.load(f)
-            except:
+            except Exception:
                 self.credentials = {}
-    
+
     def save(self):
         """Save credentials to config file."""
         os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
         with open(self.config_path, 'w') as f:
             json.dump(self.credentials, f, indent=2)
-    
+
     def set_credential(self, provider: str, token: str, **kwargs):
         """Set credential for a provider."""
         self.credentials[provider] = {
@@ -113,25 +116,25 @@ class CredentialManager:
             **kwargs
         }
         self.save()
-    
+
     def get_credential(self, provider: str) -> Optional[Dict]:
         """Get credential for a provider."""
         return self.credentials.get(provider)
-    
+
     def has_credential(self, provider: str) -> bool:
         """Check if credential exists for provider."""
         return provider in self.credentials
-    
+
     def remove_credential(self, provider: str):
         """Remove credential for a provider."""
         if provider in self.credentials:
             del self.credentials[provider]
             self.save()
-    
+
     def list_providers(self) -> List[str]:
         """List all configured providers."""
         return list(self.credentials.keys())
-    
+
     @staticmethod
     def from_env(provider: str) -> Optional[str]:
         """Load token from environment variable."""
@@ -154,11 +157,11 @@ class CredentialManager:
 
 class CredentialManagerWithMFA(CredentialManager):
     """Credential manager with MFA support."""
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.mfa_sessions = {}
-    
+
     def authenticate_with_mfa(self, provider: str, token: str, mfa_code: str) -> bool:
         """Authenticate with MFA code."""
         self.mfa_sessions[provider] = {
@@ -167,7 +170,7 @@ class CredentialManagerWithMFA(CredentialManager):
             "mfa_code": mfa_code
         }
         return True
-    
+
     def is_mfa_verified(self, provider: str) -> bool:
         """Check if MFA verified for provider."""
         session = self.mfa_sessions.get(provider, {})
@@ -180,7 +183,7 @@ class CredentialManagerWithMFA(CredentialManager):
 
 class NormalizedResult:
     """Provider-agnostic result object."""
-    
+
     def __init__(
         self,
         backend_name: str,
@@ -196,7 +199,7 @@ class NormalizedResult:
         self.probabilities = probabilities
         self.statevector = statevector
         self.metadata = metadata or {}
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -207,7 +210,7 @@ class NormalizedResult:
             "statevector": self.statevector,
             "metadata": self.metadata
         }
-    
+
     @classmethod
     def from_backend_result(cls, result: Dict[str, Any], backend_name: str):
         """Create from backend result dict."""
@@ -223,7 +226,7 @@ class NormalizedResult:
 
 class ResultNormalizer:
     """Normalises results from different providers."""
-    
+
     @staticmethod
     def normalize_ibm(result: Dict) -> NormalizedResult:
         """Normalize IBM Quantum result."""
@@ -237,7 +240,7 @@ class ResultNormalizer:
             probabilities=probabilities,
             metadata=result.get("metadata", {})
         )
-    
+
     @staticmethod
     def normalize_braket(result: Dict) -> NormalizedResult:
         """Normalize AWS Braket result."""
@@ -250,7 +253,7 @@ class ResultNormalizer:
             probabilities=probabilities,
             metadata=result.get("metadata", {})
         )
-    
+
     @staticmethod
     def normalize_azure(result: Dict) -> NormalizedResult:
         """Normalize Azure Quantum result."""
@@ -263,7 +266,7 @@ class ResultNormalizer:
             probabilities=probabilities,
             metadata=result.get("metadata", {})
         )
-    
+
     @staticmethod
     def normalize_cirq(result: Dict) -> NormalizedResult:
         """Normalize Cirq/Google result."""
@@ -275,12 +278,12 @@ class ResultNormalizer:
             probabilities={k: v/result.get("repetitions", 1) for k, v in counts.items()},
             metadata=result.get("params", {})
         )
-    
+
     @staticmethod
     def normalize_generic(result: Dict, backend_name: str) -> NormalizedResult:
         """Normalize generic backend result."""
         return NormalizedResult.from_backend_result(result, backend_name)
-    
+
     @classmethod
     def normalize(cls, result: Dict, provider: str) -> NormalizedResult:
         """Normalize result based on provider."""
@@ -300,21 +303,21 @@ class ResultNormalizer:
 
 class NativeGateSet:
     """Define backend's native gate set."""
-    
+
     def __init__(self, name: str, gates: List[str]):
         self.name = name
         self.gates = set(gates)
-    
+
     def supports(self, gate: str) -> bool:
         return gate in self.gates
-    
+
     def __repr__(self):
         return f"NativeGateSet({self.name}, {len(self.gates)} gates)"
 
 
 class GateDecomposer:
     """Decompose non-native gates to native gates."""
-    
+
     # Gate decomposition rules
     DECOMPOSITION_RULES = {
         # Toffoli -> CNOT + single qubit gates
@@ -388,26 +391,26 @@ class GateDecomposer:
         # CPhase -> Controlled Phase
         "cphase": [("u1", [1])],
     }
-    
+
     def __init__(self, native_gates: List[str]):
         self.native_gates = set(native_gates)
         self.decomposition_cache = {}
-    
+
     def decompose(self, gate: str, qubits: List[int]) -> List[tuple]:
         """Decompose a gate into native gates."""
         if gate in self.native_gates:
             return [(gate, qubits)]
-        
+
         if gate in self.decomposition_cache:
             return self.decomposition_cache[gate]
-        
+
         rule = self.DECOMPOSITION_RULES.get(gate)
         if rule is None:
             return [(gate, qubits)]  # Can't decompose
-        
+
         if isinstance(rule, str):
             rule = self.DECOMPOSITION_RULES.get(rule, [])
-        
+
         decomposed = []
         for g, qs in rule:
             if len(qs) == len(qubits):
@@ -415,38 +418,43 @@ class GateDecomposer:
             else:
                 new_qubits = qubits[:len(qs)]
             decomposed.extend(self.decompose(g, new_qubits))
-        
+
         self.decomposition_cache[gate] = decomposed
         return decomposed
-    
+
+    _NATIVE_TO_CIRCUIT = {
+        "id": "I", "i": "I", "x": "X", "y": "Y", "z": "Z", "h": "H",
+        "s": "S", "si": "S_dag", "sdg": "S_dag", "t": "T", "ti": "T_dag",
+        "tdg": "T_dag", "cx": "CNOT", "cnot": "CNOT", "cz": "CZ",
+        "swap": "SWAP", "rx": "RX", "ry": "RY", "rz": "RZ", "u1": "RZ",
+    }
+
     def decompose_circuit(self, circuit: "QuantumCircuit") -> "QuantumCircuit":
         """Decompose entire circuit to native gates."""
-        from abirqu.circuit import QuantumCircuit
-        
-        new_circuit = QuantumCircuit(circuit.num_qubits)
-        for gate, qubits, params in circuit.get_operations():
-            decomposed = self.decompose(gate, qubits)
+        from .circuit import Circuit
+
+        new_circuit = Circuit(circuit.num_qubits)
+        for gate in circuit.gates:
+            decomposed = self.decompose(gate.name.lower(), list(gate.qubits))
             for g, qs in decomposed:
-                if params:
-                    new_circuit.append(g, qs, params)
-                else:
-                    new_circuit.append(g, qs)
-        
+                canonical = self._NATIVE_TO_CIRCUIT.get(g, g.upper())
+                new_circuit.add_gate(canonical, qs, gate.params or None)
+
         return new_circuit
 
 
 class Transpiler:
     """Transpile circuits to backend-native gate sets."""
-    
+
     def __init__(self, backend: "QuantumBackend"):
         self.backend = backend
         self.gate_set = self._get_backend_gate_set()
         self.decomposer = GateDecomposer(list(self.gate_set.gates))
-    
+
     def _get_backend_gate_set(self) -> NativeGateSet:
         """Get native gate set for backend."""
         backend_name = self.backend.name.lower()
-        
+
         gate_sets = {
             "ibmq": ["u1", "u2", "u3", "cx", "id", "x", "y", "z", "h", "s", "sdg", "t", "tdg"],
             "braket": ["i", "x", "y", "z", "h", "cx", "cy", "cz", "s", "si", "t", "ti", "v", "vi", "w", "wi", "rx", "ry", "rz", "phase", "cswap"],
@@ -456,13 +464,13 @@ class Transpiler:
             "cirq": ["x", "y", "z", "h", "cx", "cz", "rx", "ry", "rz", "t", "s"],
             "local": ["x", "y", "z", "h", "cx", "s", "t", "rx", "ry", "rz"],
         }
-        
+
         return NativeGateSet(backend_name, gate_sets.get(backend_name, ["x", "h", "cx"]))
-    
+
     def transpile(self, circuit: "QuantumCircuit") -> "QuantumCircuit":
         """Transpile circuit to backend-native gates."""
         return self.decomposer.decompose_circuit(circuit)
-    
+
     def transpile_and_run(self, circuit: "QuantumCircuit", shots: int = 1024):
         """Transpile and run on backend."""
         transpiled = self.transpile(circuit)
@@ -470,12 +478,3 @@ class Transpiler:
 
 
 # Re-export phase 36 production implementations.
-from .plugin_market import (
-    PluginRegistry,
-    PluginManifest,
-    SandboxedNamespace,
-    EventBus,
-    AbirHubMarketplace,
-    SemanticVersion,
-    PluginBase,
-)

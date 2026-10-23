@@ -10,7 +10,8 @@ simulation of circuits that would be impossible with full statevector.
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
+from typing import List
+
 import numpy as np
 
 from ..circuit import Circuit

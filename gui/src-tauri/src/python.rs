@@ -125,6 +125,7 @@ impl PythonBridge {
     }
 
     /// Check if the backend is running.
+    #[allow(dead_code)]
     pub fn is_running(&self) -> bool {
         self.child
             .lock()

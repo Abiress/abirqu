@@ -25,7 +25,7 @@ class DynamicErrorSuppressor:
                 strategies[g] = {"strategy": "Pauli Twirling", "overhead_factor": 1.1}
             else:
                 strategies[g] = {"strategy": "None", "overhead_factor": 1.0}
-        
+
         return {
             "per_gate_strategies": strategies,
             "combined_overhead_factor": 1.2
@@ -94,8 +94,4 @@ class AdaptiveCompilerPass:
 # Re-export phase 33 production implementations.
 from .neutral_atom import (
     GateFidelityTracker,
-    DynamicErrorSuppressor,
-    RecalibrationAgent,
-    NeutralAtomTweezerArray,
-    AdaptiveCompilerPass,
 )

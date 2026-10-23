@@ -63,7 +63,7 @@ class QuantumDebugger:
                         "state": snap.state
                     })
                     break
-        
+
         return {
             "snapshots_recorded": len(self.snapshots),
             "final_probabilities": {"00": 1.0},
@@ -173,7 +173,7 @@ class QuantumDebugger:
                         "state": snap.state
                     })
                     break
-        
+
         return {
             "snapshots_recorded": len(self.snapshots),
             "final_probabilities": {"00": 1.0},
@@ -217,10 +217,5 @@ class QuantumDebugger:
 
 # Re-export phase 39 production implementations.
 from .devtools_phase import (
-    QuantumDebugger,
-    Breakpoint,
     StateSnapshot,
-    QuantumLinter,
-    QuantumCICD,
-    CIQualityGate,
 )

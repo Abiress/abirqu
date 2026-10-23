@@ -26,13 +26,12 @@ References:
     - Jeremiah et al. (2022): Quantum algorithm for non-linear PDEs
 """
 
-import math
-from typing import List, Tuple, Dict, Optional, Callable
 from dataclasses import dataclass
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from .circuit import Circuit, Gate
+from .circuit import Circuit
 
 
 def adam_optimizer(loss_fn, initial_params, lr=0.01, n_iters=100):

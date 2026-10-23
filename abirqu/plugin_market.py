@@ -1,10 +1,8 @@
 """Plugin marketplace and registry for AbirQu."""
 
 import ast
-import json
-import re
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Protocol, Sequence, runtime_checkable
+from typing import Any, Callable, Dict, List, Optional, Protocol, runtime_checkable
 
 
 @runtime_checkable

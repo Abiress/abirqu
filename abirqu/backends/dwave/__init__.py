@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from ...backend import QuantumBackend, JobStatus, JobHandle
+from ...backend import JobHandle, JobStatus, QuantumBackend
 from ...circuit import Circuit
 
 
@@ -35,7 +35,7 @@ class DWaveCredentials:
 
 def _random_sample_bqm(bqm, num_reads: int):
     """Fallback random sampler when neal is not available."""
-    from dimod import SampleSet, Datum
+    from dimod import Datum, SampleSet
     variables = list(bqm.variables)
     n = len(variables)
     samples = []

@@ -13,11 +13,9 @@ Reference: Shor, P.W. (1994) "Algorithms for quantum computation:
 discrete logarithms and factoring." Proceedings 35th FOCS.
 """
 import math
-import numpy as np
-from typing import List, Tuple, Optional
-from fractions import Fraction
-from abirqu import Circuit
+from typing import List, Optional, Tuple
 
+from abirqu import Circuit
 
 # ─────────────────────────────────────────────────────────────
 # Classical period finding (for reference / fallback)
@@ -579,7 +577,7 @@ class ShorAlgorithm:
 def print_shor_report(N: int, p: Optional[int], q: Optional[int], attempts: int) -> None:
     """Print Shor factorization report."""
     print(f"\n{'─'*50}")
-    print(f"  Shor's Algorithm — Factorization Report")
+    print("  Shor's Algorithm — Factorization Report")
     print(f"{'─'*50}")
     print(f"  Target number   : {N}")
     if p is not None and q is not None:

@@ -2,7 +2,7 @@
 
 import math
 from collections import defaultdict
-from typing import Any, Dict, Iterable, List, Sequence, Tuple
+from typing import Any, Dict, List, Sequence, Tuple
 
 from .circuit import Circuit
 

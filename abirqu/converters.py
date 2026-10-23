@@ -12,8 +12,7 @@ from __future__ import annotations
 
 from typing import Any, List
 
-from .circuit import Circuit, Gate
-
+from .circuit import Circuit
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Generic converter dispatcher
@@ -282,7 +281,8 @@ def to_ionq_json(circuit: Circuit) -> dict:
 def to_pytket(circuit: Circuit) -> Any:
     """Convert AbirQu Circuit to a pytket ``Circuit``."""
     try:
-        from pytket import Circuit as TkCircuit, OpType
+        from pytket import Circuit as TkCircuit
+        from pytket import OpType
     except ImportError as exc:
         raise RuntimeError(
             "pytket not installed. Install with: pip install pytket"

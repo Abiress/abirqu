@@ -2,7 +2,7 @@
 Quil (Rigetti) Interchange Format - Complete Implementation
 """
 import json
-from typing import Dict, List, Any
+
 
 class QuilGate:
     def __init__(self, name, qubits, params=None, defined_by=None):
@@ -15,7 +15,7 @@ class QuilProgram:
     def __init__(self):
         self.gates = []
         self.defined_gates = {}
-    
+
     def to_quil(self):
         lines = []
         for name, definition in self.defined_gates.items():
@@ -35,7 +35,7 @@ class QuilProgram:
                 qubits_str = ", ".join([str(q) for q in gate.qubits])
                 lines.append("%s %s" % (gate.name, qubits_str))
         return "\n".join(lines)
-    
+
     def to_json(self):
         instructions = []
         for gate in self.gates:
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     bell = create_bell_state_quil()
     print("✓ Bell state Quil created (%d chars)" % len(bell))
     print(bell[:200] + "...")
-    
+
     program = QuilProgram()
     program.gates.append(QuilGate("H", [0]))
     program.gates.append(QuilGate("CNOT", [0, 1]))

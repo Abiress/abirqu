@@ -1,15 +1,17 @@
 """Export Module for AbirQu. Copyright 2026 Abir Maheshwari"""
 import json
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List
+
 from ..circuit import Circuit
-from ..qec.codes import SurfaceCode, LDPCCode
+from ..qec.codes import LDPCCode, SurfaceCode
+
 
 class Exporter:
     """Exports quantum circuits and results to various formats."""
-    
+
     def __init__(self):
         self.supported_formats = ['qasm', 'json', 'csv', 'html', 'latex']
-        
+
     def export_circuit(self, circuit: Circuit, filepath: str, format: str = 'qasm'):
         """Export circuit to specified format."""
         if format == 'qasm':
@@ -22,13 +24,13 @@ class Exporter:
             self._export_latex(circuit, filepath)
         else:
             raise ValueError(f"Unsupported format: {format}")
-            
+
     def _export_qasm(self, circuit: Circuit, filepath: str):
         """Export to OpenQASM 2.0."""
         qasm = circuit.to_qasm()
         with open(filepath, 'w') as f:
             f.write(qasm)
-            
+
     def _export_json(self, circuit: Circuit, filepath: str):
         """Export circuit structure to JSON."""
         data = {
@@ -36,16 +38,16 @@ class Exporter:
             'num_qubits': circuit.num_qubits,
             'gates': []
         }
-        
+
         for gate in circuit.gates:
             data['gates'].append({
                 'name': gate.name,
                 'qubits': gate.qubits
             })
-            
+
         with open(filepath, 'w') as f:
             json.dump(data, f, indent=2)
-            
+
     def _export_html(self, circuit: Circuit, filepath: str):
         """Export circuit to HTML visualization."""
         html = f"""
@@ -73,14 +75,14 @@ class Exporter:
 """
         for i, gate in enumerate(circuit.gates):
             html += f"        <tr><td>{i+1}</td><td>{gate.name}</td><td>{gate.qubits}</td></tr>\n"
-            
+
         html += """    </table>
 </body>
 </html>"""
-        
+
         with open(filepath, 'w') as f:
             f.write(html)
-            
+
     def _export_latex(self, circuit: Circuit, filepath: str):
         """Export circuit to LaTeX."""
         latex = f"""
@@ -99,15 +101,15 @@ class Exporter:
                 latex += f"    & \\gate{{{gate.name}}} & \\qw{{{qubits[0]}}} \\\\\n"
             elif len(qubits) == 2:
                 latex += f"    & \\gate{{{gate.name}}} & \\qw{{{qubits[0]}}} \\\\\n"
-                
+
         latex += """}
 \\end{equation}
 
 \\end{document}"""
-        
+
         with open(filepath, 'w') as f:
             f.write(latex)
-            
+
     def export_results(self, counts: Dict[str, int], filepath: str, format: str = 'csv'):
         """Export measurement results."""
         if format == 'csv':
@@ -116,20 +118,20 @@ class Exporter:
             self._export_results_json(counts, filepath)
         else:
             raise ValueError(f"Unsupported format: {format}")
-            
+
     def _export_csv(self, counts: Dict[str, int], filepath: str):
         """Export results to CSV."""
         import csv
-        
+
         with open(filepath, 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(['State', 'Count', 'Probability'])
-            
+
             total = sum(counts.values())
             for state, count in sorted(counts.items()):
                 prob = count / total if total > 0 else 0
                 writer.writerow([state, count, prob])
-                
+
     def _export_results_json(self, counts: Dict[str, int], filepath: str):
         """Export results to JSON."""
         total = sum(counts.values())
@@ -137,7 +139,7 @@ class Exporter:
             'total_shots': total,
             'states': []
         }
-        
+
         for state, count in sorted(counts.items()):
             prob = count / total if total > 0 else 0
             data['states'].append({
@@ -145,16 +147,16 @@ class Exporter:
                 'count': count,
                 'probability': prob
             })
-            
+
         with open(filepath, 'w') as f:
             json.dump(data, f, indent=2)
-            
+
     def export_code_comparison(self, codes: List[Any], filepath: str):
         """Export comparison of QEC codes."""
         data = {
             'codes': []
         }
-        
+
         for code in codes:
             if isinstance(code, SurfaceCode):
                 data['codes'].append({
@@ -169,6 +171,6 @@ class Exporter:
                     'k': code.k,
                     'rate': code.get_rate()
                 })
-                
+
         with open(filepath, 'w') as f:
             json.dump(data, f, indent=2)

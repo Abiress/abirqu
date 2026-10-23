@@ -5,8 +5,9 @@ Copyright 2026 Abir Maheshwari
 Stabilizer codes: bit-flip, phase-flip, Shor, Steane, repetition.
 All implementations use pure numpy — no external QEC libraries.
 """
+from typing import List, Optional, Tuple
+
 import numpy as np
-from typing import List, Tuple, Optional
 
 
 class StabilizerCode:

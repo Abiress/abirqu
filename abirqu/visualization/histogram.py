@@ -2,8 +2,9 @@
 Histogram plotter for AbirQu — text and SVG.
 """
 from __future__ import annotations
+
 import html as _html
-from typing import Dict, Optional
+from typing import Dict
 
 
 def histogram_text(counts: Dict[str, int], title: str = "Results",
@@ -28,7 +29,7 @@ def histogram_svg(counts: Dict[str, int], title: str = "Results",
                   width: int = 700, bar_height: int = 24,
                   max_bars: int = 40) -> str:
     if not counts:
-        return f'<svg xmlns="http://www.w3.org/2000/svg" width="200" height="40"><text x="10" y="25" fill="#cdd6f4">No data</text></svg>'
+        return '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="40"><text x="10" y="25" fill="#cdd6f4">No data</text></svg>'
     total = sum(counts.values())
     items = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:max_bars]
     mx = items[0][1]
@@ -40,7 +41,7 @@ def histogram_svg(counts: Dict[str, int], title: str = "Results",
 
     svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{svg_h}" '
            f'font-family="monospace" font-size="12">']
-    svg.append(f'<rect width="100%" height="100%" fill="#1e1e2e"/>')
+    svg.append('<rect width="100%" height="100%" fill="#1e1e2e"/>')
     svg.append(f'<text x="{width // 2}" y="20" text-anchor="middle" fill="#cdd6f4" '
                f'font-size="14" font-weight="bold">{_html.escape(title)}</text>')
 

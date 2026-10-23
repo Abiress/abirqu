@@ -175,8 +175,8 @@ class TranspilerPipeline:
         Uses BFS shortest-path SWAP insertion for limited connectivity.
         For all-to-all connectivity, no routing needed.
         """
-        from .topology import CouplingMap
         from .routing import RoutingPass
+        from .topology import CouplingMap
 
         # Build coupling map for target backend
         n = circuit.num_qubits

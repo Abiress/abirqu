@@ -22,12 +22,12 @@ References:
 """
 
 from .bb84 import BB84Protocol, BB84Simulator
-from .e91 import E91Protocol, E91Simulator
 from .cv_qkd import CVQKDProtocol, GaussianModulation
-from .di_qkd import DIQKDProtocol, BellTest
-from .satellite import SatelliteQKD, SatelliteLink
+from .di_qkd import BellTest, DIQKDProtocol
+from .e91 import E91Protocol, E91Simulator
+from .network import QuantumChannel, QuantumNetwork, QuantumNode
 from .repeaters import QuantumRepeater, RepeaterChain
-from .network import QuantumNetwork, QuantumNode, QuantumChannel
+from .satellite import SatelliteLink, SatelliteQKD
 
 __all__ = [
     'BB84Protocol', 'BB84Simulator',

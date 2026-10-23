@@ -11,9 +11,9 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
-from .environment import ResourceQuota, VirtualEnvironment
+from .environment import ResourceQuota
 
 
 class TenantTier(str, Enum):

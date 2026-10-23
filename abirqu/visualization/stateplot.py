@@ -7,9 +7,10 @@ Unique to AbirQu:
 - Supports both statevector and probability input
 """
 from __future__ import annotations
+
 import html as _html
 import math
-from typing import Optional
+
 import numpy as np
 
 
@@ -27,7 +28,7 @@ def stateplot_svg(statevector: np.ndarray, title: str = "State Vector",
 
     svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{svg_w}" height="{svg_h}" '
            f'font-family="monospace" font-size="10">']
-    svg.append(f'<rect width="100%" height="100%" fill="#1e1e2e"/>')
+    svg.append('<rect width="100%" height="100%" fill="#1e1e2e"/>')
     svg.append(f'<text x="{svg_w // 2}" y="20" text-anchor="middle" fill="#cdd6f4" '
                f'font-size="13" font-weight="bold">{_html.escape(title)}</text>')
 
@@ -65,7 +66,7 @@ def probability_svg(statevector: np.ndarray, title: str = "Probabilities",
 
     svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{svg_w}" height="{svg_h}" '
            f'font-family="monospace" font-size="10">']
-    svg.append(f'<rect width="100%" height="100%" fill="#1e1e2e"/>')
+    svg.append('<rect width="100%" height="100%" fill="#1e1e2e"/>')
     svg.append(f'<text x="{svg_w // 2}" y="20" text-anchor="middle" fill="#cdd6f4" '
                f'font-size="13" font-weight="bold">{_html.escape(title)}</text>')
 

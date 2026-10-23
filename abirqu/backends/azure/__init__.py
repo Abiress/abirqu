@@ -8,7 +8,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from ...backend import QuantumBackend, JobStatus, JobHandle
+from ...backend import JobHandle, JobStatus, QuantumBackend
 from ...circuit import Circuit
 
 
@@ -91,7 +91,8 @@ class AzureQuantumBackend(QuantumBackend):
 
         # Convert via Qiskit bridge
         try:
-            from qiskit import QuantumCircuit as QkCircuit, transpile
+            from qiskit import QuantumCircuit as QkCircuit
+            from qiskit import transpile
             qc = QkCircuit(circuit.num_qubits)
             for gate in getattr(circuit, "gates", []):
                 name = gate.name.upper()

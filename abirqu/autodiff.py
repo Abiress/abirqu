@@ -10,10 +10,9 @@ Copyright 2026 Abir Maheshwari
 
 from __future__ import annotations
 
-import copy
 import math
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 

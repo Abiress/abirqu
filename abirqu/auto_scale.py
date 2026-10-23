@@ -21,14 +21,14 @@ References:
     - Architecture-specific SIMD optimization
 """
 
-import os
-import sys
 import math
+import os
 import platform
 import subprocess
-from typing import Dict, List, Optional, Tuple, Any
+import sys
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, Optional
 
 import numpy as np
 
@@ -572,9 +572,9 @@ class AutoScalingSimulator:
                 "available_ram_gb": round(self.hardware.available_ram_gb, 1),
                 "gpu": self.hardware.gpu_name if self.hardware.gpu_available else "None",
                 "gpu_vram_gb": round(self.hardware.gpu_vram_gb, 1),
-                "simd": f"AVX-512" if self.hardware.has_avx512 else
-                         f"AVX2" if self.hardware.has_avx2 else
-                         f"NEON" if self.hardware.has_neon else "SSE",
+                "simd": "AVX-512" if self.hardware.has_avx512 else
+                         "AVX2" if self.hardware.has_avx2 else
+                         "NEON" if self.hardware.has_neon else "SSE",
             },
         }
 
@@ -601,7 +601,6 @@ class AutoScalingSimulator:
         observables : dict, optional
             Observables to measure
         """
-        from abirqu.circuit import Circuit
 
         n_qubits = circuit.num_qubits
         depth = len(circuit.gates)

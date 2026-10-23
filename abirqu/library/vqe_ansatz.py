@@ -7,9 +7,11 @@ Unique to AbirQu:
 - Automatic circuit depth optimization
 """
 from __future__ import annotations
+
 from typing import List, Optional
+
 from ..circuit import Circuit
-from .n_local import efficient_su2, real_amplitudes
+from .n_local import efficient_su2
 
 
 def vqe_hardware_efficient(num_qubits: int, depth: int = 2,

@@ -1,8 +1,6 @@
 """High energy physics simulation - lattice gauge theory, QGP, SYK, black holes."""
 
 import math
-from dataclasses import dataclass
-from typing import Any, Dict, List
 
 
 class LatticeGaugeTheory:

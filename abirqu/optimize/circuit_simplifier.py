@@ -5,9 +5,12 @@ Copyright 2026 Abir Maheshwari
 Combines rule-based simplification with algebraic phase polynomial optimization.
 """
 
+from typing import Any, Dict, List
+
 import numpy as np
-from typing import List, Dict, Any, Tuple
+
 from abirqu.circuit import Circuit
+
 
 class CircuitSimplifier:
     """
@@ -25,39 +28,39 @@ class CircuitSimplifier:
         Applies a pipeline of optimization passes.
         """
         self.stats['original'] = len(circuit.gates)
-        
+
         # Pass 1: ZX Calculus simplification
         from abirqu.optimize.zx_calculus import simplify_via_zx
         circ_zx = simplify_via_zx(circuit)
-        
+
         # Pass 2: Commutation-Aware Peephole pass
         from abirqu.optimize.peephole import optimize_paired_gates
         gates = optimize_paired_gates(circ_zx.gates)
         gates = self._remove_identities(gates)
-        
+
         # Re-build intermediate circuit for phase poly pass
         temp_circ = Circuit(circuit.num_qubits)
         for g in gates:
             self._add_gate_to_circuit(temp_circ, g)
-            
+
         # Pass 3: Algebraic Phase Polynomial Optimization
         optimized_circ = self._algebraic_optimize(temp_circ)
-        
+
         # Pass 4: Final Peephole cleanup
         final_gates = optimize_paired_gates(optimized_circ.gates)
         final_gates = self._remove_identities(final_gates)
-        
+
         final_circ = Circuit(circuit.num_qubits)
         for g in final_gates:
             self._add_gate_to_circuit(final_circ, g)
         final_circ.measurements = list(circuit.measurements)
         final_circ.classical_bits = circuit.classical_bits
-        
+
         self.stats['optimized'] = len(final_circ.gates)
         self.stats['removed'] = self.stats['original'] - self.stats['optimized']
         if self.stats['original'] > 0:
             self.stats['pct'] = 100.0 * self.stats['removed'] / self.stats['original']
-            
+
         return final_circ
 
     def simplify(self, circuit: Circuit) -> Circuit:
@@ -137,7 +140,7 @@ class CircuitSimplifier:
         current_block = []
         is_phase_block = True
         phase_gate_names = {'CNOT', 'CX', 'RZ', 'Z', 'S', 'T'}
-        
+
         for g in gates:
             name = g.name.upper()
             if name in phase_gate_names:
@@ -154,7 +157,7 @@ class CircuitSimplifier:
                 current_block.append(g)
         if current_block:
             blocks.append(('phase' if is_phase_block else 'other', current_block))
-            
+
         opt = Circuit(circuit.num_qubits)
         for btype, block in blocks:
             if btype == 'other':
@@ -163,7 +166,7 @@ class CircuitSimplifier:
                 # Try to optimize
                 temp_opt = Circuit(circuit.num_qubits)
                 self._optimize_phase_block(temp_opt, block, circuit.num_qubits)
-                
+
                 # Only use optimized version if it's actually better or equal
                 if len(temp_opt.gates) <= len(block):
                     for g in temp_opt.gates: self._add_gate_to_circuit(opt, g)
@@ -189,9 +192,9 @@ class CircuitSimplifier:
                 else: continue
                 p = tuple(V[q])
                 phases[p] = (phases.get(p, 0.0) + angle) % (2 * np.pi)
-        
+
         non_zero_phases = {p: a for p, a in phases.items() if abs(a) > 1e-10 and any(p)}
-        
+
         # 2. Matroid Partitioning
         indep_sets = []
         for v in non_zero_phases:
@@ -202,7 +205,7 @@ class CircuitSimplifier:
                     placed = True
                     break
             if not placed: indep_sets.append([v])
-            
+
         # 3. Synthesis
         C = np.eye(n, dtype=int)
         for s in indep_sets:
@@ -215,7 +218,7 @@ class CircuitSimplifier:
                     if tuple(C[i]) == p:
                         opt.rz(i, non_zero_phases[p])
                         break
-        
+
         # 4. Final Basis
         cnots = self._synthesize_linear_transform(C, V, n)
         for c, t in cnots: opt.cnot(c, t)

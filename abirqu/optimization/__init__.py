@@ -14,8 +14,10 @@ Reference:
 - Albash, T., Lidar, D.A. (2018) "Adiabatic quantum computing."
   Rev. Mod. Phys. 90, 015002.
 """
+from typing import Callable, List, Optional, Tuple
+
 import numpy as np
-from typing import List, Optional, Callable, Tuple
+
 from ..circuit import Circuit
 
 

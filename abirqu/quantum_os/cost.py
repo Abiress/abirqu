@@ -6,10 +6,9 @@ Estimate QPU time cost before execution.
 
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Dict
 
 from ..circuit import Circuit
-
 
 # Cost per shot (in credits) for different backends
 BACKEND_COSTS = {

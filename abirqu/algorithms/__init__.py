@@ -23,15 +23,15 @@ def grover_search(target_state: int, num_qubits: int, iterations: Optional[int] 
 		iterations = max(1, int(math.pi / 4 * math.sqrt(n_states)))
 
 	c = Circuit(num_qubits, name="grover_search")
-	
+
 	# Apply Hadamard gates once at the beginning
 	for q in range(num_qubits):
 		c.h(q)
-	
+
 	# Apply k Grover iterations (oracle + diffusion)
 	for _ in range(iterations):
 		c = c + grover_template(num_qubits=num_qubits, marked_state=target_state)
-	
+
 	return c
 
 

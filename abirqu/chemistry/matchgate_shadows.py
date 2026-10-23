@@ -23,13 +23,12 @@ References:
       system from very few measurements
 """
 
-import math
-from typing import List, Tuple, Dict, Optional, Any
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from ..circuit import Circuit, Gate
+from ..circuit import Circuit
 
 
 @dataclass
@@ -95,7 +94,7 @@ class MatchgateShadows:
         depth = max(1, self.n_qubits // 2)
 
         for _ in range(self.n_measurements):
-            circ = Circuit(self.n_qubits, f"MatchgateShadow")
+            circ = Circuit(self.n_qubits, "MatchgateShadow")
 
             # Generate random angles for the circuit
             angles = self._rng.uniform(0, 2 * np.pi,

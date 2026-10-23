@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
-from ...backend import QuantumBackend, JobStatus, JobHandle
+from ...backend import JobHandle, JobStatus, QuantumBackend
 from ...circuit import Circuit
 
 

@@ -11,17 +11,14 @@ Copyright 2026 Abir Maheshwari
 
 from __future__ import annotations
 
-import copy
 import os
-import pickle
-import struct
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from concurrent.futures import ProcessPoolExecutor
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from ..circuit import Circuit, Gate
+from ..circuit import Circuit
 
 __all__ = [
     "DistributedStatevector",

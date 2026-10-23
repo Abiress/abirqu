@@ -5,32 +5,32 @@ Copyright 2026 Abir Maheshwari
 Reads JSON requests from stdin, writes JSON responses to stdout.
 Used by the Tauri GUI as a subprocess backend.
 """
-import sys
 import json
-import time
 import os
+import sys
+import time
 
 # Ensure abirqu is importable
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from abirqu.gui.server import QuantumServer
 from abirqu.gui.domain_handlers import (
     handle_chemistry_vqe,
-    handle_qec_cycle,
-    handle_qec_distill,
-    handle_qcomm_bb84,
-    handle_pqc_keygen,
-    handle_pqc_assess,
+    handle_circuit_decrypt,
+    handle_circuit_encrypt,
     handle_osint_graph,
+    handle_plugin_list,
+    handle_pqc_assess,
+    handle_pqc_keygen,
+    handle_qcomm_bb84,
     handle_qcomm_cvqkd,
     handle_qcomm_diqkd,
-    handle_qcomm_satellite,
-    handle_qcomm_repeater,
     handle_qcomm_network,
-    handle_circuit_encrypt,
-    handle_circuit_decrypt,
-    handle_plugin_list,
+    handle_qcomm_repeater,
+    handle_qcomm_satellite,
+    handle_qec_cycle,
+    handle_qec_distill,
 )
+from abirqu.gui.server import QuantumServer
 
 
 def _register_dwave_hardware(server: QuantumServer):
@@ -349,9 +349,15 @@ def _handle_run_qec(params: dict):
         num_trials = params.get("num_trials", 1000)
 
         import numpy as np
+
         from abirqu.qec.codes import (
-            RepetitionCode, BitFlipCode, PhaseFlipCode, ShorCode,
-            SteaneCode, SurfaceCode, ColorCode
+            BitFlipCode,
+            ColorCode,
+            PhaseFlipCode,
+            RepetitionCode,
+            ShorCode,
+            SteaneCode,
+            SurfaceCode,
         )
         from abirqu.qec.decoder import SyndromeDecoder
 
@@ -370,10 +376,10 @@ def _handle_run_qec(params: dict):
         corrected = 0
         total = 0
         syndrome_history = []
-        
+
         code_n = getattr(code, 'n', None) or getattr(code, 'physical_qubits', 0)
         code_k = getattr(code, 'k', None) or getattr(code, 'logical_qubits', 0)
-        
+
         for _ in range(num_trials):
             encoded = code.encode(logical_state)
             error = np.random.binomial(1, error_rate, size=code_n)
@@ -381,12 +387,12 @@ def _handle_run_qec(params: dict):
             for q in range(code_n):
                 if error[q] == 1:
                     error_state[q] = -error_state[q]
-            
+
             if hasattr(code, 'syndrome_measurement'):
                 syndrome = code.syndrome_measurement(error_state)
             else:
                 syndrome = code.compute_syndrome(error_state)
-            
+
             correction = decoder.decode(syndrome)
             corrected_state = error_state.copy()
             for q in range(code_n):
@@ -469,6 +475,7 @@ def _handle_run_chemistry(params: dict):
         n_shots = params.get("shots", 1024)
 
         import numpy as np
+
         from abirqu.chemistry.fermion_mappers import build_hamiltonian_from_integrals
 
         mol_data = {
@@ -500,9 +507,10 @@ def _handle_run_chemistry(params: dict):
             nuclear_repulsion=data["nuclear_repulsion"],
         )
 
-        from abirqu.primitives.quantum_run import QuantumRun
-        from abirqu.circuit import Circuit
         from scipy.optimize import minimize
+
+        from abirqu.circuit import Circuit
+        from abirqu.primitives.quantum_run import QuantumRun
 
         def vqe_energy(params_list):
             circ = Circuit(n_qubits, name="vqe_ansatz")
@@ -587,8 +595,9 @@ def _handle_run_grover(params: dict):
         target = params.get("target", 5)
         num_solutions = params.get("num_solutions", 1)
 
-        from abirqu.algorithms import grover_search
         import math
+
+        from abirqu.algorithms import grover_search
 
         optimal_iterations = int(math.pi / 4 * math.sqrt(2**n_qubits / num_solutions))
         circ = grover_search(target_state=target, num_qubits=n_qubits, iterations=optimal_iterations)
@@ -646,6 +655,7 @@ def _handle_run_qpinn(params: dict):
         n_epochs = params.get("n_epochs", 50)
 
         import numpy as np
+
         from abirqu.qpinn import QPINN, PDESpec, TrainingConfig
 
         def initial_condition(x):
@@ -686,7 +696,7 @@ def _handle_run_crypto(params: dict):
         analysis_type = params.get("type", "grover_oracle")
         n_bits = params.get("n_bits", 8)
 
-        from abirqu.crypto import OracleSynthesizer, ModularArithmetic, LatticeSimulation
+        from abirqu.crypto import LatticeSimulation, ModularArithmetic, OracleSynthesizer
 
         if analysis_type == "grover_oracle":
             synth = OracleSynthesizer(n_input_bits=n_bits)
@@ -854,6 +864,7 @@ def _handle_ask_quantum(params: dict):
             final_answer = f"QKD ({protocol}): QBER={r.error_rate:.4f}, key_length={len(r.final_key)}"
         elif intent == "chemistry":
             import numpy as np
+
             from abirqu.chemistry.fermion_mappers import build_hamiltonian_from_integrals
             h1e = np.array([[-1.253, 0.0], [0.0, -1.253]], dtype=float)
             h2e = np.array([[[[0.337, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.091, 0.0]]],
@@ -923,8 +934,9 @@ def handle_run_autodiff(params: dict) -> dict:
     hamiltonian_terms = params.get("hamiltonian_terms", 2)
 
     import numpy as np
-    from abirqu.circuit import Circuit
+
     from abirqu.chem.fermion_mappers import PauliTerm
+    from abirqu.circuit import Circuit
 
     circ = Circuit(n_qubits)
     param_values = np.random.uniform(0, np.pi, n_params)
@@ -935,7 +947,11 @@ def handle_run_autodiff(params: dict) -> dict:
 
     hamiltonian = [PauliTerm(1.0, ['Z'] * n_qubits), PauliTerm(0.5, ['X'] + ['I'] * (n_qubits - 1))]
 
-    from abirqu.autodiff import parameter_shift_gradient, finite_difference_gradient, adjoint_gradient
+    from abirqu.autodiff import (
+        adjoint_gradient,
+        finite_difference_gradient,
+        parameter_shift_gradient,
+    )
 
     if method == "parameter_shift":
         result = parameter_shift_gradient(circ, param_values, hamiltonian)
@@ -960,8 +976,14 @@ def handle_run_dd(params: dict) -> dict:
     n_qubits = params.get("n_qubits", 2)
     idle_qubit = params.get("idle_qubit", 0)
 
-    from abirqu.dynamical_decoupling import XY4Sequence, XY8Sequence, CPMGSequence, UDDSequence, DDScheduler
     from abirqu.circuit import Circuit
+    from abirqu.dynamical_decoupling import (
+        CPMGSequence,
+        DDScheduler,
+        UDDSequence,
+        XY4Sequence,
+        XY8Sequence,
+    )
 
     circ = Circuit(n_qubits)
     circ.h(0)
@@ -1008,8 +1030,8 @@ def handle_run_distributed(params: dict) -> dict:
 
 def handle_job_queue_status(params: dict) -> dict:
     """Get job queue status and cost estimates."""
-    from abirqu.job_orchestration import CostEstimator, AutoBackendSelector
     from abirqu.circuit import Circuit
+    from abirqu.job_orchestration import AutoBackendSelector, CostEstimator
 
     estimator = CostEstimator()
     selector = AutoBackendSelector()
@@ -1119,7 +1141,7 @@ def handle_run_resource_estimate(params: dict) -> dict:
     n_qubits = params.get("n_qubits", 8)
     code_distance = params.get("code_distance", 3)
 
-    from abirqu.resource_estimation import ResourceEstimator, AlgorithmEstimator
+    from abirqu.resource_estimation import AlgorithmEstimator, ResourceEstimator
 
     estimator = ResourceEstimator()
     algo_estimator = AlgorithmEstimator()

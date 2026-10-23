@@ -8,11 +8,24 @@ from __future__ import annotations
 
 import json
 import os
-import sqlite3
 import time
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
-from .job import QuantumJob, JobState
+try:
+    import sqlite3
+except ImportError:  # Pyodide/WASM: sqlite3 is an optional package
+    sqlite3 = None
+
+from .job import JobState, QuantumJob
+
+
+def _require_sqlite3():
+    if sqlite3 is None:
+        raise RuntimeError(
+            "sqlite3 is not available in this Python distribution "
+            "(e.g. Pyodide). Install it with: micropip.install('sqlite3') "
+            "or use a non-persistent in-memory backend."
+        )
 
 
 class JobQueue:
@@ -25,6 +38,7 @@ class JobQueue:
     """
 
     def __init__(self, db_path: str = "~/.abirqu/jobs.db"):
+        _require_sqlite3()
         self.db_path = os.path.expanduser(db_path)
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         self._init_db()

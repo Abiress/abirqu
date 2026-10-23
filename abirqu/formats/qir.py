@@ -2,7 +2,6 @@
 QIR (LLVM-based) Interchange Format - Complete Implementation
 """
 import json
-from typing import Dict, List, Optional, Any
 from enum import Enum
 
 
@@ -37,7 +36,7 @@ class QIRModule:
         self.functions = []
         self.global_vars = {}
         self.metadata = {}
-    
+
     def to_llvm_ir(self):
         lines = [
             "; QIR Module - LLVM-based Quantum IR",
@@ -55,25 +54,25 @@ class QIRModule:
             lines.append(self._function_to_ir(func))
             lines.append("")
         return "\n".join(lines)
-    
+
     def _function_to_ir(self, func):
         lines = []
-        params_str = ", ".join(["%s* %s" % (p['type'], p['name']) 
+        params_str = ", ".join(["%s* %s" % (p['type'], p['name'])
                               for p in func.inputs])
         lines.append("define void @%s(%s) {" % (func.name, params_str))
         for instr in func.instructions:
             if instr.op_type == QIROperation.QUANTUM_GATE:
-                qubits_str = ", ".join(["%qubit* @q{}".format(q) for q in instr.qubits])
+                qubits_str = ", ".join(["%q{}".format(q) for q in instr.qubits])
                 lines.append("  call void @__quantum__gate_%s(%s)" % (instr.name, qubits_str))
             elif instr.op_type == QIROperation.MEASUREMENT:
                 for i, q in enumerate(instr.qubits):
                     if i < len(instr.results):
-                        lines.append("  %s = call %result* @__quantum__measure(%qubit* @q%d)" % 
-                                       (instr.results[i], q))
+                        lines.append("  {} = call %result* @__quantum__measure(%q{})".format(
+                            instr.results[i], q))
         lines.append("  ret void")
         lines.append("}")
         return "\n".join(lines)
-    
+
     def to_json(self):
         module_dict = {
             "version": "1.0",
@@ -100,7 +99,7 @@ class QIRModule:
                 func_dict["outputs"] = func.outputs
             module_dict["functions"].append(func_dict)
         return json.dumps(module_dict, indent=2)
-    
+
     @classmethod
     def from_json(cls, json_str):
         data = json.loads(json_str)
@@ -133,7 +132,7 @@ class QIRConverter:
         module = QIRModule()
         func = QIRFunction(
             name="main",
-            inputs=[{"name": "q%d" % i, "type": "qubit"} 
+            inputs=[{"name": "q%d" % i, "type": "qubit"}
                    for i in range(circuit.num_qubits)]
         )
         gate_map = {

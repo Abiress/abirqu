@@ -1,4 +1,3 @@
-import random
 
 class ProteinLatticeModel:
     def __init__(self, sequence):
@@ -90,10 +89,3 @@ class FoldingTopologyAnalyzer:
 
 
 # Re-export phase 32 production implementations.
-from .bio_impl import (
-    ProteinLatticeModel,
-    MolecularDockingSimulator,
-    ProtonTunnelingSimulator,
-    QuantumSequenceAligner,
-    FoldingTopologyAnalyzer,
-)

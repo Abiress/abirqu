@@ -5,8 +5,8 @@ Copyright 2026 Abir Maheshwari
 Measurement histogram and statistics display.
 """
 import math
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
+from typing import Any, Dict, List
 
 
 @dataclass

@@ -7,18 +7,19 @@ Command-line interface for the Quantum OS.
 from __future__ import annotations
 
 import argparse
-import sys
 import time
 from typing import List, Optional
 
 from ..quantum_os import (
-    QuantumJob, QuantumScheduler, SchedulingPolicy,
-    JobQueue, ResourceManager, VirtualQPU, CostEstimator,
+    CostEstimator,
+    JobQueue,
+    QuantumScheduler,
+    ResourceManager,
+    SchedulingPolicy,
 )
-from ..quantum_os.tenant import TenantManager, TenantTier
-from ..quantum_os.access import AccessController, Role
 from ..quantum_os.monitor import JobMonitor
 from ..quantum_os.reservation import ReservationSystem
+from ..quantum_os.tenant import TenantManager
 
 
 def cmd_status(args):
@@ -72,7 +73,6 @@ def cmd_jobs(args):
 def cmd_cost(args):
     """Estimate cost."""
     from ..circuit import Circuit
-    from ..gates import H, CNOT
 
     c = Circuit(args.qubits)
     for i in range(args.qubits - 1):

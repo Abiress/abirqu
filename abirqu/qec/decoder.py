@@ -10,9 +10,10 @@ Implements syndrome decoding via:
 
 All in pure numpy — no external QEC libraries.
 """
-import numpy as np
-from typing import List, Dict, Optional, Tuple
 from collections import deque
+from typing import Dict, List, Tuple
+
+import numpy as np
 
 
 class SyndromeDecoder:

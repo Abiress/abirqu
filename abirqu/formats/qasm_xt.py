@@ -2,7 +2,6 @@
 QASM-XT (AbirQu Extension) Interchange Format - Complete Implementation
 """
 import json
-from typing import Dict, List, Optional, Any
 
 
 class QASMXTGate:
@@ -20,7 +19,7 @@ class QASMXTCircuit:
         self.gates = []
         self.declarations = []
         self.extensions = {}
-    
+
     def to_string(self):
         lines = ["QASM-XT 1.0;", ""]
         for decl in self.declarations:
@@ -37,7 +36,7 @@ class QASMXTCircuit:
                 line += " // extension: %s %s" % (gate.gate_type, json.dumps(gate.metadata))
             lines.append(line)
         return "\n".join(lines)
-    
+
     def add_ldpc_gate(self, name, qubits, overhead_reduction, code_type="bicycle"):
         gate = QASMXTGate(
             name=name,
@@ -52,7 +51,7 @@ class QASMXTCircuit:
         )
         self.gates.append(gate)
         return gate
-    
+
     def add_phase_poly_gate(self, name, qubits, reduction, gate_count):
         gate = QASMXTGate(
             name=name,
@@ -87,7 +86,7 @@ class QASMXTParser:
             if gate:
                 circuit.gates.append(gate)
         return circuit
-    
+
     def _parse_gate(self, line):
         import re
         extension = None
@@ -95,14 +94,14 @@ class QASMXTParser:
             parts = line.split("// extension:")
             line = parts[0].strip()
             extension = parts[1].strip()
-        
+
         gate_match = re.match(r'(\w+)\s+([^;]+);', line)
         if gate_match:
             name = gate_match.group(1)
             qubits_str = gate_match.group(2)
-            qubits = [int(q.strip().replace("q[", "").replace("]", "")) 
+            qubits = [int(q.strip().replace("q[", "").replace("]", ""))
                        for q in qubits_str.split(",")]
-            
+
             gate_type = "standard"
             metadata = {}
             if extension:
@@ -110,13 +109,13 @@ class QASMXTParser:
                     gate_type = "abirqu_ldpc"
                     try:
                         metadata = json.loads(extension.split("abirqu_ldpc")[1].strip())
-                    except:
+                    except Exception:
                         pass
                 elif "abirqu_phase_poly" in extension:
                     gate_type = "abirqu_phase_poly"
                 elif "abirqu_qos" in extension:
                     gate_type = "abirqu_qos"
-            
+
             return QASMXTGate(name=name, qubits=qubits, gate_type=gate_type, metadata=metadata)
         return None
 

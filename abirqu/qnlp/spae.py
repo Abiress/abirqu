@@ -12,14 +12,18 @@ quantum superposition.
 """
 
 from __future__ import annotations
+
+from typing import Dict, List, Optional, Tuple
+
 import numpy as np
-from typing import List, Dict, Tuple, Optional
+
 from abirqu.circuit import Circuit
+from abirqu.qnlp.bitstream import BinaryStochasticEncoder, StochasticBitstream
 from abirqu.qnlp.phonemes import (
-    text_to_phonemes, phoneme_to_index, phoneme_sequence_to_indices,
-    NUM_PHONEMES, PHONEMES
+    phoneme_sequence_to_indices,
+    phoneme_to_index,
+    text_to_phonemes,
 )
-from abirqu.qnlp.bitstream import StochasticBitstream, BinaryStochasticEncoder
 
 
 class SPAEEncoder:

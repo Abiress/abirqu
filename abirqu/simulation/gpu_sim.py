@@ -7,8 +7,7 @@ Falls back to NumPy when CuPy is unavailable.
 
 from __future__ import annotations
 
-import math
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 try:
     import cupy as cp
@@ -210,32 +209,32 @@ class GPUSimulator:
         """Apply three-qubit gate (Toffoli, Fredkin) using tensor contraction."""
         q0, q1, q2 = qubits
         n = self.n_qubits
-        
+
         # Build the full 8x8 matrix for the 3-qubit subsystem
         # Then apply it using index manipulation
         new_state = self._xp.zeros_like(self._statevector)
-        
+
         for i in range(2**n):
             # Extract bits for the 3 qubits
             b0 = (i >> q0) & 1
             b1 = (i >> q1) & 1
             b2 = (i >> q2) & 1
-            
+
             # Compute the 3-bit index
             idx3 = b0 + 2*b1 + 4*b2
-            
+
             # Apply the 8x8 matrix to get new 3-bit index
             new_idx3 = 0
             for j in range(8):
                 if abs(matrix[j, idx3]) > 1e-10:
                     new_idx3 = j
                     break
-            
+
             # Extract new bits
             new_b0 = new_idx3 & 1
             new_b1 = (new_idx3 >> 1) & 1
             new_b2 = (new_idx3 >> 2) & 1
-            
+
             # Compute new full index
             new_i = i
             # Clear old bits
@@ -246,9 +245,9 @@ class GPUSimulator:
             new_i |= (new_b0 << q0)
             new_i |= (new_b1 << q1)
             new_i |= (new_b2 << q2)
-            
+
             new_state[new_i] += self._statevector[i]
-        
+
         self._statevector = new_state
 
     def run_circuit(self, circuit: Circuit, shots: int = 1000) -> Dict[str, Any]:

@@ -6,9 +6,7 @@ Hardware topology loaders for D-Wave Chimera and Pegasus graphs.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Set, Tuple
-
-import numpy as np
+from typing import Dict, List, Optional, Tuple
 
 
 class DWaveTopology:
@@ -162,8 +160,8 @@ class DWaveTopology:
     def plot_topology(topology: str = "advantage", save_path: Optional[str] = None):
         """Plot the hardware topology using networkx and matplotlib."""
         try:
-            import networkx as nx
             import matplotlib.pyplot as plt
+            import networkx as nx
         except ImportError as exc:
             raise RuntimeError("Requires networkx and matplotlib.") from exc
 

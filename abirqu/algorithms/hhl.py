@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 import numpy as np
 
@@ -88,7 +88,6 @@ class HHL:
             circ.cry(ctrl, ancilla, t_val)
 
     def _add_inverse_phase_estimation(self, circ: Circuit):
-        from qiskit import QuantumCircuit as QiskitCircuit
         n_eval = self.num_eval_qubits
         for i in range(n_eval - 1, -1, -1):
             circ.h(i + 1)

@@ -105,6 +105,7 @@
 | **MCP Integration** | AI agent protocol | JSON-RPC 2.0 server with 5 quantum tools |
 | **LLM Copilot** | Natural language circuits | NL→circuit generation, explanation, optimization suggestions |
 | **Neural Network Layers** | Framework integration | PyTorch/JAX/TensorFlow quantum layers with autograd |
+| **NMR Quantum Computer** | Pulse-level ensemble QC | Chloroform/trichloroethylene/crotonic registers, RF pulse simulation, J-coupling gate identities, T2 decoherence model, device layout export |
 | **Resource Estimation** | Algorithm cost analysis | Shor/Grover/VQE/HHL resource estimates, surface code overhead |
 | **Benchpress** | Benchmarking suite | Cross-SDK comparison, circuit/transpilation/simulation benchmarks |
 | **VS Code Extension** | Editor integration | Run/optimize/visualize commands for VS Code |
@@ -491,6 +492,22 @@ if os.environ.get("IBM_QUANTUM_TOKEN"):
     print(result["counts"])
 else:
     print("Set IBM_QUANTUM_TOKEN to run on real hardware")
+```
+
+### NMR Quantum Computer
+
+```python
+from abirqu import Circuit, NMRSystem
+
+# Pulse-level simulation on a real molecule register
+nmr = NMRSystem("chloroform")   # 13C q0, 1H q1, J = 209 Hz
+nmr.apply_circuit(Circuit(2).h(0).cnot(0, 1))
+print(nmr.probabilities())      # {'00': 0.5, '11': 0.5}
+print(f"Estimated fidelity: {nmr.estimated_fidelity():.3f}")
+
+# Inspect and export the full instrument layout
+nmr.layout()                            # ASCII instrument diagram
+nmr.export_layout_html("nmr.html")      # standalone HTML layout website
 ```
 
 ---

@@ -6,8 +6,10 @@ Novel contribution: Compiles quantum circuits with awareness of hardware noise p
 Optimizes for minimum expected error on the specific target device, not generic hardware.
 """
 
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
-from typing import List, Dict, Any, Tuple, Optional
+
 from abirqu.circuit import Circuit, Gate
 from abirqu.noise import NoiseModel
 

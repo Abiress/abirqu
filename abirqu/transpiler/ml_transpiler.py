@@ -10,15 +10,13 @@ Uses only NumPy for core computation — no external ML framework required.
 from __future__ import annotations
 
 import random
-from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 import numpy as np
 
 from ..circuit import Circuit, Gate
 from .topology import CouplingMap
-
 
 # ---------------------------------------------------------------------------
 # Q-table backed RL qubit router

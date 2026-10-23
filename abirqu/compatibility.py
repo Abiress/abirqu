@@ -94,8 +94,8 @@ class CompatibilityManager:
         from .formats.openqasm2 import OpenQASM2Parser, create_bell_state_qasm
         from .formats.openqasm3 import OpenQASM3Parser, create_bell_state_qasm3
         from .formats.qasm_xt import QASMXTParser, create_bell_state_qasm_xt
-        from .formats.qir import create_bell_state_qir, QIRModule
-        from .formats.quil import QuilProgram, QuilGate
+        from .formats.qir import QIRModule, create_bell_state_qir
+        from .formats.quil import QuilGate, QuilProgram
 
         q2 = OpenQASM2Parser().parse(create_bell_state_qasm())
         q3 = OpenQASM3Parser().parse(create_bell_state_qasm3())

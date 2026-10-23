@@ -7,7 +7,7 @@ Split large circuits across multiple QPUs.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List
 
 from ..circuit import Circuit, Gate
 

@@ -17,9 +17,8 @@ import hashlib
 import hmac
 import os
 import struct
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
-
 
 # --- Kyber-768 (ML-KEM) ---
 

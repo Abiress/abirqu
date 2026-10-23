@@ -25,7 +25,11 @@ class ErrorMitigationFlow:
     """Convenience wrapper for readout mitigation + ZNE extrapolation."""
 
     def __init__(self) -> None:
-        from .phases.phase20 import ErrorMitigationPipeline, ReadoutErrorMitigator, ZeroNoiseExtrapolator
+        from .phases.phase20 import (
+            ErrorMitigationPipeline,
+            ReadoutErrorMitigator,
+            ZeroNoiseExtrapolator,
+        )
 
         self._readout = ReadoutErrorMitigator()
         self._zne = ZeroNoiseExtrapolator()

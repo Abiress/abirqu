@@ -2,7 +2,7 @@
 OpenQASM 2.0 Interchange Format - Complete Implementation
 """
 import re
-from typing import Dict, List, Optional, Any
+
 
 class GateDef:
     def __init__(self, name, qubits, params=None, classical_bits=None):
@@ -17,7 +17,7 @@ class OpenQASM2Circuit:
         self.num_clbits = num_clbits
         self.gates = []
         self.includes = []
-    
+
     def to_qasm(self):
         lines = ["OPENQASM 2.0;", ""]
         for inc in self.includes:

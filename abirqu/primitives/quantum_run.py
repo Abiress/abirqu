@@ -27,17 +27,21 @@ information.  The user never has to choose between primitives.
 from __future__ import annotations
 
 import time
-import math
 from dataclasses import dataclass, field
 from typing import (
-    Any, Callable, Dict, List, Optional, Sequence, Tuple, Union,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
 )
 
 import numpy as np
 
-from ..circuit import Circuit, Gate, Measurement
+from ..circuit import Circuit
 from ..noise import NoiseModel
-
 
 # ═══════════════════════════════════════════════════════════════════
 #  Result containers — richer than Qiskit's flat dicts
@@ -247,7 +251,7 @@ class QuantumRun:
     def _translate_to_pulses(self):
         """Translate circuits to pulse schedules using PulseScheduler."""
         try:
-            from ..pulse_translator import PulseScheduler, HardwareProfile
+            from ..pulse_translator import HardwareProfile, PulseScheduler
             hw = HardwareProfile(self._hardware_profile or "superconducting")
             scheduler = PulseScheduler(hw)
             self._pulse_schedule = []

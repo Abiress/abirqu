@@ -10,7 +10,6 @@ import numpy as np
 
 from ...circuit import Circuit
 
-
 NEUTRAL_ATOM_NATIVE_GATES = ["Ry", "Rz", "MS", "CZ"]
 
 

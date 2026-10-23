@@ -10,11 +10,11 @@ of circuits with hundreds of qubits.
 
 from __future__ import annotations
 
+from typing import Any, Dict, List
+
 import numpy as np
-from typing import Any, Dict, List, Optional, Set, Tuple
 
 from ..circuit import Circuit, Gate
-
 
 CLIFFORD_GATES = {"H", "S", "S_DAG", "X", "Y", "Z", "CNOT", "CX", "CZ", "SWAP"}
 

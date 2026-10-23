@@ -6,24 +6,39 @@ Quantum Error Correction: stabilizer codes, surface codes, color codes,
 syndrome decoders, magic state distillation, fault-tolerant compilation.
 """
 from .codes import (
-    StabilizerCode, RepetitionCode, BitFlipCode, PhaseFlipCode,
-    ShorCode, SteaneCode, SurfaceCode, ColorCode, EncodedState,
+    BitFlipCode,
+    ColorCode,
+    EncodedState,
+    PhaseFlipCode,
+    RepetitionCode,
+    ShorCode,
+    StabilizerCode,
+    SteaneCode,
+    SurfaceCode,
 )
-from .surface_code import RotatedSurfaceCode
 from .decoder import (
-    SyndromeDecoder, SurfaceCodeDecoder, BeliefPropagationDecoder,
-    MWPMDecoder, GPUAcceleratedDecoder,
-)
-from .union_find_decoder import UnionFindDecoder
-from .magic_state import (
-    MagicState, MagicStateDistiller, HStateDistiller,
-    TStateFactory, TGateInjector,
+    BeliefPropagationDecoder,
+    GPUAcceleratedDecoder,
+    MWPMDecoder,
+    SurfaceCodeDecoder,
+    SyndromeDecoder,
 )
 from .ft_compiler import (
-    FaultTolerantCompiler, TransversalGateSet,
-    CompilationResult, GateInfo,
+    CompilationResult,
+    FaultTolerantCompiler,
+    GateInfo,
+    TransversalGateSet,
 )
 from .ldpc import LDPCCode
+from .magic_state import (
+    HStateDistiller,
+    MagicState,
+    MagicStateDistiller,
+    TGateInjector,
+    TStateFactory,
+)
+from .surface_code import RotatedSurfaceCode
+from .union_find_decoder import UnionFindDecoder
 
 __all__ = [
     # Codes

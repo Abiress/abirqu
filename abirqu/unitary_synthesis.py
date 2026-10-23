@@ -11,11 +11,11 @@ gradient-based optimization. Scales to large systems by:
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 
-from .circuit import Circuit, Gate
+from .circuit import Circuit
 
 
 def _random_su2_params(num_qubits: int, depth: int, rng: np.random.Generator) -> np.ndarray:
@@ -323,5 +323,4 @@ class ScalableUnitarySynthesizer:
 __all__ = [
     "synthesize_unitary",
     "ScalableUnitarySynthesizer",
-    "AQCTensor",
 ]

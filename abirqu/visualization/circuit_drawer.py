@@ -9,10 +9,11 @@ Unique features not in other SDKs:
 - Interactive HTML with gate tooltips
 """
 from __future__ import annotations
-import html as _html
-from typing import List, Optional, Tuple, Union
-from ..circuit import Circuit, Gate, Measurement
 
+import html as _html
+from typing import List, Optional
+
+from ..circuit import Circuit, Gate
 
 # ── Gate color palette ────────────────────────────────────────────
 _COLORS = {
@@ -143,10 +144,10 @@ def draw_svg(circuit: Circuit, title: Optional[str] = None) -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
         f'font-family="monospace" font-size="12">'
     ]
-    svg.append(f'<defs><filter id="glow"><feGaussianBlur stdDeviation="2" result="c"/>'
-               f'<feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>'
-               f'</filter></defs>')
-    svg.append(f'<rect width="100%" height="100%" fill="#1e1e2e"/>')
+    svg.append('<defs><filter id="glow"><feGaussianBlur stdDeviation="2" result="c"/>'
+               '<feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>'
+               '</filter></defs>')
+    svg.append('<rect width="100%" height="100%" fill="#1e1e2e"/>')
 
     if title:
         svg.append(f'<text x="{width // 2}" y="18" text-anchor="middle" '

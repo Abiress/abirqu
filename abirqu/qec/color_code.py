@@ -8,8 +8,9 @@ including H and S gates (unlike surface codes which only support Clifford-1).
 
 Pure numpy implementation.
 """
+from typing import Optional
+
 import numpy as np
-from typing import List, Tuple, Optional
 
 
 class ColorCode:

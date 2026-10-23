@@ -16,7 +16,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..circuit import Circuit
 
-
 # ---------------------------------------------------------------------------
 # Circuit template
 # ---------------------------------------------------------------------------

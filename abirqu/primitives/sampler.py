@@ -6,10 +6,13 @@ returns a QuasiDistribution with extra AbirQu-native features like
 effective shot count, entropy, and state purity.
 """
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, Union
+
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
+
 from ..circuit import Circuit
-from .quantum_run import QuantumRun, SamplerResult
+from .quantum_run import QuantumRun
 
 
 class QuasiDistribution:

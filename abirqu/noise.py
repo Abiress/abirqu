@@ -1,6 +1,8 @@
-import numpy as np
-from typing import List, Dict, Optional, Union
 from enum import Enum
+from typing import Dict, List, Optional, Union
+
+import numpy as np
+
 
 class NoiseType(Enum):
     """Types of quantum noise channels."""
@@ -17,7 +19,7 @@ class NoiseModel:
     Framework for quantum noise models.
     Supports various noise channels that can be applied to quantum circuits.
     """
-    
+
     def __init__(self, num_qubits: int):
         """
         Initialize a noise model for a given number of qubits.
@@ -30,8 +32,8 @@ class NoiseModel:
         self.two_qubit_errors: Dict[tuple, List[Dict]] = {}   # (q1, q2) -> list of errors
         self.readout_errors: Dict[int, tuple] = {}  # qubit -> (p(0|1), p(1|0))
         self.gate_errors: Dict[str, float] = {}  # gate name -> error rate
-        
-    def add_depolarizing_error(self, qubits: Union[int, List[int]], 
+
+    def add_depolarizing_error(self, qubits: Union[int, List[int]],
                                probability: float) -> 'NoiseModel':
         """
         Add depolarizing noise channel.
@@ -45,7 +47,7 @@ class NoiseModel:
         """
         if isinstance(qubits, int):
             qubits = [qubits]
-            
+
         for q in qubits:
             if q not in self.single_qubit_errors:
                 self.single_qubit_errors[q] = []
@@ -54,7 +56,7 @@ class NoiseModel:
                 'probability': probability
             })
         return self
-    
+
     def add_amplitude_damping(self, qubit: int, gamma: float) -> 'NoiseModel':
         """
         Add amplitude damping (energy relaxation) noise.
@@ -73,7 +75,7 @@ class NoiseModel:
             'gamma': gamma
         })
         return self
-    
+
     def add_phase_damping(self, qubit: int, lambda_: float) -> 'NoiseModel':
         """
         Add phase damping (dephasing) noise.
@@ -92,7 +94,7 @@ class NoiseModel:
             'lambda': lambda_
         })
         return self
-    
+
     def add_readout_error(self, qubit: int, p0given1: float, p1given0: float) -> 'NoiseModel':
         """
         Add readout error for measurement.
@@ -107,7 +109,7 @@ class NoiseModel:
         """
         self.readout_errors[qubit] = (p0given1, p1given0)
         return self
-    
+
     def add_gate_error(self, gate_name: str, error_rate: float) -> 'NoiseModel':
         """
         Add gate-specific error rate.
@@ -121,11 +123,11 @@ class NoiseModel:
         """
         self.gate_errors[gate_name] = error_rate
         return self
-    
+
     def get_qubit_errors(self, qubit: int) -> List[Dict]:
         """Get all errors for a specific qubit."""
         return self.single_qubit_errors.get(qubit, [])
-    
+
     def get_readout_error(self, qubit: int) -> Optional[tuple]:
         """Get readout error for a qubit."""
         return self.readout_errors.get(qubit)
@@ -198,7 +200,7 @@ class NoiseModel:
             noisy = (1 - eps) * noisy + eps * uniform
 
         return noisy
-    
+
     def apply_to_state_vector(self, state: np.ndarray, gate_matrix: np.ndarray,
                               target_qubits: List[int]) -> np.ndarray:
         """
@@ -215,9 +217,9 @@ class NoiseModel:
         """
         # For state vector, we apply noise as a probabilistic mixture
         # This is an approximation - real noise would use density matrices
-        
+
         new_state = state.copy()
-        
+
         # Apply depolarizing noise
         for q in target_qubits:
             errors = self.get_qubit_errors(q)
@@ -228,9 +230,9 @@ class NoiseModel:
                     if np.random.random() < p:
                         pauli_choice = np.random.choice([0, 1, 2])  # X, Y, Z
                         new_state = self._apply_pauli(new_state, q, pauli_choice)
-                        
+
         return new_state
-    
+
     def _apply_pauli(self, state: np.ndarray, qubit: int, pauli_idx: int) -> np.ndarray:
         """
         Apply a Pauli operator to a state vector.
@@ -244,7 +246,7 @@ class NoiseModel:
             New state vector
         """
         num_qubits = int(np.log2(len(state)))
-        
+
         if pauli_idx == 0:  # X
             # Flip the qubit
             mask = 1 << (num_qubits - 1 - qubit)
@@ -252,7 +254,7 @@ class NoiseModel:
             for i in range(len(state)):
                 new_state[i ^ mask] = state[i]
             return new_state
-            
+
         elif pauli_idx == 1:  # Y
             # Y = i*X*Z
             mask = 1 << (num_qubits - 1 - qubit)
@@ -261,7 +263,7 @@ class NoiseModel:
                 bit = (i >> (num_qubits - 1 - qubit)) & 1
                 new_state[i ^ mask] = state[i] * (1j if bit == 0 else -1j)
             return new_state
-            
+
         elif pauli_idx == 2:  # Z
             mask = 1 << (num_qubits - 1 - qubit)
             new_state = state.copy()
@@ -270,9 +272,9 @@ class NoiseModel:
                 if bit == 1:
                     new_state[i] *= -1
             return new_state
-            
+
         return state
-    
+
     def to_dict(self) -> Dict:
         """Serialize noise model to dictionary."""
         return {
@@ -293,7 +295,7 @@ class DeviceNoiseProfile:
     """
     Pre-configured noise profiles based on real quantum devices.
     """
-    
+
     @staticmethod
     def ibm_nairobi() -> NoiseModel:
         """
@@ -301,20 +303,20 @@ class DeviceNoiseProfile:
         Based on typical device parameters.
         """
         noise = NoiseModel(7)
-        
+
         # Single-qubit gate error ~0.1%
         for q in range(7):
             noise.add_depolarizing_error(q, 0.001)
             noise.add_phase_damping(q, 0.001)
             noise.add_readout_error(q, 0.03, 0.02)  # ~2-3% readout error
-            
+
         # Two-qubit gate errors ~1-2%
         coupling_map = [(0,1), (1,0), (1,2), (2,1), (2,3), (3,2), (3,4), (4,3), (4,5), (5,4), (5,6), (6,5)]
         for q1, q2 in coupling_map:
             noise.add_gate_error('CNOT', 0.015)
-            
+
         return noise
-    
+
     @staticmethod
     def google_sycamore() -> NoiseModel:
         """
@@ -322,15 +324,15 @@ class DeviceNoiseProfile:
         Simplified for 10 qubits.
         """
         noise = NoiseModel(10)
-        
+
         # Sycamore has ~0.1-0.2% single-qubit, ~0.5-1% two-qubit errors
         for q in range(10):
             noise.add_depolarizing_error(q, 0.0015)
             noise.add_phase_damping(q, 0.001)
             noise.add_readout_error(q, 0.015, 0.01)
-            
+
         return noise
-    
+
     @staticmethod
     def ionq_harmony() -> NoiseModel:
         """
@@ -338,40 +340,40 @@ class DeviceNoiseProfile:
         Generally lower noise than superconducting.
         """
         noise = NoiseModel(11)
-        
+
         for q in range(11):
             noise.add_depolarizing_error(q, 0.0003)  # Very low single-qubit error
             noise.add_readout_error(q, 0.005, 0.005)  # ~0.5% readout error
-            
+
         # All-to-all connectivity with low two-qubit error
         for q1 in range(11):
             for q2 in range(q1+1, 11):
                 noise.add_gate_error('CNOT', 0.003)
-                
+
         return noise
 
 # Example usage and tests
 if __name__ == "__main__":
     print("Testing Noise Model Framework...")
-    
+
     # Create a simple noise model
     noise = NoiseModel(2)
     noise.add_depolarizing_error(0, 0.01)
     noise.add_amplitude_damping(0, 0.005)
     noise.add_readout_error(0, 0.02, 0.03)
     noise.add_gate_error('CNOT', 0.02)
-    
+
     print("Noise model created:")
     print(f"Qubit 0 errors: {noise.get_qubit_errors(0)}")
     print(f"Readout error q0: {noise.get_readout_error(0)}")
     print(f"CNOT error rate: {noise.gate_errors.get('CNOT')}")
-    
+
     # Test device profiles
     print("\nIBM Nairobi profile:")
     ibm_noise = DeviceNoiseProfile.ibm_nairobi()
     print(f"Number of qubits: {ibm_noise.num_qubits}")
     print(f"Qubit 0 errors: {len(ibm_noise.get_qubit_errors(0))}")
-    
+
     print("\nIonQ Harmony profile:")
     ionq_noise = DeviceNoiseProfile.ionq_harmony()
     print(f"Number of qubits: {ionq_noise.num_qubits}")

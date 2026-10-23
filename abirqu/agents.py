@@ -7,9 +7,8 @@ from typing import Dict
 import numpy as np
 
 from .circuit import Circuit
-from .patterns import grover_template, qaoa_template, vqe_ansatz_template
 from .optimize.circuit_simplifier import CircuitSimplifier
-from .patterns import detect_patterns
+from .patterns import detect_patterns, grover_template, qaoa_template, vqe_ansatz_template
 
 
 class CircuitGenerationAgent:

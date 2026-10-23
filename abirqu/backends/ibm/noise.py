@@ -7,7 +7,7 @@ Noise models calibrated to real IBM hardware data.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict
 
 import numpy as np
 

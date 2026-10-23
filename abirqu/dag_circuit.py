@@ -20,14 +20,12 @@ References:
 
 import math
 import time
-from typing import Dict, List, Optional, Tuple, Any, Callable, Set
+from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from collections import defaultdict
+from typing import Any, Dict, List, Optional, Tuple
 
-import numpy as np
-
-from abirqu.circuit import Circuit, Gate
+from abirqu.circuit import Circuit
 
 
 class DAGNodeType(Enum):

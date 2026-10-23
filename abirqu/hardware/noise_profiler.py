@@ -7,8 +7,8 @@ noise models for simulation.
 """
 import math
 import time
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple
 
 
 @dataclass

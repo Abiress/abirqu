@@ -1,7 +1,7 @@
 """Sparse state vector and lazy evaluation for large quantum systems."""
 
 import math
-from typing import Any, Dict, List
+from typing import Any, List
 
 
 class SparseStateVector:

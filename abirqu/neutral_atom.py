@@ -1,6 +1,5 @@
 """Neutral atom quantum computing - fidelity tracking and tweezer arrays."""
 
-from dataclasses import dataclass
 from typing import Any, Dict, List, Sequence, Tuple
 
 
@@ -77,29 +76,30 @@ class NeutralAtomTweezerArray:
         }
 
     def optimize_layout_for_circuit(self, required_edges: Sequence[Tuple[int, int]]):
-        import numpy as np
         from collections import defaultdict
-        
+
+        import numpy as np
+
         w = int(np.ceil(np.sqrt(self.num_atoms)))
         h = int(np.ceil(self.num_atoms / w))
-        
+
         site_coords = {s: (s % w, s // w) for s in range(self.num_sites)}
-        
+
         adj = defaultdict(list)
         for u, v in required_edges:
             if u < self.num_atoms and v < self.num_atoms:
                 adj[u].append(v)
                 adj[v].append(u)
-                
+
         qubits_by_deg = sorted(range(self.num_atoms), key=lambda q: len(adj[q]), reverse=True)
         placed = {}
         occupied = set()
-        
+
         for q in qubits_by_deg:
             best_site = -1
             best_adj_score = -1
             placed_neighbors = [placed[nb] for nb in adj[q] if nb in placed]
-            
+
             candidates = []
             if placed_neighbors:
                 for pn in placed_neighbors:
@@ -110,10 +110,10 @@ class NeutralAtomTweezerArray:
                             ns = ny * w + nx
                             if ns < self.num_sites and ns not in occupied:
                                 candidates.append(ns)
-                                
+
             if not candidates:
                 candidates = [s for s in range(self.num_sites) if s not in occupied]
-                
+
             for s in candidates:
                 if s in occupied:
                     continue
@@ -126,16 +126,16 @@ class NeutralAtomTweezerArray:
                 if score > best_adj_score:
                     best_adj_score = score
                     best_site = s
-                    
+
             if best_site == -1:
                 for s in range(self.num_sites):
                     if s not in occupied:
                         best_site = s
                         break
-                        
+
             placed[q] = best_site
             occupied.add(best_site)
-            
+
         natively_satisfied = 0
         for u, v in required_edges:
             if u in placed and v in placed:
@@ -144,9 +144,9 @@ class NeutralAtomTweezerArray:
                 vx, vy = site_coords[pv]
                 if abs(ux - vx) + abs(uy - vy) == 1:
                     natively_satisfied += 1
-                    
+
         satisfaction_rate = natively_satisfied / max(1, len(required_edges))
-        
+
         pitch = 5.0
         total_dist = 0.0
         max_dist = 0.0
@@ -157,9 +157,9 @@ class NeutralAtomTweezerArray:
                 dist = pitch * np.sqrt((init_x - new_x)**2 + (init_y - new_y)**2)
                 total_dist += dist
                 max_dist = max(max_dist, dist)
-                
+
         rearrangement_time = 100.0 + 2.0 * max_dist
-        
+
         return {
             "required_edges": len(required_edges),
             "natively_satisfied": natively_satisfied,
@@ -184,16 +184,16 @@ class AdaptiveCompilerPass:
         from collections import deque
         num_qubits = self.topology.get("num_qubits", 10)
         edges = self.topology.get("edges", [])
-        
+
         adj = {i: [] for i in range(num_qubits)}
         for x, y in edges:
             if x < num_qubits and y < num_qubits:
                 adj[x].append(y)
                 adj[y].append(x)
-                
+
         physical_to_logical = {i: i for i in range(num_qubits)}
         logical_to_physical = {i: i for i in range(num_qubits)}
-        
+
         def find_path(start, end):
             if start == end:
                 return [start]
@@ -209,39 +209,39 @@ class AdaptiveCompilerPass:
                         visited.add(neighbor)
                         queue.append(path + [neighbor])
             return []
-            
+
         total_swaps = 0
         routed_gates = []
-        
+
         for u, v in gates:
             if u >= num_qubits or v >= num_qubits:
                 continue
             pu = logical_to_physical[u]
             pv = logical_to_physical[v]
-            
+
             path = find_path(pu, pv)
             if not path:
                 continue
-                
+
             for step in range(len(path) - 2):
                 w1 = path[step]
                 w2 = path[step + 1]
-                
+
                 l1 = physical_to_logical[w1]
                 l2 = physical_to_logical[w2]
-                
+
                 logical_to_physical[l1] = w2
                 logical_to_physical[l2] = w1
                 physical_to_logical[w1] = l2
                 physical_to_logical[w2] = l1
-                
+
                 routed_gates.append(("SWAP", w1, w2))
                 total_swaps += 1
-                
+
             new_pu = logical_to_physical[u]
             new_pv = logical_to_physical[v]
             routed_gates.append(("GATE", new_pu, new_pv))
-            
+
         return {
             "original_gates": len(gates),
             "routed_gates": len(routed_gates),

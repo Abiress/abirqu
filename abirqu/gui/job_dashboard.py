@@ -5,8 +5,8 @@ Copyright 2026 Abir Maheshwari
 Real-time job monitoring dashboard.
 """
 import time
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 
 @dataclass

@@ -1,6 +1,5 @@
 """Dynamic circuit simulation with mid-circuit measurement and classical control."""
 
-import math
 import random
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence

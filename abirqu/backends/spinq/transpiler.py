@@ -10,7 +10,6 @@ import numpy as np
 
 from ...circuit import Circuit
 
-
 SPINQ_NATIVE_GATES = ["Rz", "Rx", "MS"]
 
 

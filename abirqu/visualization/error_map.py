@@ -2,6 +2,7 @@
 Error map visualizer for AbirQu — per-qubit error rates as a heatmap.
 """
 from __future__ import annotations
+
 import html as _html
 from typing import Dict, List, Optional, Tuple
 
@@ -20,7 +21,7 @@ def error_map_svg(num_qubits: int,
     total_w = n * cell_w + 160
 
     svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{total_w}" height="{total_h}" font-family="monospace" font-size="11">']
-    svg.append(f'<rect width="100%" height="100%" fill="#1e1e2e"/>')
+    svg.append('<rect width="100%" height="100%" fill="#1e1e2e"/>')
     svg.append(f'<text x="{total_w // 2}" y="20" text-anchor="middle" fill="#cdd6f4" font-size="13" font-weight="bold">{_html.escape(title)}</text>')
 
     def _color(e):

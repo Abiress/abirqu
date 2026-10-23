@@ -12,8 +12,7 @@ to the IBM QX architecture." arXiv:1907.06105
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Set, Tuple
-from collections import deque
+from typing import Dict, List, Optional, Tuple
 
 from ..circuit import Circuit, Gate
 from .topology import CouplingMap

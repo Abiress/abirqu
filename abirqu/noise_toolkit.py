@@ -9,10 +9,12 @@ Implements techniques not available as first-class primitives in other SDKs:
 - Readout error mitigation via confusion matrix inversion
 """
 from __future__ import annotations
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
-import numpy as np
-from .circuit import Circuit
 
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+
+import numpy as np
+
+from .circuit import Circuit
 
 # ═══════════════════════════════════════════════════════════════════
 #  Zero Noise Extrapolation (ZNE)

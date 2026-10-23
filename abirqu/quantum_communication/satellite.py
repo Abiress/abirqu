@@ -8,9 +8,10 @@ Supports India's 1,000-km and 2,000-km QKD network plans.
 Key advantage: Free-space loss scales as 1/R² (vs exponential in fiber).
 """
 
-import numpy as np
-from typing import List, Tuple, Optional, Dict, Any
 from dataclasses import dataclass
+from typing import Any, Dict, Optional
+
+import numpy as np
 
 
 @dataclass

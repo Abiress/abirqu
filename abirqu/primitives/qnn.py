@@ -12,10 +12,13 @@ Features NOT available in other SDKs:
 - Native batch execution across parameter sets
 """
 from __future__ import annotations
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
+from typing import Callable, List, Optional, Tuple
+
 import numpy as np
+
 from ..circuit import Circuit
-from ..gates import GATES, PARAMETERIZED_GATES
+from ..gates import PARAMETERIZED_GATES
 
 
 def _get_parameter_indices(circuit: Circuit) -> List[Tuple[int, int]]:

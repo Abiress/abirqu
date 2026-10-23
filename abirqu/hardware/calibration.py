@@ -7,8 +7,8 @@ T1/T2 coherence times, gate fidelities, readout errors, crosstalk.
 """
 import math
 import time
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass

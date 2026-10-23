@@ -13,14 +13,14 @@ References:
     - AbirQu Auto-Scale: Hardware-aware simulator routing
 """
 
-import math
-import time
-import json
 import hashlib
-from typing import List, Tuple, Dict, Optional, Callable, Any
+import json
+import math
+import threading
+import time
 from dataclasses import dataclass, field
 from enum import Enum
-import threading
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -505,7 +505,7 @@ class AgentOrchestrator:
 
     def _handle_molecular_simulation(self, params: Dict) -> Dict:
         """Simulate a molecular system."""
-        from ..chemistry import run_molecular_vqe, MolecularData
+        from ..chemistry import MolecularData, run_molecular_vqe
 
         molecule_name = params.get("molecule", "H2")
         mapper = params.get("mapper", "jordan_wigner")
@@ -523,7 +523,7 @@ class AgentOrchestrator:
 
     def _handle_optimization(self, params: Dict) -> Dict:
         """Run quantum optimization."""
-        from ..osint import IntelligenceGraph, GraphToIsingCompiler
+        from ..osint import GraphToIsingCompiler, IntelligenceGraph
 
         edges = params.get("edges", [])
         problem = params.get("problem", "max_cut")
@@ -554,7 +554,7 @@ class AgentOrchestrator:
 
     def _handle_graph_analysis(self, params: Dict) -> Dict:
         """Analyze an intelligence graph."""
-        from ..osint import IntelligenceGraph, GraphToIsingCompiler
+        from ..osint import GraphToIsingCompiler, IntelligenceGraph
 
         edges = params.get("edges", [])
 
@@ -571,7 +571,7 @@ class AgentOrchestrator:
 
     def _handle_cryptanalysis(self, params: Dict) -> Dict:
         """Run cryptanalysis operation."""
-        from ..crypto import OracleSynthesizer, LatticeSimulation
+        from ..crypto import LatticeSimulation, OracleSynthesizer
 
         operation = params.get("operation", "oracle_synthesis")
 

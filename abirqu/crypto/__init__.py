@@ -18,9 +18,9 @@ References:
 """
 
 import math
-from typing import Any, List, Tuple, Dict, Optional, Callable
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 

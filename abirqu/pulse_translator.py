@@ -13,9 +13,8 @@ Features:
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 

@@ -11,11 +11,11 @@ Supports:
 - Network capacity analysis
 """
 
-import numpy as np
-from typing import List, Tuple, Optional, Dict, Any, Set
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from collections import defaultdict
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 
 
 class Topology(Enum):

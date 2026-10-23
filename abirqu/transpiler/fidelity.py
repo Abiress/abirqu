@@ -7,7 +7,6 @@ Estimate circuit fidelity from noise model and gate counts.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Optional
 
 from ..circuit import Circuit
 

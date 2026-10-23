@@ -26,7 +26,7 @@ References:
 """
 
 import math
-from typing import List, Tuple, Dict, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 

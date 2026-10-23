@@ -1,5 +1,6 @@
 import random
 
+
 class QuantumAssociativeMemory:
     def __init__(self, num_qubits):
         self.num_qubits = num_qubits
@@ -118,10 +119,3 @@ class QuantumLanguageModel:
 
 
 # Re-export phase 34 production implementations.
-from .qml import (
-    QuantumAssociativeMemory,
-    QuantumInterferenceDecisionEngine,
-    QuantumTensorNetworkAttention,
-    QRAM,
-    QuantumLanguageModel,
-)

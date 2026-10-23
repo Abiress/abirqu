@@ -6,8 +6,10 @@ Efficient estimation of <ψ|P|ψ> for large Pauli sums using
 grouping, commutation relations, and classical shadows.
 """
 
+from typing import Any, Dict, List, Optional
+
 import numpy as np
-from typing import List, Dict, Tuple, Optional, Any
+
 from abirqu.circuit import Circuit
 
 

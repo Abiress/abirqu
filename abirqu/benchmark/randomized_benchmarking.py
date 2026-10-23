@@ -6,10 +6,11 @@ Estimate average gate fidelity via random Clifford sequences.
 Standard method for characterizing quantum gate performance.
 """
 
-import numpy as np
-from typing import List, Dict, Tuple, Optional, Any
-from abirqu.circuit import Circuit
+from typing import Any, Dict, List, Optional
 
+import numpy as np
+
+from abirqu.circuit import Circuit
 
 # Clifford group for single qubit (24 elements)
 SINGLE_QUBIT_CLIFFORDS = [

@@ -10,9 +10,10 @@ Compiles quantum circuits to fault-tolerant gate sequences using:
 
 Pure numpy — no external dependencies.
 """
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
+
 import numpy as np
-from typing import List, Dict, Optional, Tuple
-from dataclasses import dataclass, field
 
 
 @dataclass

@@ -17,18 +17,14 @@ References:
       Quantum Simulations
 """
 
-import math
-from typing import List, Tuple, Dict, Optional, Any
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
 from .fermion_mappers import (
-    JordanWignerMapper,
-    BravyiKitaevMapper,
-    ParityMapper,
-    build_hamiltonian_from_integrals,
     PauliTerm,
+    build_hamiltonian_from_integrals,
 )
 
 
@@ -429,7 +425,7 @@ def run_molecular_vqe(
     hamiltonian, n_qubits = mol_data.get_hamiltonian(mapper)
 
     # Import VQE ansatz from library
-    from ..library.vqe_ansatz import vqe_uccsd, vqe_hardware_efficient
+    from ..library.vqe_ansatz import vqe_hardware_efficient, vqe_uccsd
 
     if ansatz == "uccsd":
         circuit_fn = lambda params: vqe_uccsd(

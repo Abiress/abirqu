@@ -9,14 +9,12 @@ from __future__ import annotations
 import math
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from .circuit import Circuit
-from .gates import H, CNOT, rx, ry, rz, X, Z, SWAP
 from .backend import FastBackend
-
+from .circuit import Circuit
 
 # --- QAOA (Quantum Approximate Optimization Algorithm) ---
 

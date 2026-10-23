@@ -6,10 +6,12 @@ in a single pass over the statevector, not per-observable.  This
 means 100 observables cost ~the same as 1.
 """
 from __future__ import annotations
+
 from typing import Any, Dict, List, Optional, Union
-import numpy as np
+
 from ..circuit import Circuit
-from .quantum_run import QuantumRun, EstimatorResult as _EstimatorResult
+from .quantum_run import EstimatorResult as _EstimatorResult
+from .quantum_run import QuantumRun
 
 
 class Estimator:

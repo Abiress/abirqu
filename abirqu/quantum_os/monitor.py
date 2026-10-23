@@ -7,10 +7,10 @@ Real-time monitoring of quantum jobs.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
-from .job import QuantumJob, JobState
+from .job import JobState, QuantumJob
 
 
 @dataclass

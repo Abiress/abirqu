@@ -2,9 +2,10 @@
 Gate map / coupling map visualizer for AbirQu.
 """
 from __future__ import annotations
+
 import html as _html
 import math
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 def gate_map_svg(num_qubits: int,
@@ -25,7 +26,7 @@ def gate_map_svg(num_qubits: int,
         positions[q] = (cx + r * math.cos(angle), cy + r * math.sin(angle))
 
     svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" font-family="monospace">']
-    svg.append(f'<rect width="100%" height="100%" fill="#1e1e2e"/>')
+    svg.append('<rect width="100%" height="100%" fill="#1e1e2e"/>')
     svg.append(f'<text x="{cx}" y="22" text-anchor="middle" fill="#cdd6f4" font-size="13" font-weight="bold">{_html.escape(title)}</text>')
 
     max_count = max(gate_counts.values()) if gate_counts else 1

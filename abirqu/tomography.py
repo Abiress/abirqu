@@ -6,10 +6,11 @@ Reconstruct density matrices from measurement data using
 full tomography, compressed sensing, and classical shadows.
 """
 
+from typing import Any, Dict, List, Optional
+
 import numpy as np
-from typing import List, Dict, Tuple, Optional, Any
+
 from abirqu.circuit import Circuit
-from abirqu.gates import H, X, Y, Z, S, S_dag, CNOT
 
 
 def single_qubit_pauli_matrices() -> Dict[str, np.ndarray]:

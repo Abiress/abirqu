@@ -8,9 +8,10 @@ and the 20-to-4 protocol for |H> states.
 Magic states enable non-Clifford gates (T gate, Toffoli) in
 fault-tolerant quantum computation.
 """
-import numpy as np
-from typing import List, Tuple, Optional
 from dataclasses import dataclass
+from typing import List, Optional
+
+import numpy as np
 
 
 @dataclass

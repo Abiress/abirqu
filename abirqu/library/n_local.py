@@ -9,8 +9,9 @@ circuits have unique features:
 - Self-contained gate decomposition
 """
 from __future__ import annotations
-import math
+
 from typing import List, Optional
+
 from ..circuit import Circuit
 
 

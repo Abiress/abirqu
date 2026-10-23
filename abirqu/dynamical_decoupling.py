@@ -18,7 +18,6 @@ import numpy as np
 
 from .circuit import Circuit, Gate, Measurement
 
-
 # ── Gate matrices (reused) ──────────────────────────────────────────────────
 
 _SQRT2_INV = 1.0 / math.sqrt(2)

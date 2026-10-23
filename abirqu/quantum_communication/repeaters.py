@@ -9,9 +9,10 @@ Key concept: Divide long channel into shorter segments,
 create entanglement locally, then swap.
 """
 
-import numpy as np
-from typing import List, Tuple, Optional, Dict, Any
 from dataclasses import dataclass
+from typing import List, Optional
+
+import numpy as np
 
 
 @dataclass

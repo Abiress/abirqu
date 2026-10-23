@@ -9,7 +9,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
-from ...backend import QuantumBackend, JobStatus, JobHandle
+from ...backend import JobHandle, JobStatus, QuantumBackend
 from ...circuit import Circuit
 
 
@@ -57,12 +57,12 @@ class PasqalBackend(QuantumBackend):
         should decompose gates to the native Rydberg gate set.
         """
         try:
+            import numpy as np
             import pulser
             from pulser import Register, Sequence
+            from pulser.channels import Rydberg
             from pulser.devices import VirtualDevice
             from pulser.pulse import Pulse
-            from pulser.channels import Rydberg
-            import numpy as np
         except ImportError as exc:
             raise RuntimeError(
                 "Pasqal backend requires 'pulser'. "

@@ -11,8 +11,6 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import os
-import sqlite3
 import threading
 import time
 import uuid
@@ -20,7 +18,10 @@ from collections import OrderedDict
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-import numpy as np
+try:
+    import sqlite3
+except ImportError:  # Pyodide/WASM: sqlite3 is an optional package
+    sqlite3 = None
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +148,12 @@ class JobQueue:
         self._local = threading.local()
         self._init_db()
 
-    def _get_conn(self) -> sqlite3.Connection:
+    def _get_conn(self):
+        if sqlite3 is None:
+            raise RuntimeError(
+                "sqlite3 is not available in this Python distribution "
+                "(e.g. Pyodide). Install it with: micropip.install('sqlite3')"
+            )
         if not hasattr(self._local, "conn") or self._local.conn is None:
             self._local.conn = sqlite3.connect(self._db_path)
             self._local.conn.row_factory = sqlite3.Row

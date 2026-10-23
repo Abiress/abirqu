@@ -8,9 +8,10 @@ discrete qubit states. Higher key rates over short distances.
 Gaussian-modulated coherent state protocol (GG02).
 """
 
-import numpy as np
-from typing import List, Tuple, Optional, Dict, Any
 from dataclasses import dataclass
+from typing import List, Optional, Tuple
+
+import numpy as np
 
 
 @dataclass

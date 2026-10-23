@@ -7,9 +7,9 @@ Unified cloud provider management for quantum hardware access.
 import logging
 import os
 import time
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from ..exceptions import AuthenticationError
 
@@ -115,7 +115,7 @@ class CloudCredentials:
                              CloudProvider.OQC, CloudProvider.QUERA):
             return bool(self.api_key)
         if self.provider == CloudProvider.AWS_BRAKET:
-            return bool(self.api_key and creds.extra.get('secret_key'))
+            return bool(self.api_key and self.extra.get('secret_key'))
         if self.provider == CloudProvider.AZURE_QUANTUM:
             return bool(self.token or self.api_key)
         if self.provider == CloudProvider.GOOGLE_QUANTUM:

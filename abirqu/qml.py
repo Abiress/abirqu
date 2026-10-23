@@ -1,7 +1,7 @@
 """Quantum machine learning components - associative memory, attention, QRAM."""
 
 import random
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, Sequence, Tuple
 
 
 class QuantumAssociativeMemory:

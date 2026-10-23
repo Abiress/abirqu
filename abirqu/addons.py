@@ -10,11 +10,13 @@ Unique features not in other SDKs:
 - Trotter-Suzuki decomposition with higher-order formulas
 """
 from __future__ import annotations
-from typing import List, Optional, Tuple
-import numpy as np
-from .circuit import Circuit, Gate
-import math
 
+import math
+from typing import Dict, List, Tuple
+
+import numpy as np
+
+from .circuit import Circuit, Gate
 
 # ═══════════════════════════════════════════════════════════════════
 #  Multi-Product Formulas (MPF)

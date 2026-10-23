@@ -11,8 +11,9 @@ Full implementation of the rotated surface code with:
 
 Pure numpy implementation.
 """
+from typing import List, Optional
+
 import numpy as np
-from typing import List, Tuple, Optional
 
 
 class RotatedSurfaceCode:

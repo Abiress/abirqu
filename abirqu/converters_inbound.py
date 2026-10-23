@@ -13,12 +13,11 @@ missing.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict
 
 import numpy as np
 
 from .circuit import Circuit, Measurement
-
 
 # ── Gate name normalisation helpers ─────────────────────────────────────────
 
@@ -248,9 +247,6 @@ def from_pennylane(tape: Any) -> Circuit:
         "CZ": "CZ",
         "SWAP": "SWAP",
         "Toffoli": "TOFFOLI",
-        "RX": "RX",
-        "RY": "RY",
-        "RZ": "RZ",
         "RX": "RX",
         "RY": "RY",
         "RZ": "RZ",

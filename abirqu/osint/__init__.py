@@ -19,15 +19,15 @@ References:
 """
 
 import math
-from typing import List, Tuple, Dict, Optional, Set, Any
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from ..circuit import Circuit, Gate
 from ..chemistry.fermion_mappers import PauliTerm
-from .quantum_encoding import QuantumDataEncoder, QRAMEmulator, TensorNetworkEmbedding
+from ..circuit import Circuit, Gate
+from .quantum_encoding import QRAMEmulator, QuantumDataEncoder, TensorNetworkEmbedding
 
 
 class ProblemType(Enum):

@@ -1,6 +1,6 @@
+from typing import Dict, List, Tuple
+
 import numpy as np
-from typing import List, Union, Tuple, Dict, Any
-import itertools
 
 # Standard quantum gates as unitary matrices
 I = np.array([[1, 0], [0, 1]], dtype=complex)  # Identity
@@ -105,7 +105,7 @@ class GateDecomposition:
     """
     Handles decomposition of gates into elementary gate sets.
     """
-    
+
     @staticmethod
     def decompose_toffoli() -> List[Tuple[np.ndarray, List[int]]]:
         """
@@ -116,14 +116,14 @@ class GateDecomposition:
         # This is a simplified decomposition - in practice would be more complex
         # For now, we'll return the Toffoli gate itself
         return [(TOFFOLI, [0, 1, 2])]
-    
+
     @staticmethod
     def decompose_fredkin() -> List[Tuple[np.ndarray, List[int]]]:
         """
         Decompose Fredkin gate into elementary gates.
         """
         return [(FREDKIN, [0, 1, 2])]
-    
+
     @staticmethod
     def get_universal_gate_set() -> Dict[str, np.ndarray]:
         """
@@ -151,17 +151,17 @@ def apply_phase(angle: float, state: np.ndarray, qubit_index: int, num_qubits: i
     """
     # Create phase matrix for single qubit
     phase_matrix = np.array([[1, 0], [0, np.exp(1j * angle)]], dtype=complex)
-    
+
     # Apply using tensor product approach (similar to QVM)
     tensor_shape = (2,) * num_qubits
     state_tensor = state.reshape(tensor_shape)
-    
+
     # Target qubit axis (little-endian indexing)
     target_axis = num_qubits - 1 - qubit_index
-    
+
     # Apply phase using tensordot
     new_tensor = np.tensordot(phase_matrix, state_tensor, axes=([1], [target_axis]))
-    
+
     # Move the result dimension to the correct position
     # Since we contracted axis 1 of phase_matrix with target_axis of state_tensor,
     # and phase_matrix's axis 0 remains, we need to move it to target_axis position
@@ -172,16 +172,16 @@ def apply_phase(angle: float, state: np.ndarray, qubit_index: int, num_qubits: i
     # state_tensor_uncontracted_axes are all axes except target_axis
     # We want the result to have shape (2, 2, ..., 2) with the phase applied
     # So we need to move the first dimension to target_axis position
-    
+
     # Get the shape of the result
     result_shape = list(new_tensor.shape)
     # Move first dimension to target_axis position
     dim_to_move = result_shape.pop(0)
     result_shape.insert(target_axis, dim_to_move)
-    new_tensor = np.transpose(new_tensor, 
-                            list(range(1, target_axis+1)) + [0] + 
+    new_tensor = np.transpose(new_tensor,
+                            list(range(1, target_axis+1)) + [0] +
                             list(range(target_axis+1, len(result_shape)+1)))
-    
+
     return new_tensor.reshape(-1)
 
 def is_unitary(matrix: np.ndarray, tolerance: float = 1e-10) -> bool:
@@ -208,17 +208,17 @@ if __name__ == "__main__":
     print("H gate:\n", H)
     print("CNOT gate:\n", CNOT)
     print("Toffoli gate shape:", TOFFOLI.shape)
-    
+
     print("\nTesting unitary property:")
     print("X is unitary:", is_unitary(X))
     print("H is unitary:", is_unitary(H))
     print("CNOT is unitary:", is_unitary(CNOT))
-    
+
     print("\nTesting parameterized gates:")
     print("RX(pi/2):\n", rx(np.pi/2))
     print("RY(pi/2):\n", ry(np.pi/2))
     print("RZ(pi/2):\n", rz(np.pi/2))
-    
+
     print("\nTesting phase application:")
     state = np.array([1, 0, 0, 0], dtype=complex)  # |00>
     phased_state = apply_phase(np.pi, state, 0, 2)  # Apply pi phase to qubit 0

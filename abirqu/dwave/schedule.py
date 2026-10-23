@@ -7,7 +7,7 @@ Control quantum annealing parameters: anneal time, pause, quench, and freezeout.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 

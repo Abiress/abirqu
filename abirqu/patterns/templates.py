@@ -14,7 +14,7 @@ def grover_template(num_qubits: int, marked_state: int) -> Circuit:
 
     # Oracle: flip phase of marked state
     c = c + oracle_pattern(num_qubits, marked_state)
-    
+
     # Diffusion: 2|s><s| - I
     for q in range(num_qubits):
         c.h(q)

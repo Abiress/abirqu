@@ -19,7 +19,7 @@ Available backends:
 - ``abirqu.backends.quera.QuEraBackend`` — QuEra Aquila (AWS Braket analog)
 """
 
-from ..backend import QuantumBackend, FastBackend, BackendRegistry, JobStatus, JobHandle
+from ..backend import BackendRegistry, FastBackend, JobHandle, JobStatus, QuantumBackend
 
 __all__ = [
     "QuantumBackend",

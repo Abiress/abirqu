@@ -12,172 +12,263 @@ __url__ = "https://github.com/abirqu/abirqu"
 # timeline.
 
 # Core exports
-from .circuit import Circuit, Gate, Measurement
-from .exceptions import (
-    AbirQuError,
-    CircuitError,
-    SimulationError,
-    BackendError,
-    TranspilerError,
-    HardwareError,
-    QuantumCommunicationError,
-    ConfigurationError,
-    AuthenticationError,
-    JobError,
+# Addons
+from .addons import (
+    AQCTensor,
+    CircuitCutter,
+    MultiProductFormula,
+    OperatorBackpropagation,
+    SQDCorrector,
+    TrotterSuzuki,
 )
-from .logging_config import setup_logging
-from .gates import X, Y, Z, H, S, S_dag, T, T_dag, CNOT, CZ, SWAP, rx, ry, rz
+
+# Agentic Orchestration
+from .agentic import (
+    AgentOrchestrator,
+    DistributedQuantumComputer,
+    ExecutionPlan,
+    ExecutionTarget,
+    MultiGPUSimulator,
+)
 from .backend import (
-    QuantumBackend,
-    FastBackend,
     BackendRegistry,
-    JobStatus,
+    FastBackend,
     JobHandle,
+    JobStatus,
+    QuantumBackend,
     get_best_backend,
 )
+
+# ─── Production Modules ───────────────────────────────────────────────
+# Quantum Chemistry (Pharmaceuticals & Drug Discovery)
+from .chemistry import (
+    BravyiKitaevMapper,
+    FermionicOperator,
+    JordanWignerMapper,
+    MatchgateShadows,
+    MolecularData,
+    OpenFermionHook,
+    ParityMapper,
+    PySCFHook,
+    build_hamiltonian_from_integrals,
+    run_molecular_vqe,
+)
+from .circuit import Circuit, Gate, Measurement
+from .compatibility import CompatibilityManager
 from .converters import (
     convert_circuit,
-    to_qiskit,
     to_braket,
     to_cirq,
     to_ionq_json,
-    to_pytket,
-    to_quil,
     to_openqasm,
-)
-from .noise import NoiseModel
-from .numpy_sim import NumPySimulator
-from .tracker import QuantumAdvantageTracker
-from .compatibility import CompatibilityManager
-from .mitigation import ErrorMitigationFlow, counts_to_probabilities
-from .security import CircuitProtector, AccessController, EncryptedCircuit, sign_payload, verify_signature
-from .patterns import (
-    PatternKind,
-    PatternMatch,
-    detect_patterns,
-    initialization_pattern,
-    superposition_pattern,
-    entanglement_pattern,
-    oracle_pattern,
-    PatternAwareOptimizer,
-    PatternRegistry,
+    to_pytket,
+    to_qiskit,
+    to_quil,
 )
 
-# Transpiler
-from .transpiler import TranspilerPipeline, TargetBackend
-from .transpiler.topology import CouplingMap
-from .transpiler.routing import RoutingPass
-from .transpiler.scheduling import SchedulingPass
-from .transpiler.fidelity import FidelityEstimator
+# Inbound converters (Qiskit, Cirq, PennyLane, QASM → AbirQu)
+from .converters_inbound import from_cirq, from_pennylane, from_qasm, from_qiskit
 
-# Quantum OS
-from .quantum_os import (
-    QuantumJob, JobState,
-    QuantumScheduler, SchedulingPolicy,
-    JobQueue, ResourceManager, VirtualQPU, CostEstimator,
-    PreemptionManager, ReservationSystem, CircuitPartitioner,
-    VirtualEnvironment, JobMonitor, TenantManager, AccessController,
+# Cryptanalysis (Oracle Synthesis & Lattice Simulation)
+from .crypto import (
+    LatticeSimulation,
+    ModularArithmetic,
+    OracleSynthesizer,
 )
 
 # D-Wave
 from .dwave import (
-    QUBOBuilder, AnnealingSchedule, HybridSolver, DWaveTopology,
-    circuit_to_qubo, circuit_to_ising,
+    AnnealingSchedule,
+    DWaveTopology,
+    HybridSolver,
+    QUBOBuilder,
+    circuit_to_ising,
+    circuit_to_qubo,
 )
 
-# Simulators
-from .simulation import (
-    GPUSimulator, CliffordSimulator, MPSSimulator,
-    is_clifford_only, estimate_bond_dimension,
+# Dynamical decoupling
+from .dynamical_decoupling import (
+    CPMGSequence,
+    DDScheduler,
+    DDSequence,
+    UDDSequence,
+    XY4Sequence,
+    XY8Sequence,
+)
+from .exceptions import (
+    AbirQuError,
+    AuthenticationError,
+    BackendError,
+    CircuitError,
+    ConfigurationError,
+    HardwareError,
+    JobError,
+    QuantumCommunicationError,
+    SimulationError,
+    TranspilerError,
 )
 
-# Primitives (unified execution)
-from .primitives import (
-    QuantumRun, SamplerResult, EstimatorResult, MitigationResult, QNNResult,
-    Sampler, QuasiDistribution, Estimator, QNN,
-)
+# Format exports
+from .formats import openqasm2, openqasm3, qasm_xt, qir, quil
+from .gates import CNOT, CZ, SWAP, H, S, S_dag, T, T_dag, X, Y, Z, rx, ry, rz
 
-# Visualization
-from .visualization import (
-    CircuitDrawer, draw,
-    draw_text, draw_ascii, draw_svg, draw_html,
-    BlochSphere,
-    histogram_text, histogram_svg,
-    stateplot_svg, probability_svg, stateplot_ascii,
-    gate_map_svg, error_map_svg,
-    noise_fingerprint_svg, circuit_fingerprint_svg,
+# Cloud-native job orchestration
+from .job_orchestration import (
+    AutoBackendSelector,
+    CostEstimator,
+    JobBatcher,
+    JobQueue,
+    JobScheduler,
+    ResultCache,
+    SchedulingPolicy,
+)
+from .job_orchestration import (
+    JobStatus as JobOrchestrationStatus,
 )
 
 # Circuit Library
 from .library import (
-    real_amplitudes, efficient_su2, n_local,
-    qaoa_circuit, qaoa_maxcut,
-    vqe_hardware_efficient, vqe_uccsd, vqe_custom,
-    angle_encoding, amplitude_encoding, zz_feature_map, iqp_encoding,
-    ghz_circuit, w_state, qft_circuit, grover_circuit,
-    grover_oracle, bernstein_vazirani_circuit, quantum_fourier_transform,
+    amplitude_encoding,
+    angle_encoding,
+    bernstein_vazirani_circuit,
+    efficient_su2,
+    ghz_circuit,
+    grover_circuit,
+    grover_oracle,
+    iqp_encoding,
+    n_local,
+    qaoa_circuit,
+    qaoa_maxcut,
+    qft_circuit,
+    quantum_fourier_transform,
     random_circuit,
+    real_amplitudes,
+    vqe_custom,
+    vqe_hardware_efficient,
+    vqe_uccsd,
+    w_state,
+    zz_feature_map,
 )
+from .logging_config import setup_logging
+from .mitigation import ErrorMitigationFlow, counts_to_probabilities
+
+# NMR Quantum Computer
+from .nmr import (
+    MOLECULES,
+    Molecule,
+    NMRSystem,
+    Nucleus,
+    list_molecules,
+)
+from .noise import NoiseModel
 
 # Noise Toolkit
 from .noise_toolkit import (
-    ZeroNoiseExtrapolator, ReadoutMitigator, M3Mitigator,
-    PECCorrector, generate_calibration_circuits, generate_zne_circuits,
+    M3Mitigator,
+    PECCorrector,
+    ReadoutMitigator,
+    ZeroNoiseExtrapolator,
+    generate_calibration_circuits,
+    generate_zne_circuits,
 )
-
-# Addons
-from .addons import (
-    MultiProductFormula, TrotterSuzuki, CircuitCutter,
-    AQCTensor, OperatorBackpropagation, SQDCorrector,
-)
-
-# ─── Production Modules ───────────────────────────────────────────────
-
-# Quantum Chemistry (Pharmaceuticals & Drug Discovery)
-from .chemistry import (
-    JordanWignerMapper, BravyiKitaevMapper, ParityMapper,
-    FermionicOperator, build_hamiltonian_from_integrals,
-    PySCFHook, OpenFermionHook, MolecularData, run_molecular_vqe,
-    MatchgateShadows,
-)
+from .numpy_sim import NumPySimulator
 
 # OSINT & Intelligence (Graph Analysis & Data Encoding)
 from .osint import (
-    IntelligenceGraph, GraphNode, GraphEdge, GraphToIsingCompiler,
-    QuantumDataEncoder, QRAMEmulator, TensorNetworkEmbedding,
+    GraphEdge,
+    GraphNode,
+    GraphToIsingCompiler,
+    IntelligenceGraph,
+    QRAMEmulator,
+    QuantumDataEncoder,
+    TensorNetworkEmbedding,
+)
+from .patterns import (
+    PatternAwareOptimizer,
+    PatternKind,
+    PatternMatch,
+    PatternRegistry,
+    detect_patterns,
+    entanglement_pattern,
+    initialization_pattern,
+    oracle_pattern,
+    superposition_pattern,
 )
 
-# Cryptanalysis (Oracle Synthesis & Lattice Simulation)
-from .crypto import (
-    OracleSynthesizer, ModularArithmetic, LatticeSimulation,
+# Primitives (unified execution)
+from .primitives import (
+    QNN,
+    Estimator,
+    EstimatorResult,
+    MitigationResult,
+    QNNResult,
+    QuantumRun,
+    QuasiDistribution,
+    Sampler,
+    SamplerResult,
+)
+from .qpinn import QPINN, NavierStokesQPINN, PDESpec, TrainingConfig
+
+# Quantum OS
+from .quantum_os import (
+    AccessController,
+    CircuitPartitioner,
+    CostEstimator,
+    JobMonitor,
+    JobQueue,
+    JobState,
+    PreemptionManager,
+    QuantumJob,
+    QuantumScheduler,
+    ReservationSystem,
+    ResourceManager,
+    SchedulingPolicy,
+    TenantManager,
+    VirtualEnvironment,
+    VirtualQPU,
+)
+from .security import AccessController as SecurityAccessController
+from .security import CircuitProtector, EncryptedCircuit, sign_payload, verify_signature
+
+# Simulators
+from .simulation import (
+    CliffordSimulator,
+    GPUSimulator,
+    MPSSimulator,
+    estimate_bond_dimension,
+    is_clifford_only,
 )
 
 # Space & Deep Tech (HHL Solver & Q-PINNs)
 from .space import HHLSolver
-from .qpinn import QPINN, NavierStokesQPINN, PDESpec, TrainingConfig
+from .tracker import QuantumAdvantageTracker
 
-# Agentic Orchestration
-from .agentic import (
-    MultiGPUSimulator, AgentOrchestrator, DistributedQuantumComputer,
-    ExecutionTarget, ExecutionPlan,
+# Transpiler
+from .transpiler import TargetBackend, TranspilerPipeline
+from .transpiler.fidelity import FidelityEstimator
+from .transpiler.routing import RoutingPass
+from .transpiler.scheduling import SchedulingPass
+from .transpiler.topology import CouplingMap
+
+# Visualization
+from .visualization import (
+    BlochSphere,
+    CircuitDrawer,
+    circuit_fingerprint_svg,
+    draw,
+    draw_ascii,
+    draw_html,
+    draw_svg,
+    draw_text,
+    error_map_svg,
+    gate_map_svg,
+    histogram_svg,
+    histogram_text,
+    noise_fingerprint_svg,
+    probability_svg,
+    stateplot_ascii,
+    stateplot_svg,
 )
-
-# Inbound converters (Qiskit, Cirq, PennyLane, QASM → AbirQu)
-from .converters_inbound import from_qiskit, from_cirq, from_pennylane, from_qasm
-
-# Dynamical decoupling
-from .dynamical_decoupling import (
-    DDSequence, XY4Sequence, XY8Sequence, CPMGSequence, UDDSequence, DDScheduler,
-)
-
-# Cloud-native job orchestration
-from .job_orchestration import (
-    JobQueue, JobScheduler, JobBatcher, ResultCache, CostEstimator, AutoBackendSelector,
-    JobStatus as JobOrchestrationStatus, SchedulingPolicy,
-)
-
-# Format exports
-from .formats import openqasm2, openqasm3, quil, qir, qasm_xt
 
 # Backend exports (lazy — only import when accessed)
 phases = None

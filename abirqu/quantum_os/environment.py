@@ -11,7 +11,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from .job import QuantumJob, JobState
+from .job import JobState, QuantumJob
 
 
 @dataclass

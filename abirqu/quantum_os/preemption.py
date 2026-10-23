@@ -7,10 +7,10 @@ Preempt low-priority jobs when high-priority jobs arrive.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
-from .job import QuantumJob, JobState
+from .job import QuantumJob
 
 
 @dataclass

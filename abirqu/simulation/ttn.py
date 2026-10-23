@@ -20,8 +20,9 @@ References:
     - Motta et al. (2021): Tree tensor network state quantum chemistry
 """
 
-from typing import List, Tuple, Optional, Dict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from typing import Dict, List, Optional
+
 import numpy as np
 
 from ..circuit import Circuit

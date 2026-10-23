@@ -150,12 +150,16 @@ print("Success:", "00" in result.counts and "11" in result.counts)</textarea>
         const status = document.getElementById('status');
         try {
             pyodide = await loadPyodide();
+            status.textContent = 'Loading runtime packages...';
+            await pyodide.loadPackage(['micropip', 'sqlite3', 'numpy', 'scipy', 'networkx', 'packaging']);
             status.textContent = 'Installing abirqu...';
-            await pyodide.loadPackage('micropip');
             await pyodide.runPythonAsync(`
                 import micropip
-                await micropip.install('abirqu')
+                await micropip.install('abirqu', deps=False)
+                await micropip.install('requests')
             `);
+            status.textContent = 'Importing abirqu...';
+            await pyodide.runPythonAsync('import abirqu');
             status.textContent = 'Ready';
             status.className = 'status ready';
             document.getElementById('runBtn').disabled = false;

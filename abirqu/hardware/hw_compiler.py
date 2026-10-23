@@ -7,8 +7,8 @@ connectivity, native gate sets, noise characteristics.
 """
 import logging
 import time
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, field
+from typing import Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 

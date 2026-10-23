@@ -1,6 +1,8 @@
 """Simulator Backend for AbirQu. Copyright 2026 Abir Maheshwari"""
+from typing import Any, Dict, List
+
 import numpy as np
-from typing import Dict, Any, List, Optional
+
 from .circuit import Circuit
 
 try:

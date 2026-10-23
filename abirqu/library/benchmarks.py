@@ -5,8 +5,10 @@ These are NOT copies of Qiskit's circuits.  AbirQu's benchmarks include
 unique circuits not found in other SDKs.
 """
 from __future__ import annotations
+
 import math
 from typing import Optional
+
 from ..circuit import Circuit
 
 

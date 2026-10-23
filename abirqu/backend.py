@@ -43,7 +43,7 @@ import numpy as np
 
 from .circuit import Circuit
 from .exceptions import BackendError, JobError
-from .simulator import SimulatorBackend, RustSimulator, _serialize_circuit, HAS_RUST_CORE
+from .simulator import HAS_RUST_CORE, RustSimulator, SimulatorBackend, _serialize_circuit
 
 logger = logging.getLogger(__name__)
 

@@ -24,9 +24,9 @@ References:
 """
 
 import math
-from typing import Callable, Optional, Tuple, List, Dict, Any
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 

@@ -14,7 +14,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-
 # ---------------------------------------------------------------------------
 # Internal: parameterised quantum circuit forward pass
 # ---------------------------------------------------------------------------
@@ -44,7 +43,7 @@ def _quantum_forward(
     np.ndarray, shape (batch, n_qubits)
         Expectation values ⟨Z⟩ for each qubit.
     """
-    from ..gates import rx, ry, rz, H, CNOT, CZ
+    from ..gates import CNOT, CZ, H, rx, ry, rz
 
     batch_size = x.shape[0]
     state = np.zeros((batch_size, 2 ** n_qubits), dtype=np.complex128)

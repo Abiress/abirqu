@@ -20,12 +20,11 @@ References:
     - Giovannetti et al. (2008): Quantum random access memory
 """
 
-import math
-from typing import List, Tuple, Dict, Optional, Union
+from typing import List, Optional
 
 import numpy as np
 
-from ..circuit import Circuit, Gate
+from ..circuit import Circuit
 
 
 class QuantumDataEncoder:

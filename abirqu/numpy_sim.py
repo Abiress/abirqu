@@ -2,8 +2,9 @@
 NumPy-accelerated quantum simulator for AbirQu.
 Simple but correct implementation.
 """
-import numpy as np
 from typing import Dict
+
+import numpy as np
 
 # Gate matrices
 _H = np.array([[1, 1], [1, -1]], dtype=np.complex128) / np.sqrt(2)
@@ -19,97 +20,97 @@ class NumPySimulator:
     Pure-Python/NumPy state-vector simulator.
     Uses explicit loops for correctness. Performance is O(n * 2^n).
     """
-    
+
     def __init__(self, num_qubits: int):
         self.n = num_qubits
         self.state = np.zeros(2**num_qubits, dtype=np.complex128)
         self.state[0] = 1.0
-    
+
     def _apply_1q(self, gate: np.ndarray, qubit: int):
         """Apply 2x2 gate to single qubit."""
         new_state = np.zeros_like(self.state)
         mask = 1 << qubit
-        
+
         for i in range(2**self.n):
             bit = (i >> qubit) & 1
             other = i ^ mask
-            
+
             if bit == 0:
                 # This is a |0⟩ component on this qubit
                 new_state[i] = gate[0, 0] * self.state[i] + gate[0, 1] * self.state[other]
                 new_state[other] = gate[1, 0] * self.state[i] + gate[1, 1] * self.state[other]
-        
+
         self.state = new_state
-    
+
     def h(self, qubit: int):
         self._apply_1q(_H, qubit)
-    
+
     def x(self, qubit: int):
         self._apply_1q(_X, qubit)
-    
+
     def y(self, qubit: int):
         self._apply_1q(_Y, qubit)
-    
+
     def z(self, qubit: int):
         self._apply_1q(_Z, qubit)
-    
+
     def s(self, qubit: int):
         self._apply_1q(_S, qubit)
-    
+
     def t(self, qubit: int):
         self._apply_1q(_T, qubit)
-    
+
     def rx(self, qubit: int, theta: float):
         c, s = np.cos(theta/2), np.sin(theta/2)
         gate = np.array([[c, -1j*s], [-1j*s, c]], dtype=np.complex128)
         self._apply_1q(gate, qubit)
-    
+
     def ry(self, qubit: int, theta: float):
         c, s = np.cos(theta/2), np.sin(theta/2)
         gate = np.array([[c, -s], [s, c]], dtype=np.complex128)
         self._apply_1q(gate, qubit)
-    
+
     def rz(self, qubit: int, theta: float):
         gate = np.array([[np.exp(-1j*theta/2), 0],
                          [0, np.exp(1j*theta/2)]], dtype=np.complex128)
         self._apply_1q(gate, qubit)
-    
+
     def cnot(self, control: int, target: int):
         """CNOT: if control=1, flip target."""
         new_state = np.zeros_like(self.state)
         control_mask = 1 << control
         target_mask = 1 << target
-        
+
         for i in range(2**self.n):
             if (i & control_mask):
                 new_state[i ^ target_mask] = self.state[i]
             else:
                 new_state[i] = self.state[i]
-        
+
         self.state = new_state
-    
+
     def cz(self, control: int, target: int):
         """CZ: if both control and target are 1, multiply by -1."""
         for i in range(2**self.n):
             if ((i >> control) & 1) and ((i >> target) & 1):
                 self.state[i] *= -1
-    
+
     def toffoli(self, c1: int, c2: int, target: int):
         """Toffoli: if both controls are 1, flip target."""
         new_state = np.zeros_like(self.state)
         c1_mask = 1 << c1
         c2_mask = 1 << c2
         t_mask = 1 << target
-        
+
         for i in range(2**self.n):
             if (i & c1_mask) and (i & c2_mask):
                 # Both controls are 1, flip target
                 new_state[i ^ t_mask] = self.state[i]
             else:
                 new_state[i] = self.state[i]
-        
+
         self.state = new_state
-    
+
     def swap(self, q0: int, q1: int):
         """SWAP: exchange q0 and q1."""
         if q0 == q1:
@@ -129,14 +130,14 @@ class NumPySimulator:
             new_state[j] = self.state[i]
 
         self.state = new_state
-    
+
     def run_circuit(self, circuit) -> Dict[str, float]:
         """Execute a full Circuit object."""
         for gate in getattr(circuit, 'gates', []):
             name = gate.name.upper()
             qubits = gate.qubits
             params = getattr(gate, 'params', []) or []
-            
+
             if len(qubits) == 1:
                 q = qubits[0]
                 if name == 'H':
@@ -173,35 +174,35 @@ class NumPySimulator:
                 matrix = getattr(gate, 'matrix', None)
                 if matrix is not None:
                     self._apply_custom_unitary(matrix, qubits)
-        
+
         probs = np.abs(self.state) ** 2
         return {
             format(i, f'0{self.n}b'): float(p)
             for i, p in enumerate(probs) if p > 1e-15
         }
-    
+
     def get_probabilities(self) -> Dict[str, float]:
         probs = np.abs(self.state) ** 2
         return {
             format(i, f'0{self.n}b'): float(p)
             for i, p in enumerate(probs) if p > 1e-15
         }
-    
+
     def get_state_vector(self) -> np.ndarray:
         return self.state.copy()
-    
+
     def _apply_custom_unitary(self, matrix: np.ndarray, qubits: list):
         """Apply an arbitrary unitary matrix to specified qubits."""
         n_qubits = len(qubits)
         dim = 2 ** n_qubits
-        
+
         if matrix.shape != (dim, dim):
             raise ValueError(f"Unitary matrix shape {matrix.shape} doesn't match {n_qubits} qubits")
-        
+
         # Create the full state vector permutation for these qubits
         # We need to apply the matrix to the subspace defined by these qubits
         new_state = np.zeros_like(self.state)
-        
+
         # Iterate over all basis states
         for i in range(2 ** self.n):
             # Extract the bits for the target qubits
@@ -209,7 +210,7 @@ class NumPySimulator:
             for j, q in enumerate(qubits):
                 if (i >> q) & 1:
                     subspace_idx |= (1 << j)
-            
+
             # Apply the unitary to this component
             for k in range(dim):
                 if abs(matrix[k, subspace_idx]) > 1e-15:
@@ -223,5 +224,5 @@ class NumPySimulator:
                         if (k >> j) & 1:
                             output_idx |= (1 << q)
                     new_state[output_idx] += matrix[k, subspace_idx] * self.state[i]
-        
+
         self.state = new_state

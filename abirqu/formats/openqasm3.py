@@ -2,7 +2,7 @@
 OpenQASM 3.0 Interchange Format - Complete Implementation
 """
 import re
-from typing import Dict, List, Optional, Any
+
 
 class GateDef3:
     def __init__(self, name, qubits, params=None, modifiers=None, condition=None):
@@ -19,7 +19,7 @@ class OpenQASM3Circuit:
         self.gates = []
         self.includes = []
         self.version = "3.0"
-    
+
     def to_qasm(self):
         lines = [f"OPENQASM {self.version};", ""]
         for inc in self.includes:
@@ -80,7 +80,7 @@ class OpenQASM3Parser:
                 if gate:
                     circuit.gates.append(gate)
         return circuit
-    
+
     def _parse_gate(self, line):
         # Remove ctrl @ prefix
         modifiers = []

@@ -4,9 +4,8 @@ Copyright 2026 Abir Maheshwari
 
 Python code editor with quantum syntax highlighting and auto-completion.
 """
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, field
-
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
 
 QUANTUM_KEYWORDS = [
     'quantum', 'qubit', 'circuit', 'gate', 'measure', 'reset',

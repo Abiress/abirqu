@@ -23,10 +23,9 @@ References:
     - Seeley, Richard, Love (2012): The Bravyi-Kitaev transformation
 """
 
-import math
-from typing import List, Tuple, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, List, Tuple
 
 import numpy as np
 

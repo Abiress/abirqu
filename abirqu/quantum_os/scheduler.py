@@ -9,9 +9,9 @@ from __future__ import annotations
 import heapq
 import logging
 from enum import Enum
-from typing import Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from .job import QuantumJob, JobState
+from .job import JobState, QuantumJob
 
 logger = logging.getLogger(__name__)
 

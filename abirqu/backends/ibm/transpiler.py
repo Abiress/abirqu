@@ -6,12 +6,9 @@ Transpile AbirQu circuits to IBM native gate set (ECR, ID, RZ, X, SX).
 
 from __future__ import annotations
 
-from typing import List, Tuple
-
 import numpy as np
 
 from ...circuit import Circuit
-
 
 # IBM native gate set for Eagle/Heron processors
 IBM_NATIVE_GATES = ["ECR", "ID", "RZ", "X", "SX"]

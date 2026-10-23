@@ -12,7 +12,6 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
-
 # ---------------------------------------------------------------------------
 # JSON-RPC 2.0 message types
 # ---------------------------------------------------------------------------
@@ -266,7 +265,7 @@ def _builtin_optimize_circuit(
 ) -> Dict[str, Any]:
     """Transpile and optimise a circuit."""
     from ..circuit import Circuit
-    from ..transpiler import TranspilerPipeline, TargetBackend
+    from ..transpiler import TargetBackend, TranspilerPipeline
 
     circ = Circuit(num_qubits)
     for g in gates or []:
