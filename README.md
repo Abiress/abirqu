@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.2.4-blue?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-1.2.5-blue?style=for-the-badge" alt="Version"/>
   <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" alt="Build"/>
-  <img src="https://img.shields.io/badge/tests-702%20PASS-brightgreen?style=for-the-badge" alt="Tests"/>
+  <img src="https://img.shields.io/badge/tests-774%20PASS-brightgreen?style=for-the-badge" alt="Tests"/>
   <img src="https://img.shields.io/badge/backends-12%20Real-purple?style=for-the-badge" alt="Backends"/>
   <img src="https://img.shields.io/badge/GUI-Full%20IDE%20(14%20panels)-purple?style=for-the-badge" alt="GUI"/>
   <img src="https://img.shields.io/badge/simulators-6%20Backends-orange?style=for-the-badge" alt="Simulators"/>
@@ -44,6 +44,7 @@
 - **Full transpiler pipeline** — ML-enhanced with RL qubit routing + GNN layout, target-aware decomposition for 10 backends, SABRE routing, ASAP scheduling
 - **Quantum error correction** — Surface/Color/Stabilizer codes, 6 decoders (MWPM, Union-Find, Belief Propagation, GPU-accelerated), magic state distillation, fault-tolerant compiler
 - **7 QKD protocols** — BB84, E91, CV-QKD, DI-QKD, satellite QKD, repeater chains, quantum networks
+- **NMR quantum computer** — pulse-level ensemble QC on real molecule registers (chloroform, trichloroethylene, crotonic acid) with J-coupling gate physics, T2 decoherence, and device layout export
 - **6 domain modules** — Chemistry (VQE, Jordan-Wigner/Bravyi-Kitaev), OSINT (graph→Ising optimization), Cryptanalysis (Shor/Grover), Space (HHL solver), Q-PINN (quantum PDE solvers), Agentic orchestration
 - **AI/ML integration** — MCP protocol for AI agents, LLM copilot (template-matching NL→circuit), PyTorch/JAX/TensorFlow quantum layers
 - **Production infrastructure** — SQLite job queue, 4 scheduling policies, cost estimation, RBAC, audit trail, resource estimation
@@ -263,6 +264,7 @@ Real, reproducible benchmarks on local NumPy simulator (Intel, 64 threads):
 | **Benchpress** | Cross-SDK benchmarking suite with comparison reports |
 | **Distributed Simulation** | MPI-based execution with ProcessPoolExecutor fallback |
 | **Cross-SDK Converters** | Import from Qiskit, Cirq, PennyLane; export to 7 frameworks |
+| **NMR Quantum Computer** | Pulse-level ensemble QC on molecule registers (chloroform, trichloroethylene, crotonic acid): RF pulses, virtual Z, J-coupling evolution, CNOT/CZ/H decompositions, T2 decoherence model, ASCII + HTML device layout export |
 | **VS Code Extension** | Run/optimize/visualize quantum circuits in VS Code |
 
 ### Language Bindings
@@ -543,9 +545,10 @@ Test Files:
   test_hardware.py          80 tests  (calibration, characterization, profiling)
   test_quantum_communication.py  30 tests  (BB84, E91, CV-QKD, DI-QKD)
   test_properties.py         9 tests  (quantum invariants)
+  test_nmr.py               19 tests  (NMR pulse-level simulator)
   test_hybrid_simulator.py   6 tests  (hybrid Clifford/MPS)
   test_novel_contributions.py 5 tests  (novel algorithms)
-  test_readme.py             1 test   (12 code blocks verified)
+  test_readme.py             1 test   (11 code blocks verified)
   test_tutorials.py          1 test   (tutorial validation)
 ```
 
@@ -555,6 +558,7 @@ Test Files:
 
 | Version | Date | Key Additions |
 |---------|------|---------------|
+| **v1.2.5** | 2026-10-23 | **NMR Quantum Computer + Bug Fixes** — New `abirqu.nmr` module: pulse-level simulation on real molecule registers (chloroform, trichloroethylene, crotonic acid),RF pulses with B1-derived durations, virtual Z, J-coupling evolution, verified CZ/CNOT/H decompositions, T2 decoherence model, ASCII + HTML device layout export. 19 tests (755→774). Fixed 9 runtime bugs (cloud manager, QEC decoder/patch, expectations, Transpiler QuantumCircuit API, QIR emission, AccessController shadowing). Lazy sqlite3 imports for Pyodide/WASM. 1160 lint fixes. WASM demo Pyodide packaging fix. |
 | **v1.2.4** | 2026-07-15 | **VQE Fix + GUI Overhaul** — Fixed vqe_uccsd/vqe_hardware_efficient `parameters` kwarg bug. SettingsPanel accent color and font size now apply to CSS variables. Library/Hardware panels show clear fallback when server not ready. Hardware sidebar shows active backend details. Plugins panel merges builtin plugins with backend response. Theme-aware colors across all 20+ components (zero hardcoded `border-white/5`). PythonBridge BufReader fix. All 10 backend actions verified. |
 | **v1.2.2** | 2026-07-13 | **GUI Fully Wired** — All 14 panels use real SDK backend (no mock data). ExplorerPanel filesystem, PluginsPanel real listing, Console job polling, QCommPanel/DomainPanel error states, SecurityPanel key passing, BlochSphere multi-qubit fix, TTN bug fix. |
 | **v1.2.1** | 2026-07-07 | **Core SDK Completion** — TTN Simulator (200+ qubits), Cross-SDK Inbound (Qiskit/Cirq/PennyLane), Job Orchestration (SQLite, 4 schedulers), Auto-differentiation (parameter-shift/adjoint), Dynamical Decoupling (XY4/XY8/CPMG/UDD), Union-Find Decoder, Distributed Simulation (MPI). 75 new tests (627→702). |
