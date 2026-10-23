@@ -2,7 +2,7 @@
   <img src="assets/logo.png" alt="AbirQu Logo" width="320"/>
 </p>
 
-<h1 align="center">AbirQu Quantum SDK v1.2.4</h1>
+<h1 align="center">AbirQu Quantum SDK v1.2.5</h1>
 
 <p align="center">
   <b>Created by Abir Maheshwari</b> &nbsp;|&nbsp; abhirsxn@gmail.com &nbsp;|&nbsp; <a href="https://aqdi.world">aqdi.world</a> &nbsp;|&nbsp; Indian Quantum Mission Support Enabled
