@@ -124,7 +124,7 @@ All modules use **pure NumPy with OpenBLAS DYNAMIC_ARCH** — runs on Intel, AMD
 | **Framework Integration** | Runs on Qiskit/Cirq/D-Wave/OQTOPUS | Qiskit only | Cirq only | Braket only |
 | **Hardware backends** | 12 (IBM verified on real hardware) | 5 (all verified) | 3 (all verified) | 6 (all verified) |
 | **Quantum communication** | 7 protocols | N/A | N/A | N/A |
-| **Fault-tolerant QEC** | Surface/Color/Stabilizer, 5 decoders | Basic | N/A | N/A |
+| **Fault-tolerant QEC** | Surface/Color/Stabilizer, 6 decoders | Basic | N/A | N/A |
 | **Hardware calibration** | Full (T1/T2, RB, tomography, SPAM) | Basic | N/A | N/A |
 | **Domain modules** | 6 (Chemistry, OSINT, Crypto, Space, QPINN, Agentic) | Via plugins | Via plugins | N/A |
 | **Simulation engines** | 6 (GPU, Clifford, MPS, TTN, MonteCarlo, NumPy) | 3 | 2 | N/A |
@@ -271,13 +271,13 @@ Real, reproducible benchmarks on local NumPy simulator (Intel, 64 threads):
 
 | Language | Status | Tests | Notes |
 |----------|--------|-------|-------|
-| **Python** | Complete | 702 | Primary SDK, full feature set |
+| **Python** | Complete | 774 | Primary SDK, full feature set |
 | **JavaScript/TypeScript** | Complete | 30 | Standalone pure-JS, npm publishable |
-| **Go** | Complete | — | cgo bindings to Rust core |
+| **Go** | Complete | 6 | cgo bindings to Rust core |
 | **Java** | Complete | 13 | JNA bindings to Rust core |
 | **.NET** | Complete | 6 | P/Invoke bindings to Rust core |
 | **Swift** | Complete | 4 | CInterop bindings to Rust core |
-| **Kotlin** | Complete | — | JNA bindings to Rust core |
+| **Kotlin** | Complete | 5 | JNA bindings to Rust core |
 | **WebAssembly** | Complete | — | Pyodide-based browser/Node.js runtime |
 
 ---
@@ -540,16 +540,18 @@ CPU:        20 cores | 30.6 GB RAM
 
 Test Files:
   test_gui.py              125 tests  (IDE backend components)
-  test_comprehensive.py     83 tests  (core, backends, noise, chemistry, QEC)
-  test_qec.py               83 tests  (all QEC codes + decoders)
+  test_tutorials.py        205 tests  (one per tutorial, all runnable)
+  test_comprehensive.py     97 tests  (core, backends, noise, chemistry, QEC)
+  test_qec.py               91 tests  (all QEC codes + decoders)
   test_hardware.py          80 tests  (calibration, characterization, profiling)
+  test_v1_2_1.py            76 tests  (v1.2.1 feature additions)
+  test_plugins.py           31 tests  (plugin system + transpiler)
   test_quantum_communication.py  30 tests  (BB84, E91, CV-QKD, DI-QKD)
-  test_properties.py         9 tests  (quantum invariants)
   test_nmr.py               19 tests  (NMR pulse-level simulator)
+  test_properties.py         9 tests  (quantum invariants)
   test_hybrid_simulator.py   6 tests  (hybrid Clifford/MPS)
   test_novel_contributions.py 5 tests  (novel algorithms)
   test_readme.py             1 test   (11 code blocks verified)
-  test_tutorials.py          1 test   (tutorial validation)
 ```
 
 ---
@@ -566,7 +568,7 @@ Test Files:
 | **v1.1.0** | 2026-07-06 | **Production Readiness** — Published on PyPI, CI/CD, Shor's algorithm, Grover fixed, VQE chemical accuracy, IBM hardware verified (ibm_fez), 627 tests |
 | **v1.0.0** | 2026-07-05 | **Full Stack** — Hardware calibration, device characterization, noise profiling, hardware-aware compiler, cloud manager, 412 tests |
 | **v0.8.0** | 2026-07 | **GUI** — Visual circuit editor, Bloch sphere, state vector, histograms, hardware panel, 125 tests |
-| **v0.7.0** | 2026-07 | **QEC** — Stabilizer/Surface/Color codes, 5 decoders, magic state distillation, 83 tests |
+| **v0.7.0** | 2026-07 | **QEC** — Stabilizer/Surface/Color codes, 6 decoders, magic state distillation, 83 tests |
 | **v0.6.0** | 2026-06 | **Q-Comm** — 7 protocols: BB84, E91, CV-QKD, DI-QKD, satellite, repeaters, network, 30 tests |
 | **v0.4.0** | 2026-06 | **Novel** — Noise-Adaptive Compiler, SPAE, Circuit Cutting, Hybrid MPS-Clifford Simulator |
 | **v0.3.0** | 2026-06 | QuantumRun primitives, QNN, 6 domain modules, Unitary Synthesis, Adaptive Error Mitigation |
