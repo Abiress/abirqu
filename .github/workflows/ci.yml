@@ -40,6 +40,7 @@ jobs:
 
     - name: Verify PyPI build
       run: |
+        python -m pip install --quiet build twine
         python -m build
         twine check dist/*
 
