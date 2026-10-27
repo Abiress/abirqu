@@ -218,32 +218,81 @@ def _trial_division(n: int) -> List[int]:
 	return factors
 
 
+def _controlled_modmult_gate(
+	control_qubit: int,
+	target_start: int,
+	target_qubits: int,
+	multiplier: int,
+	N: int,
+) -> Optional[Gate]:
+	"""Build a gate for |c⟩|y⟩ → |c⟩|y·m mod N⟩ (controlled modular multiply).
+
+	Matrix subspace convention (matches
+	``NumPySimulator._apply_custom_unitary``): matrix bit ``j`` = the
+	``j``-th qubit of the gate's qubit list.  Bit 0 is the control, bits
+	``1..target_qubits`` hold the target-register value ``y`` (LSB first,
+	i.e. target qubit ``target_start + k`` carries bit ``k`` of ``y``).
+
+	Returns ``None`` when the gate is the identity (nothing to append).
+	"""
+	dim = 2 ** (target_qubits + 1)
+	U = np.zeros((dim, dim), dtype=np.complex128)
+	m = multiplier % N
+	for idx_in in range(dim):
+		c = idx_in & 1
+		y = idx_in >> 1
+		if c == 1 and y < N and m != 1:
+			y_out = (y * m) % N
+		else:
+			y_out = y
+		U[(y_out << 1) | c, idx_in] = 1.0
+
+	if np.array_equal(U, np.eye(dim)):
+		return None
+
+	return Gate(
+		"C_MOD_MULT",
+		[control_qubit] + list(range(target_start, target_start + target_qubits)),
+		U,
+		[multiplier, N],
+	)
+
+
 def _build_controlled_modexp_unitary(
 	counting_qubits: int,
 	target_qubits: int,
 	a: int,
 	N: int,
 ) -> np.ndarray:
-	"""Build the unitary matrix for controlled modular exponentiation.
+	"""Dense unitary for |x⟩|y⟩ → |x⟩|y·a^x mod N⟩.
 
-	Creates the matrix for |x⟩|y⟩ → |x⟩|y·a^x mod N⟩ where x is the
-	counting register and y is the target register.
+	Register layout matches the circuit built by :func:`shor_factorization`:
+	the counting register occupies qubits ``0..counting-1`` (the low bits of
+	the state index) and the target register occupies qubits
+	``counting..counting+target-1`` (the high bits), so a basis index is
+	``idx = y·2^counting + x``.
+
+	Note: shor_factorization itself uses :func:`_controlled_modmult_gate`
+	(factored into one small gate per counting qubit) instead of this
+	``2^total`` dense matrix, which is intractable beyond ~12 total qubits.
 	"""
 	total = counting_qubits + target_qubits
 	dim = 2 ** total
+	if dim > 2 ** 15:
+		raise ValueError(
+			"dense controlled-modexp unitary needs 2^%d memory; use the "
+			"factored _controlled_modmult_gate representation instead" % total
+		)
+
 	U = np.zeros((dim, dim), dtype=np.complex128)
 
 	for x in range(2 ** counting_qubits):
 		power = pow(a, x, N)
 		for y in range(2 ** target_qubits):
-			# Compute input state index
-			input_idx = x * (2 ** target_qubits) + y
+			input_idx = (y << counting_qubits) | x
 			if y < N:
-				# Valid target: map to y * power mod N
-				result = (y * power) % N
-				output_idx = x * (2 ** target_qubits) + result
+				output_idx = (((y * power) % N) << counting_qubits) | x
 			else:
-				# Invalid target (>= N): leave unchanged
 				output_idx = input_idx
 			U[output_idx, input_idx] = 1.0
 
@@ -260,15 +309,21 @@ def shor_factorization(
 
 	Builds a proper order-finding circuit with:
 	  - Hadamard gates on the counting register
-	  - Controlled modular exponentiation (a^x mod N)
+	  - Controlled modular exponentiation (a^x mod N), factored into one
+	    small controlled-multiply gate per counting qubit (2^(1+target)
+	    dimension each, so the register sizes stay tractable)
 	  - Inverse QFT on the counting register
 	  - Measurement of the counting register
 
 	Then extracts the period via continued fractions and computes factors.
+	Order finding is probabilistic: when an attempt is inconclusive (r odd
+	or a^(r/2) = -1 mod N), it retries with a fresh random base (up to 8
+	attempts).
 
 	Args:
 		num_to_factor: The integer N to factor (must be > 1, odd, not a perfect power).
-		num_qubits: Total qubits. Auto-calculated if None (counts + target).
+		num_qubits: Kept for API compatibility; the circuit size is chosen
+			from N (counting + target registers).
 		backend: Backend name for circuit execution.
 		shots: Number of measurement shots.
 
@@ -340,99 +395,111 @@ def shor_factorization(
 			"algorithm": "shor-classical-fallback",
 		}
 
-	# Pick a random a coprime to N
-	while True:
-		a = random.randint(2, N - 1)
-		if math.gcd(a, N) == 1:
+	# A single order-finding attempt can be inconclusive (r odd, or
+	# a^(r/2) = -1 mod N); retry with a fresh random base until factors
+	# are recovered or attempts are exhausted.
+	best_result = None
+	for _attempt in range(8):
+		while True:
+			a = random.randint(2, N - 1)
+			if math.gcd(a, N) == 1:
+				break
+
+		# If gcd(a, N) > 1, we got lucky
+		g = math.gcd(a, N)
+		if g > 1:
+			return Circuit(1, name=f"shor_{N}"), {
+				"num_to_factor": N,
+				"factors": [g, N // g],
+				"success": True,
+				"a": a,
+				"period": None,
+				"counts": {},
+				"algorithm": "shor-quantum",
+			}
+
+		total_qubits = counting_qubits + target_qubits
+		circuit = Circuit(total_qubits, name=f"shor_{N}")
+
+		# Initialize target register to |1⟩
+		circuit.x(counting_qubits)
+
+		# Hadamard on counting register to create superposition of all x
+		for q in range(counting_qubits):
+			circuit.h(q)
+
+		# Controlled modular exponentiation: |x⟩|y⟩ → |x⟩|y·a^x mod N⟩
+		# Factored into one small controlled-multiply gate per counting qubit:
+		# |y⟩ → |y·(a^{2^j} mod N)⟩ controlled on counting qubit j. Composing
+		# them reproduces the full modular exponentiation while keeping every
+		# individual gate at 2^(1+target_qubits) dimension.
+		for j in range(counting_qubits):
+			p_j = pow(a, 1 << j, N)
+			gate = _controlled_modmult_gate(j, counting_qubits, target_qubits, p_j, N)
+			if gate is not None:
+				circuit.gates.append(gate)
+
+		# Inverse QFT on counting register
+		for i in range(counting_qubits - 1, -1, -1):
+			for j in range(i + 1, counting_qubits):
+				angle = -math.pi / (2 ** (j - i))
+				circuit.cnot(j, i)
+				circuit.rz(i, angle)
+				circuit.cnot(j, i)
+			circuit.h(i)
+
+		# Measure counting register
+		for q in range(counting_qubits):
+			circuit.measure(q, q)
+
+		# Run the circuit
+		result = circuit.run(shots=shots, backend=None)
+		counts = result.get("counts", {})
+
+		# Extract counting register bits from measurement results
+		counting_counts: Dict[str, int] = {}
+		for bitstring, count in counts.items():
+			if len(bitstring) >= counting_qubits:
+				counting_part = bitstring[-counting_qubits:]
+			else:
+				counting_part = bitstring.zfill(counting_qubits)[-counting_qubits:]
+			counting_counts[counting_part] = counting_counts.get(counting_part, 0) + count
+
+		# Find period from measurements
+		period = _find_period_from_measurements(counting_counts, counting_qubits, N)
+
+		# Extract factors from period
+		factors: List[int] = []
+		if period is not None and period % 2 == 0:
+			x = pow(a, period // 2, N)
+			if x != N - 1:
+				f1 = math.gcd(x + 1, N)
+				f2 = math.gcd(x - 1, N)
+				if 1 < f1 < N:
+					factors.append(f1)
+				if 1 < f2 < N:
+					factors.append(f2)
+				if not factors:
+					for f in (f1, f2):
+						if f > 1:
+							for p in _trial_division(f):
+								if p not in factors and p < N:
+									factors.append(p)
+
+		best_result = (circuit, {
+			"num_to_factor": N,
+			"factors": factors,
+			"success": len(factors) >= 1 and all(N % f == 0 for f in factors),
+			"a": a,
+			"period": period,
+			"counts": counting_counts,
+			"algorithm": "shor-quantum",
+		})
+
+		if best_result[1]["success"]:
 			break
 
-	# If gcd(a, N) > 1, we got lucky
-	g = math.gcd(a, N)
-	if g > 1:
-		return Circuit(1, name=f"shor_{N}"), {
-			"num_to_factor": N,
-			"factors": [g, N // g],
-			"success": True,
-			"a": a,
-			"period": None,
-			"counts": {},
-			"algorithm": "shor-quantum",
-		}
-
-	total_qubits = counting_qubits + target_qubits
-	circuit = Circuit(total_qubits, name=f"shor_{N}")
-
-	# Initialize target register to |1⟩
-	circuit.x(counting_qubits)
-
-	# Hadamard on counting register to create superposition of all x
-	for q in range(counting_qubits):
-		circuit.h(q)
-
-	# Controlled modular exponentiation: |x⟩|y⟩ → |x⟩|y·a^x mod N⟩
-	# Build the unitary and apply it as a custom gate
-	modexp_unitary = _build_controlled_modexp_unitary(counting_qubits, target_qubits, a, N)
-	# Add as a custom gate
-	circuit.gates.append(
-		Gate("C_MOD_EXP", list(range(total_qubits)), modexp_unitary, [a, N])
-	)
-
-	# Inverse QFT on counting register
-	for i in range(counting_qubits - 1, -1, -1):
-		for j in range(i + 1, counting_qubits):
-			angle = -math.pi / (2 ** (j - i))
-			circuit.cnot(j, i)
-			circuit.rz(i, angle)
-			circuit.cnot(j, i)
-		circuit.h(i)
-
-	# Measure counting register
-	for q in range(counting_qubits):
-		circuit.measure(q, q)
-
-	# Run the circuit
-	result = circuit.run(shots=shots, backend=None)
-	counts = result.get("counts", {})
-
-	# Extract counting register bits from measurement results
-	counting_counts: Dict[str, int] = {}
-	for bitstring, count in counts.items():
-		if len(bitstring) >= counting_qubits:
-			counting_part = bitstring[-counting_qubits:]
-		else:
-			counting_part = bitstring.zfill(counting_qubits)[-counting_qubits:]
-		counting_counts[counting_part] = counting_counts.get(counting_part, 0) + count
-
-	# Find period from measurements
-	period = _find_period_from_measurements(counting_counts, counting_qubits, N)
-
-	# Extract factors from period
-	factors: List[int] = []
-	if period is not None and period % 2 == 0:
-		x = pow(a, period // 2, N)
-		if x != N - 1:
-			f1 = math.gcd(x + 1, N)
-			f2 = math.gcd(x - 1, N)
-			if 1 < f1 < N:
-				factors.append(f1)
-			if 1 < f2 < N:
-				factors.append(f2)
-			if not factors:
-				for f in (f1, f2):
-					if f > 1:
-						for p in _trial_division(f):
-							if p not in factors and p < N:
-								factors.append(p)
-
-	return circuit, {
-		"num_to_factor": N,
-		"factors": factors,
-		"success": len(factors) >= 1 and all(N % f == 0 for f in factors),
-		"a": a,
-		"period": period,
-		"counts": counting_counts,
-		"algorithm": "shor-quantum",
-	}
+	return best_result
 
 
 def amplitude_estimation(

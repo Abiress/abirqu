@@ -149,9 +149,11 @@ class TestInboundConverters:
 
     def test_from_qiskit_type_error(self):
         try:
-            from abirqu.converters_inbound import from_qiskit
+            import qiskit.circuit  # noqa: F401
         except ImportError:
             pytest.skip("Qiskit not installed")
+
+        from abirqu.converters_inbound import from_qiskit
 
         with pytest.raises(TypeError):
             from_qiskit("not a circuit")

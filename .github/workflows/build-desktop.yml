@@ -136,6 +136,9 @@ jobs:
     needs: build-desktop
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
+    # softprops/action-gh-release needs write access to publish the release
+    permissions:
+      contents: write
 
     steps:
     - uses: actions/checkout@v4

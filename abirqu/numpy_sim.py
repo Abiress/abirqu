@@ -225,37 +225,41 @@ class NumPySimulator:
         return self.state.copy()
 
     def _apply_custom_unitary(self, matrix: np.ndarray, qubits: list):
-        """Apply an arbitrary unitary matrix to specified qubits."""
+        """Apply an arbitrary unitary matrix to specified qubits.
+
+        Vectorised implementation: the gate acts on the subspace spanned
+        by ``qubits`` (subspace bit ``j`` = state qubit ``qubits[j]``);
+        the state tensor is permuted so those axes are leading, then the
+        matrix is applied as one batched matmul.
+        """
         n_qubits = len(qubits)
         dim = 2 ** n_qubits
 
         if matrix.shape != (dim, dim):
             raise ValueError(f"Unitary matrix shape {matrix.shape} doesn't match {n_qubits} qubits")
 
-        # Create the full state vector permutation for these qubits
-        # We need to apply the matrix to the subspace defined by these qubits
-        new_state = np.zeros_like(self.state)
+        n = self.n
+        if n_qubits == n and list(qubits) == list(range(n)):
+            # Gate covers the whole register: single dense matmul
+            self.state = matrix @ self.state
+            return
 
-        # Iterate over all basis states
-        for i in range(2 ** self.n):
-            # Extract the bits for the target qubits
-            subspace_idx = 0
-            for j, q in enumerate(qubits):
-                if (i >> q) & 1:
-                    subspace_idx |= (1 << j)
+        tensor = self.state.reshape((2,) * n)
+        # qubit q corresponds to tensor axis n - 1 - q (qubit q = index bit q);
+        # after moveaxis, moved axis j = matrix bit j (subspace LSB-first).
+        axes = [n - 1 - q for q in qubits]
+        moved = np.moveaxis(tensor, axes, list(range(n_qubits)))
 
-            # Apply the unitary to this component
-            for k in range(dim):
-                if abs(matrix[k, subspace_idx]) > 1e-15:
-                    # Compute the output state index
-                    output_idx = i
-                    # Clear the target qubit bits
-                    for j, q in enumerate(qubits):
-                        output_idx &= ~(1 << q)
-                    # Set the new bits from the matrix output
-                    for j, q in enumerate(qubits):
-                        if (k >> j) & 1:
-                            output_idx |= (1 << q)
-                    new_state[output_idx] += matrix[k, subspace_idx] * self.state[i]
+        k = n_qubits
+        rest = moved.shape[k:]
+        # Row-major flatten is MSB-first over the leading axes, so reverse
+        # them once to make the row index match the matrix convention
+        # (row bit p = matrix bit p).
+        rev = list(range(k - 1, -1, -1))
+        perm = rev + list(range(k, k + len(rest)))
+        sub = moved.reshape((2,) * k + rest).transpose(perm)
+        flat = sub.reshape(dim, -1)
+        out = matrix @ flat
 
-        self.state = new_state
+        # Write back with the same reversal so axis j again holds matrix bit j
+        moved[:] = out.reshape((2,) * k + rest).transpose(perm)
