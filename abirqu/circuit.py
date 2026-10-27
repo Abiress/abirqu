@@ -207,6 +207,21 @@ class Circuit:
     def rz(self, qubit: int, theta: float) -> 'Circuit':
         return self.add_gate('RZ', qubit, [theta])
 
+    def cry(self, control: int, target: int, theta: float) -> 'Circuit':
+        """Controlled RY rotation.
+
+        Decomposed into the standard two-CNOT form which any simulator
+        that supports RY and CNOT can execute:
+
+            CRY(θ) = RY(θ/2)_t · CNOT · RY(-θ/2)_t · CNOT
+        """
+        return (
+            self.ry(target, theta / 2.0)
+            .cnot(control, target)
+            .ry(target, -theta / 2.0)
+            .cnot(control, target)
+        )
+
     def cnot(self, control: int, target: int) -> 'Circuit':
         return self.add_gate('CNOT', [control, target])
 

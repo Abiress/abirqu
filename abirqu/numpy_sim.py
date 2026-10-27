@@ -15,6 +15,39 @@ _S = np.array([[1, 0], [0, 1j]], dtype=np.complex128)
 _T = np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=np.complex128)
 
 
+def counts_from_probabilities(probs: Dict[str, float], shots: int, seed=None) -> Dict[str, int]:
+    """Sample measurement counts from state probabilities.
+
+    Args:
+        probs: Mapping of bitstring -> probability (as returned by
+            ``NumPySimulator.run_circuit``).  Unnormalised or zero vectors
+            are handled gracefully.
+        shots: Number of measurement shots.
+        seed: Optional seed for reproducible sampling.
+
+    Returns:
+        Mapping of bitstring -> number of times measured.
+    """
+    states = list(probs.keys())
+    if not states:
+        return {}
+
+    rng = np.random.default_rng(seed)
+    p = np.array([probs[k] for k in states], dtype=float)
+    total = p.sum()
+    if total <= 0.0:
+        p = np.full(len(states), 1.0 / len(states))
+    else:
+        p = p / total
+
+    draws = rng.choice(len(states), size=int(shots), p=p)
+    counts: Dict[str, int] = {}
+    for d in draws:
+        bitstring = states[int(d)]
+        counts[bitstring] = counts.get(bitstring, 0) + 1
+    return counts
+
+
 class NumPySimulator:
     """
     Pure-Python/NumPy state-vector simulator.

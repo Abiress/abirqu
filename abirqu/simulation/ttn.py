@@ -336,9 +336,11 @@ class TTNSimulator:
 
     def _run_statevector(self, circuit: Circuit, shots: int) -> Dict[str, int]:
         """Use statevector simulation for small circuits."""
-        from . import MonteCarloWavefunctionSimulator
-        sim = MonteCarloWavefunctionSimulator()
-        return sim.run_circuit(circuit, shots=shots)
+        from ..numpy_sim import NumPySimulator, counts_from_probabilities
+
+        sim = NumPySimulator(num_qubits=circuit.num_qubits)
+        probs = sim.run_circuit(circuit)
+        return counts_from_probabilities(probs, shots)
 
     def _run_ttn(self, circuit: Circuit, shots: int) -> Dict[str, int]:
         """Use TTN for larger circuits."""

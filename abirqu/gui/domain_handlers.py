@@ -568,6 +568,10 @@ def handle_circuit_encrypt(params: Dict[str, Any]) -> Dict[str, Any]:
     """
     params:
       circuit_data: dict with num_qubits and gates
+
+    Generates a Kyber-768 key pair, encrypts the circuit with
+    Kyber-encapsulated AES-256-GCM, and returns the full roundtrip
+    material so ``handle_circuit_decrypt`` can restore the circuit.
     """
     from abirqu.circuit import Circuit
     from abirqu.security import CircuitProtector
@@ -579,45 +583,54 @@ def handle_circuit_encrypt(params: Dict[str, Any]) -> Dict[str, Any]:
     circ = Circuit(num_qubits)
     for gate in gates:
         if isinstance(gate, dict):
-            circ.add_gate(gate.get("name", ""), gate.get("qubits", []), gate.get("params"))
+            name = str(gate.get("name", "")).strip().upper()
+            if not name:
+                continue
+            params = gate.get("params") or []
+            try:
+                circ.add_gate(name, gate.get("qubits", []), params if params else None)
+            except (ValueError, TypeError, KeyError):
+                continue  # skip unconvertible gate entries
 
     protector = CircuitProtector()
-    encrypted = protector.encrypt_circuit(circ)
+    key_pair = protector.generate_keys()
+    encrypted = protector.encrypt_circuit(circ, key_pair.public_key)
 
     return _to_jsonable({
-        "ciphertext": encrypted.ciphertext[:64] + "...",
-        "nonce": encrypted.nonce,
-        "digest": encrypted.digest,
-        "algorithm": encrypted.algorithm,
+        "ciphertext": encrypted["ciphertext"].hex(),
+        "nonce": encrypted["iv"].hex(),
+        "digest": encrypted["encapsulation"].hex(),
+        "algorithm": encrypted["algorithm"],
         "key_id": "ak-" + np.random.bytes(16).hex(),
-        "key": protector._secret_key.hex() if hasattr(protector, '_secret_key') else "",
+        "key": key_pair.secret_key.hex(),
     })
 
 
 def handle_circuit_decrypt(params: Dict[str, Any]) -> Dict[str, Any]:
     """
-    params:
-      ciphertext: str
-      nonce: str
-      digest: str
-      key: str (hex-encoded secret key)
+    params (all returned by ``handle_circuit_encrypt``):
+      ciphertext: hex    — AES-256-GCM encrypted circuit payload
+      nonce: hex         — AES-GCM initialisation vector
+      digest: hex        — Kyber encapsulation ciphertext
+      key: hex           — Kyber secret key for decapsulation
     """
-    from abirqu.security import CircuitProtector, EncryptedCircuit
+    from abirqu.security import CircuitProtector
 
     key_hex = params.get("key", "")
     if not key_hex:
         return {"status": "error", "error": "No decryption key provided"}
 
     try:
-        key = bytes.fromhex(key_hex)
-        protector = CircuitProtector(secret_key=key)
+        protector = CircuitProtector()
 
-        payload = EncryptedCircuit(
-            ciphertext=params.get("ciphertext", ""),
-            nonce=params.get("nonce", ""),
-            digest=params.get("digest", ""),
+        encrypted = {
+            "ciphertext": bytes.fromhex(params.get("ciphertext", "")),
+            "iv": bytes.fromhex(params.get("nonce", "")),
+            "encapsulation": bytes.fromhex(params.get("digest", "")),
+        }
+        decrypted = protector.decrypt_circuit(
+            encrypted, secret_key=bytes.fromhex(key_hex)
         )
-        decrypted = protector.decrypt_circuit(payload)
         return _to_jsonable({
             "success": True,
             "num_qubits": decrypted.num_qubits,

@@ -55,6 +55,8 @@ export default function SecurityPanel() {
   const [encryptedOutput, setEncryptedOutput] = useState<string | null>(null);
   const [decryptResult, setDecryptResult] = useState<string | null>(null);
   const [encKey, setEncKey] = useState<string>('');
+  const [encNonce, setEncNonce] = useState<string>('');
+  const [encDigest, setEncDigest] = useState<string>('');
   const [encMetadata, setEncMetadata] = useState<{
     algorithm: string;
     keyId: string;
@@ -142,14 +144,18 @@ export default function SecurityPanel() {
       });
       setEncryptedOutput(resp.ciphertext);
       setEncKey(resp.key || '');
+      setEncNonce(resp.nonce || '');
+      setEncDigest(resp.digest || '');
       setEncMetadata({
         algorithm: resp.algorithm,
         keyId: resp.key_id,
         timestamp: new Date().toISOString(),
       });
     } catch {
-      setEncryptedOutput(generateHex(256));
+      setEncryptedOutput(null);
       setEncKey('');
+      setEncNonce('');
+      setEncDigest('');
       setEncMetadata({
         algorithm: 'AES-256-GCM + Kyber-768',
         keyId: 'ak-' + generateHex(16),
@@ -165,8 +171,8 @@ export default function SecurityPanel() {
     try {
       const resp = await runCircuitDecrypt({
         ciphertext: encryptedOutput || '',
-        nonce: encMetadata?.keyId || '',
-        digest: '',
+        nonce: encNonce,
+        digest: encDigest,
         key: encKey,
       });
       if (resp.success) {
@@ -177,7 +183,7 @@ export default function SecurityPanel() {
     } catch {
       setDecryptResult(circuitInput);
     }
-  }, [encryptedOutput, encMetadata, encKey, circuitInput]);
+  }, [encryptedOutput, encNonce, encDigest, encKey, circuitInput]);
 
   const tabs: { key: SecurityTab; label: string; icon: string }[] = [
     { key: 'keygen', label: 'Key Generation', icon: '🔑' },

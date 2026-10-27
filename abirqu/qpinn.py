@@ -129,6 +129,30 @@ class QPINN:
         self.parameters: Optional[np.ndarray] = None
         self.loss_history: List[float] = []
 
+        # Precomputed gate layout for the vectorised forward pass
+        # (structure is fixed; only angles change between evaluations).
+        self._gate_plan = self._build_gate_plan()
+
+    def _build_gate_plan(self) -> List[Tuple]:
+        """Precompute the ansatz topology: (kind, qubit(s), param_index or None).
+
+        Produces the same gate sequence as :meth:`_build_ansatz_circuit`
+        without constructing Circuit objects on every evaluation.
+        """
+        plan: List[Tuple] = []
+        for i in range(min(2, self.n_qubits)):
+            plan.append(("ENCODE_RY", i, None))
+        param_idx = 0
+        for _layer in range(self.circuit_depth):
+            for q in range(self.n_qubits):
+                for axis in ("RX", "RY", "RZ"):
+                    if param_idx < self.n_parameters:
+                        plan.append((axis, q, param_idx))
+                        param_idx += 1
+            for q in range(self.n_qubits - 1):
+                plan.append(("CNOT", (q, q + 1), None))
+        return plan
+
     def _build_ansatz_circuit(
         self,
         parameters: np.ndarray,
@@ -194,14 +218,112 @@ class QPINN:
         Returns:
             Function value u(x, t)
         """
-        # Build circuit
-        circ = self._build_ansatz_circuit(parameters, inputs)
+        pts = np.atleast_2d(np.asarray(inputs, dtype=float))
+        return float(self._forward_batch(parameters, pts)[0])
 
-        # Simulate the circuit to get expectation value
-        # <Z_0> as the function output
-        expectation = self._simulate_expectation(circ)
+    def _forward_batch(
+        self,
+        parameters: np.ndarray,
+        inputs: np.ndarray,
+    ) -> np.ndarray:
+        """Batched vectorised forward pass over the precomputed gate plan.
 
-        return float(expectation)
+        Simulates ``inputs.shape[0]`` ansatz circuits for the same
+        parameter vector in one numpy pass.  Numerically identical to
+        building each Circuit and running :meth:`_simulate_expectation`,
+        but orders of magnitude faster for the training loop, which
+        evaluates the loss at hundreds of points per step.
+        """
+        inputs = np.atleast_2d(np.asarray(inputs, dtype=float))
+        n = self.n_qubits
+        dim = 1 << n
+        n_pts = inputs.shape[0]
+
+        state = np.zeros((n_pts, dim), dtype=complex)
+        state[:, 0] = 1.0
+
+        for kind, qubit, param_idx in self._gate_plan:
+            if kind == "CNOT":
+                self._apply_cnot_cols(state, qubit[0], qubit[1], dim)
+            elif kind == "ENCODE_RY":
+                if qubit < inputs.shape[1]:
+                    self._encode_ry_batch(state, qubit, inputs[:, qubit] * np.pi, n)
+            elif param_idx < len(parameters):
+                theta = parameters[param_idx]
+                if kind == "RY":
+                    self._apply_1q_cols(state, qubit, self._ry_mat(theta), n)
+                elif kind == "RX":
+                    self._apply_1q_cols(state, qubit, self._rx_mat(theta), n)
+                elif kind == "RZ":
+                    self._apply_rz_cols(state, qubit, theta, dim)
+
+        probs = np.abs(state) ** 2
+        idx = np.arange(dim)
+        even = probs[:, idx & 1 == 0].sum(axis=1)
+        odd = probs[:, idx & 1 == 1].sum(axis=1)
+        return even - odd
+
+    @staticmethod
+    def _ry_mat(theta: float) -> np.ndarray:
+        c, s = np.cos(theta / 2), np.sin(theta / 2)
+        return np.array([[c, -s], [s, c]], dtype=complex)
+
+    @staticmethod
+    def _rx_mat(theta: float) -> np.ndarray:
+        c, s = np.cos(theta / 2), -1j * np.sin(theta / 2)
+        return np.array([[c, s], [s, c]], dtype=complex)
+
+    @staticmethod
+    def _apply_1q_cols(state: np.ndarray, qubit: int, mat: np.ndarray, n: int) -> None:
+        """Apply a fixed 2x2 matrix to one qubit across the batch (in place).
+
+        ``state`` has shape (n_points, 2 ** n); it is reshaped to
+        (n_points, 2, ..., 2) where axis 1 + (n - 1 - qubit) holds the
+        two amplitudes of the qubit pair.
+        """
+        ax = 1 + (n - 1 - qubit)
+        M = state.reshape((state.shape[0],) + (2,) * n)
+        t = np.moveaxis(M, ax, 1)
+        top = t[:, 0, :].copy()
+        bot = t[:, 1, :]
+        t[:, 0, :] = mat[0, 0] * top + mat[0, 1] * bot
+        t[:, 1, :] = mat[1, 0] * top + mat[1, 1] * bot
+
+    @staticmethod
+    def _encode_ry_batch(
+        state: np.ndarray, qubit: int, angles: np.ndarray, n: int
+    ) -> None:
+        """Apply per-point RY(input_encoding) across the batch (in place)."""
+        ax = 1 + (n - 1 - qubit)
+        M = state.reshape((state.shape[0],) + (2,) * n)
+        t = np.moveaxis(M, ax, 1)
+        top = t[:, 0, :].copy()
+        bot = t[:, 1, :]
+        tail = (None,) * (bot.ndim - 1)
+        c = np.cos(angles / 2)[..., *tail]
+        s = np.sin(angles / 2)[..., *tail]
+        t[:, 0, :] = c * top - s * bot
+        t[:, 1, :] = s * top + c * bot
+
+    @staticmethod
+    def _apply_rz_cols(state: np.ndarray, qubit: int, theta: float, dim: int) -> None:
+        idx = np.arange(dim)
+        bit = (idx >> qubit) & 1
+        phase = np.where(bit == 0, np.exp(-1j * theta / 2), np.exp(1j * theta / 2))
+        state *= phase[None, :]
+
+    @staticmethod
+    def _apply_cnot_cols(
+        state: np.ndarray, control: int, target: int, dim: int
+    ) -> None:
+        idx = np.arange(dim)
+        flipped = idx ^ (1 << target)
+        mask = (((idx >> control) & 1) == 1) & (idx < flipped)
+        src = idx[mask]
+        dst = flipped[mask]
+        tmp = state[:, src].copy()
+        state[:, src] = state[:, dst]
+        state[:, dst] = tmp
 
     def _simulate_expectation(self, circ: Circuit) -> float:
         """
@@ -292,8 +414,7 @@ class QPINN:
             for j in range(i, i + step):
                 if (j >> qubit) & 1 == 0:
                     state[j] *= np.exp(-1j * theta / 2)
-                else:
-                    state[j] *= np.exp(1j * theta / 2)
+                    state[j + step] *= np.exp(1j * theta / 2)
 
     def _apply_cnot(self, state: np.ndarray, control: int, target: int, n_qubits: int):
         """Apply CNOT gate."""
@@ -358,28 +479,37 @@ class QPINN:
         L_pde: PDE residual loss at collocation points
         L_bc: Boundary condition loss
         L_ic: Initial condition loss
+
+        All ansatz evaluations are batched into single simulation passes
+        (one per shifted point set) instead of one circuit per point.
         """
-        # PDE residual loss
-        pde_loss = 0.0
-        for pt in collocation_points:
-            residual = self.pde_residual(parameters, pt[0], pt[1])
-            pde_loss += residual ** 2
-        pde_loss /= len(collocation_points)
+        h = 1e-5
+        viscosity = 0.01  # diffusion coefficient used by :meth:`pde_residual`
+
+        # PDE residual loss (finite-difference derivatives)
+        base = self._forward_batch(parameters, collocation_points)
+        u_t_plus = self._forward_batch(parameters, collocation_points + np.array([0.0, h]))
+        u_x_plus = self._forward_batch(parameters, collocation_points + np.array([h, 0.0]))
+        u_x_minus = self._forward_batch(parameters, collocation_points + np.array([-h, 0.0]))
+
+        u_t = (u_t_plus - base) / h
+        u_xx = (u_x_plus - 2 * base + u_x_minus) / (h ** 2)
+        residual = u_t - viscosity * u_xx
+        pde_loss = float(np.mean(residual ** 2))
 
         # Boundary condition loss (Dirichlet: u = 0 at boundaries)
-        bc_loss = 0.0
-        for pt in boundary_points:
-            u_val = self.forward(parameters, pt)
-            bc_loss += u_val ** 2  # u = 0 at boundaries
-        bc_loss /= max(len(boundary_points), 1)
+        # u = 0 at boundaries
+        u_bc = self._forward_batch(parameters, boundary_points)
+        bc_loss = float(np.mean(u_bc ** 2)) if len(boundary_points) else 0.0
 
         # Initial condition loss
-        ic_loss = 0.0
-        for i, pt in enumerate(initial_points):
-            u_val = self.forward(parameters, pt)
-            target = initial_values[i] if i < len(initial_values) else 0.0
-            ic_loss += (u_val - target) ** 2
-        ic_loss /= max(len(initial_points), 1)
+        u_ic = self._forward_batch(parameters, initial_points)
+        target = np.asarray(initial_values, dtype=float)
+        if target.shape[0] < u_ic.shape[0]:
+            target = np.concatenate(
+                [target, np.zeros(u_ic.shape[0] - target.shape[0])]
+            )
+        ic_loss = float(np.mean((u_ic - target) ** 2)) if len(initial_points) else 0.0
 
         total_loss = (
             self.config.weight_pde * pde_loss +
@@ -453,11 +583,9 @@ class QPINN:
         if self.parameters is None:
             raise ValueError("Model not trained. Call train() first.")
 
-        results = np.zeros(len(x))
-        for i, xi in enumerate(x):
-            results[i] = self.forward(self.parameters, np.array([xi, t]))
-
-        return results
+        x = np.asarray(x, dtype=float)
+        points = np.column_stack([x, np.full(len(x), t)])
+        return self._forward_batch(self.parameters, points)
 
     def _generate_collocation_points(self) -> np.ndarray:
         """Generate random collocation points in the domain."""

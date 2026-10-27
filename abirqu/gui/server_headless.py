@@ -5,6 +5,7 @@ Copyright 2026 Abir Maheshwari
 Reads JSON requests from stdin, writes JSON responses to stdout.
 Used by the Tauri GUI as a subprocess backend.
 """
+import dataclasses
 import json
 import os
 import sys
@@ -186,10 +187,11 @@ def _handle_run_qiskit(circuit_data: dict, shots: int):
             counts = job.result().get_counts()
             return {"status": "ok", "data": {"counts": counts, "backend": "qiskit_aer", "framework": "qiskit"}}
         except ImportError:
-            from abirqu.numpy_sim import NumPySimulator
-            sim = NumPySimulator()
-            result = sim.run_circuit(c, shots=shots)
-            return {"status": "ok", "data": {**result, "backend": "abirqu_numpy", "framework": "qiskit_fallback"}}
+            from abirqu.numpy_sim import NumPySimulator, counts_from_probabilities
+            sim = NumPySimulator(num_qubits=c.num_qubits)
+            probs = sim.run_circuit(c)
+            counts = counts_from_probabilities(probs, shots)
+            return {"status": "ok", "data": {"counts": counts, "backend": "abirqu_numpy", "framework": "qiskit_fallback"}}
     except Exception as e:
         return {"status": "error", "error": f"Qiskit error: {e}"}
 
@@ -230,10 +232,11 @@ def _handle_run_cirq(circuit_data: dict, shots: int):
                     counts[state] = counts.get(state, 0) + 1
             return {"status": "ok", "data": {"counts": counts, "backend": "cirq_simulator", "framework": "cirq"}}
         except ImportError:
-            from abirqu.numpy_sim import NumPySimulator
-            sim = NumPySimulator()
-            result = sim.run_circuit(c, shots=shots)
-            return {"status": "ok", "data": {**result, "backend": "abirqu_numpy", "framework": "cirq_fallback"}}
+            from abirqu.numpy_sim import NumPySimulator, counts_from_probabilities
+            sim = NumPySimulator(num_qubits=c.num_qubits)
+            probs = sim.run_circuit(c)
+            counts = counts_from_probabilities(probs, shots)
+            return {"status": "ok", "data": {"counts": counts, "backend": "abirqu_numpy", "framework": "cirq_fallback"}}
     except Exception as e:
         return {"status": "error", "error": f"Cirq error: {e}"}
 
@@ -249,10 +252,11 @@ def _handle_run_oqtopus(circuit_data: dict, shots: int):
             result = oq.execute(qasm, shots=shots)
             return {"status": "ok", "data": {"counts": result.get("counts", {}), "backend": "oqtopus_cloud", "framework": "oqtopus"}}
         except (ImportError, Exception):
-            from abirqu.numpy_sim import NumPySimulator
-            sim = NumPySimulator()
-            result = sim.run_circuit(c, shots=shots)
-            return {"status": "ok", "data": {**result, "backend": "abirqu_numpy", "framework": "oqtopus_fallback"}}
+            from abirqu.numpy_sim import NumPySimulator, counts_from_probabilities
+            sim = NumPySimulator(num_qubits=c.num_qubits)
+            probs = sim.run_circuit(c)
+            counts = counts_from_probabilities(probs, shots)
+            return {"status": "ok", "data": {"counts": counts, "backend": "abirqu_numpy", "framework": "oqtopus_fallback"}}
     except Exception as e:
         return {"status": "error", "error": f"OQTOPUS error: {e}"}
 
@@ -653,6 +657,7 @@ def _handle_run_qpinn(params: dict):
         n_qubits = params.get("n_qubits", 4)
         circuit_depth = params.get("circuit_depth", 3)
         n_epochs = params.get("n_epochs", 50)
+        n_collocation = params.get("n_collocation_points", 200)
 
         import numpy as np
 
@@ -669,7 +674,13 @@ def _handle_run_qpinn(params: dict):
             boundary_conditions={"u(0,t)": 0.0, "u(1,t)": 0.0},
             initial_condition=initial_condition,
         )
-        config = TrainingConfig(n_epochs=n_epochs, learning_rate=0.01)
+        config = TrainingConfig(
+            n_epochs=n_epochs,
+            learning_rate=0.01,
+            n_collocation_points=n_collocation,
+            n_boundary_points=25,
+            n_initial_points=25,
+        )
         qpinn = QPINN(pde=pde, n_qubits=n_qubits, circuit_depth=circuit_depth, config=config)
 
         qpinn.train()
@@ -677,14 +688,21 @@ def _handle_run_qpinn(params: dict):
         x_test = np.linspace(0.0, 1.0, 16)
         prediction = qpinn.predict(x_test, 0.5)
 
+        loss_history = [float(x) for x in qpinn.loss_history]
+        final_loss = loss_history[-1] if loss_history else None
+        converged = (
+            len(loss_history) > 1
+            and abs(loss_history[-2] - loss_history[-1]) < 0.1
+        )
+
         return {"status": "ok", "data": {
             "pde": "heat_1d",
             "n_qubits": n_qubits,
             "circuit_depth": circuit_depth,
-            "n_epochs": n_epochs,
+            "n_epochs": len(loss_history),
             "prediction": [float(p) for p in prediction[:16]],
-            "converged": True,
-            "final_loss": 0.001,
+            "converged": converged,
+            "final_loss": final_loss,
         }}
     except Exception as e:
         return {"status": "error", "error": f"QPINN error: {e}"}
@@ -855,7 +873,7 @@ def _handle_ask_quantum(params: dict):
             from abirqu.qec.codes import SurfaceCode
             code = SurfaceCode(3)
             encoded = code.encode(0)
-            final_answer = f"QEC {code_type} code: n={code.n}, k={code.k}, d=3"
+            final_answer = f"QEC {code_type} code: n={code.physical_qubits}, k={code.logical_qubits}, d={code.d}"
         elif intent == "qkd":
             protocol = "BB84" if "bb84" in q_lower else "E91"
             from abirqu.quantum_communication.bb84 import BB84Protocol
@@ -931,21 +949,23 @@ def handle_run_autodiff(params: dict) -> dict:
     method = params.get("method", "parameter_shift")
     n_qubits = params.get("n_qubits", 2)
     n_params = params.get("n_params", 4)
-    hamiltonian_terms = params.get("hamiltonian_terms", 2)
 
     import numpy as np
 
-    from abirqu.chem.fermion_mappers import PauliTerm
     from abirqu.circuit import Circuit
 
     circ = Circuit(n_qubits)
     param_values = np.random.uniform(0, np.pi, n_params)
-    for i in range(min(n_params, n_qubits)):
-        circ.rx(i, float(param_values[i]))
+    for i in range(n_params):
+        circ.rx(i % n_qubits, float(param_values[i]))
     for i in range(n_qubits - 1):
         circ.cnot(i, i + 1)
 
-    hamiltonian = [PauliTerm(1.0, ['Z'] * n_qubits), PauliTerm(0.5, ['X'] + ['I'] * (n_qubits - 1))]
+    # Observable H = Z⊗I...I + 0.5·X⊗I...I as a dense matrix
+    identity = np.eye(2 ** (n_qubits - 1))
+    z_mat = np.array([[1.0, 0.0], [0.0, -1.0]])
+    x_mat = np.array([[0.0, 1.0], [1.0, 0.0]])
+    hamiltonian = np.kron(z_mat, identity) + 0.5 * np.kron(x_mat, identity)
 
     from abirqu.autodiff import (
         adjoint_gradient,
@@ -992,19 +1012,19 @@ def handle_run_dd(params: dict) -> dict:
     seq_map = {
         "XY4": XY4Sequence(),
         "XY8": XY8Sequence(),
-        "CPMG": CPMGSequence(N=4),
-        "UDD": UDDSequence(N=8),
+        "CPMG": CPMGSequence(n_pulses=4),
+        "UDD": UDDSequence(n_pulses=8),
     }
     seq = seq_map.get(sequence_type, XY4Sequence())
     scheduler = DDScheduler()
-    scheduled_circ = scheduler.insert_dd(circ, idle_qubit, seq)
+    scheduled_circ = scheduler.schedule(circ, {idle_qubit: seq})
 
     return {
         "sequence_type": sequence_type,
         "original_depth": circ.depth(),
         "scheduled_depth": scheduled_circ.depth(),
-        "pulses_inserted": len(seq.pulse_times),
-        "is_identity": seq.is_identity(),
+        "pulses_inserted": seq.num_pulses,
+        "is_identity": bool(seq.is_identity),
     }
 
 
@@ -1022,8 +1042,9 @@ def handle_run_distributed(params: dict) -> dict:
     for i in range(n_qubits - 1):
         circ.cnot(i, i + 1)
 
-    sim = MPIQuantumSimulator(n_workers=n_workers)
-    counts = sim.run_circuit(circ, shots=shots)
+    sim = MPIQuantumSimulator(n_qubits=n_qubits, n_workers=n_workers)
+    result = sim.simulate_distributed(circ, shots=shots)
+    counts = result.get("counts", {})
 
     return {"counts": counts, "n_workers": n_workers, "n_qubits": n_qubits}
 
@@ -1063,6 +1084,7 @@ def handle_run_ml_transpile(params: dict) -> dict:
 
     from abirqu.circuit import Circuit
     from abirqu.transpiler.ml_transpiler import MLTranspilerPipeline
+    from abirqu.transpiler.topology import CouplingMap
 
     circ = Circuit(n_qubits)
     for i in range(n_qubits):
@@ -1074,7 +1096,8 @@ def handle_run_ml_transpile(params: dict) -> dict:
             circ.cnot(i, i + 1)
 
     pipeline = MLTranspilerPipeline()
-    result = pipeline.transpile(circ, target=None)
+    target = CouplingMap(n_qubits, [(i, i + 1) for i in range(n_qubits - 1)])
+    result = pipeline.transpile(circ, target)
 
     return {
         "original_gates": len(circ.gates),
@@ -1086,16 +1109,42 @@ def handle_run_ml_transpile(params: dict) -> dict:
 
 
 def handle_run_mcp(params: dict) -> dict:
-    """Run MCP server tool call."""
+    """Run MCP server tool call via JSON-RPC 2.0 (tools/call)."""
     tool_name = params.get("tool", "get_backend_info")
     tool_args = params.get("args", {})
 
-    from abirqu.mcp import MCPServer
+    from abirqu.mcp import MCPServer, register_builtin_tools
 
     server = MCPServer()
-    result = server.handle_tool_call(tool_name, tool_args)
+    register_builtin_tools(server)
 
-    return {"tool": tool_name, "result": result}
+    if tool_name in ("list", "list_tools"):
+        raw = json.dumps({
+            "jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {},
+        })
+        rpc = json.loads(server.handle(raw))
+        return {"tool": tool_name, "result": rpc.get("result", {})}
+
+    raw = json.dumps({
+        "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+        "params": {"name": tool_name, "arguments": tool_args},
+    })
+    rpc = json.loads(server.handle(raw))
+    if "error" in rpc:
+        raise ValueError(rpc["error"].get("message", f"Unknown tool: {tool_name}"))
+
+    # tools/call returns {"content": [{"type": "text", "text": json-dump}]}
+    content = rpc.get("result", {}).get("content", [])
+    parsed = None
+    for item in content:
+        if item.get("type") == "text":
+            try:
+                parsed = json.loads(item.get("text", ""))
+            except (json.JSONDecodeError, TypeError):
+                parsed = item.get("text", "")
+            break
+
+    return {"tool": tool_name, "result": parsed if parsed is not None else rpc.get("result", {})}
 
 
 def handle_run_copilot(params: dict) -> dict:
@@ -1135,6 +1184,14 @@ def handle_run_copilot(params: dict) -> dict:
         return {"action": action, "error": f"Unknown action: {action}"}
 
 
+ALGO_PARAMS = {
+    "shor": lambda q: {"n_bits": max(8, q)},
+    "grover": lambda q: {"search_space": 2 ** max(8, q)},
+    "vqe": lambda q: {"n_qubits": q, "n_layers": 2},
+    "hhl": lambda q: {"matrix_size": max(4, q)},
+}
+
+
 def handle_run_resource_estimate(params: dict) -> dict:
     """Estimate resources for a quantum algorithm."""
     algorithm = params.get("algorithm", "shor")
@@ -1146,18 +1203,19 @@ def handle_run_resource_estimate(params: dict) -> dict:
     estimator = ResourceEstimator()
     algo_estimator = AlgorithmEstimator()
 
-    if algorithm == "shor":
-        estimate = algo_estimator.estimate_shor(n_qubits)
-    elif algorithm == "grover":
-        estimate = algo_estimator.estimate_grover(n_qubits)
-    elif algorithm == "vqe":
-        estimate = algo_estimator.estimate_vqe(n_qubits, n_layers=2)
-    elif algorithm == "hhl":
-        estimate = algo_estimator.estimate_hhl(n_qubits)
-    else:
-        estimate = {"error": f"Unknown algorithm: {algorithm}"}
+    algo_params = ALGO_PARAMS.get(algorithm.lower())
+    if algo_params is None:
+        raise ValueError(
+            f"Unknown algorithm: {algorithm!r}. Supported: shor, grover, vqe, hhl"
+        )
+    estimate = algo_estimator.estimate_algorithm(algorithm.lower(), algo_params(n_qubits))
 
-    overhead = estimator.estimate_overhead("surface", n_qubits, code_distance)
+    overhead = estimator.estimate_overhead("surface", n_qubits)
+
+    estimate = dataclasses.asdict(estimate) if dataclasses.is_dataclass(estimate) else estimate
+    overhead = dataclasses.asdict(overhead) if dataclasses.is_dataclass(overhead) else overhead
+    if isinstance(overhead, dict):
+        overhead["code_distance"] = code_distance
 
     return {
         "algorithm": algorithm,
@@ -1171,14 +1229,23 @@ def handle_run_benchpress(params: dict) -> dict:
     category = params.get("category", "circuit_construction")
 
     from benchpress import BenchpressRunner
+    import dataclasses as _dc
 
     runner = BenchpressRunner()
     result = runner.run_benchmark_suite(category)
 
+    results = [
+        _dc.asdict(r) if _dc.is_dataclass(r) and not isinstance(r, type) else r
+        for r in (result.results or [])
+    ]
+
     return {
-        "category": category,
-        "total_benchmarks": len(result.get("benchmarks", [])),
-        "results": result,
+        "category": result.category.value if hasattr(result.category, "value") else str(result.category),
+        "backend": str(result.backend) if getattr(result, "backend", None) is not None else None,
+        "total_benchmarks": len(results),
+        "total_time_ms": result.total_time_ms,
+        "summary": result.summary,
+        "results": results,
     }
 
 
