@@ -155,7 +155,7 @@ jobs:
 
     - name: Test JavaScript binding
       run: |
-        cd js && node tests/run-tests.js
+        cd js && npm ci && node tests/run-tests.js
 
     - name: Set up JDK
       uses: actions/setup-java@v4
