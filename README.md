@@ -290,9 +290,9 @@ Full-featured quantum IDE built with **Tauri 2.x** (Rust + React + TypeScript). 
 
 | Platform | Installer | Size | Download |
 |----------|-----------|------|----------|
-| Linux (Debian/Ubuntu) | `AbirQu_1.2.4_amd64.deb` | 4.2 MB | [Download](installers/AbirQu_1.2.4_amd64.deb) |
-| Linux (Fedora/RHEL) | `AbirQu-1.2.4-1.x86_64.rpm` | 4.2 MB | [Download](installers/AbirQu-1.2.4-1.x86_64.rpm) |
-| Linux (Universal) | `AbirQu_1.2.4_amd64.AppImage` | 80 MB | [Download](installers/AbirQu_1.2.4_amd64.AppImage) |
+| Linux (Debian/Ubuntu) | `AbirQu_1.2.5_amd64.deb` | 4.2 MB | [Download](installers/AbirQu_1.2.5_amd64.deb) |
+| Linux (Fedora/RHEL) | `AbirQu-1.2.5-1.x86_64.rpm` | 4.2 MB | [Download](installers/AbirQu-1.2.5-1.x86_64.rpm) |
+| Linux (Universal) | `AbirQu_1.2.5_amd64.AppImage` | 80 MB | [Download](installers/AbirQu_1.2.5_amd64.AppImage) |
 | Binary (any Linux) | `abirqu-gui` | 14 MB | [Download](installers/abirqu-gui) |
 
 ### All 14 Panels
@@ -338,22 +338,22 @@ npx @tauri-apps/cli build
 
 ```bash
 # Debian/Ubuntu
-sudo dpkg -i AbirQu_1.2.4_amd64.deb
+sudo dpkg -i AbirQu_1.2.5_amd64.deb
 
 # Fedora/RHEL
-sudo rpm -i AbirQu-1.2.4-1.x86_64.rpm
+sudo rpm -i AbirQu-1.2.5-1.x86_64.rpm
 
 # Any Linux (portable)
-chmod +x AbirQu_1.2.4_amd64.AppImage && ./AbirQu_1.2.4_amd64.AppImage
+chmod +x AbirQu_1.2.5_amd64.AppImage && ./AbirQu_1.2.5_amd64.AppImage
 ```
 
 ### Install (Windows)
 
-Download `AbirQu_1.2.4_x64-setup.exe` from [Releases](https://github.com/Abiress/abirqu/releases) and run the installer.
+Download `AbirQu_1.2.5_x64-setup.exe` from [Releases](https://github.com/Abiress/abirqu/releases) and run the installer.
 
 ### Install (macOS)
 
-Download `AbirQu_1.2.4_aarch64.dmg` (Apple Silicon) or `AbirQu_1.2.4_x64.dmg` (Intel) from [Releases](https://github.com/Abiress/abirqu/releases), open the DMG, and drag AbirQu to Applications.
+Download `AbirQu_1.2.5_aarch64.dmg` (Apple Silicon) or `AbirQu_1.2.5_x64.dmg` (Intel) from [Releases](https://github.com/Abiress/abirqu/releases), open the DMG, and drag AbirQu to Applications.
 
 ### Pre-built Binaries
 
