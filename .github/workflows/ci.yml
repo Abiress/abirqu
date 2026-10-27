@@ -55,7 +55,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -e .
+        pip install -e ".[dev]"
 
     - name: Run tutorials (batch 1-100)
       run: |
@@ -73,7 +73,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -e .
+        pip install -e ".[dev]"
 
     - name: Validate Grover search
       run: |
@@ -209,7 +209,9 @@ jobs:
     - name: Test Swift binding
       run: |
         export LD_LIBRARY_PATH=$PWD/target/release:$LD_LIBRARY_PATH
-        cd swift && swift test
+        # Package.swift carries an absolute -L path for local dev; pass the
+        # checkout-relative search dir for CI builds
+        cd swift && swift test -Xlinker "-L$(cd .. && pwd)/target/release"
 
   publish:
     needs: [test, validate-algorithms, test-bindings]

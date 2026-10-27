@@ -300,8 +300,8 @@ class QPINN:
         top = t[:, 0, :].copy()
         bot = t[:, 1, :]
         tail = (None,) * (bot.ndim - 1)
-        c = np.cos(angles / 2)[..., *tail]
-        s = np.sin(angles / 2)[..., *tail]
+        c = np.cos(angles / 2).reshape(-1, *([1] * (bot.ndim - 1)))
+        s = np.sin(angles / 2).reshape(-1, *([1] * (bot.ndim - 1)))
         t[:, 0, :] = c * top - s * bot
         t[:, 1, :] = s * top + c * bot
 
