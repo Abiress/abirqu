@@ -16,7 +16,6 @@ from .algorithms import (
     shor_factorization,
     vqe_hardware_efficient,
 )
-from .benchmark_spec import run_and_write_benchmark
 from .circuit import Circuit
 from .optimize.transpiler import HardwareAwareTranspiler
 from .sdk import AbirQuSDK
@@ -31,6 +30,10 @@ def build_bell() -> Circuit:
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(prog="abirqu", description="AbirQu CLI")
+    parser.add_argument(
+        "--version", action="version",
+        version=f"%(prog)s {__import__('abirqu').__version__}",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     run = sub.add_parser("run-bell", help="Execute a Bell-state demo")
@@ -67,11 +70,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     capabilities = sub.add_parser("capability-matrix", help="Print one-shot SDK capability matrix")
     capabilities.add_argument("--summary-only", action="store_true", help="Print only readiness, runtime checks, and summary")
-
-    benchmark = sub.add_parser("benchmark-spec", help="Run Quantum SDK Benchmark Specification v1.0")
-    benchmark.add_argument("--profile", choices=["quick", "full"], default="full")
-    benchmark.add_argument("--output", default="benchmark_results/spec_benchmark_results.json")
-    benchmark.add_argument("--stdout", action="store_true", help="Also print full benchmark JSON to stdout")
 
     args = parser.parse_args(argv)
 
@@ -168,20 +166,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 "compatibility_summary": report.get("compatibility_summary", {}),
             }
         print(json.dumps(report, indent=2))
-        return 0
-
-    if args.command == "benchmark-spec":
-        report = run_and_write_benchmark(output_path=args.output, profile=args.profile)
-        summary = {
-            "output": args.output,
-            "profile": args.profile,
-            "accuracy": report.get("accuracy", {}),
-            "performance": report.get("performance", {}),
-            "pass_fail": report.get("benchmark_spec_v1", {}).get("pass_fail", {}),
-        }
-        print(json.dumps(summary, indent=2))
-        if args.stdout:
-            print(json.dumps(report, indent=2))
         return 0
 
     return 1

@@ -10,16 +10,16 @@ import argparse
 import time
 from typing import List, Optional
 
-from ..quantum_os import (
+from . import (
     CostEstimator,
     JobQueue,
     QuantumScheduler,
     ResourceManager,
     SchedulingPolicy,
 )
-from ..quantum_os.monitor import JobMonitor
-from ..quantum_os.reservation import ReservationSystem
-from ..quantum_os.tenant import TenantManager
+from .monitor import JobMonitor
+from .reservation import ReservationSystem
+from .tenant import TenantManager
 
 
 def cmd_status(args):
