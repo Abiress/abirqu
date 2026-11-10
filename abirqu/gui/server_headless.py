@@ -441,12 +441,15 @@ def _handle_run_qkd(params: dict):
                 "eavesdrop": eavesdrop,
                 "sifted_length": len(result.sifted_key_alice),
                 "error_rate": round(result.error_rate, 4),
-                "final_key_length": len(result.final_key),
+                # final_key is None when the protocol aborted (eavesdropper
+                # detected or no sifted bits); report that instead of crashing
+                "key_established": result.final_key is not None,
+                "final_key_length": len(result.final_key) if result.final_key is not None else 0,
                 "eavesdropper_detected": result.eavesdropper_detected,
                 "secure": result.error_rate < 0.11,
                 "raw_key_alice": [int(b) for b in result.raw_key_alice[:100]],
                 "sifted_key_alice": [int(b) for b in result.sifted_key_alice[:100]],
-                "final_key": [int(b) for b in result.final_key[:100]],
+                "final_key": [int(b) for b in (result.final_key or [])[:100]],
             }}
         elif protocol == "E91":
             from abirqu.quantum_communication.e91 import E91Protocol
@@ -459,11 +462,13 @@ def _handle_run_qkd(params: dict):
                 "bell_violation": round(result.bell_violation, 4),
                 "sifted_length": len(result.sifted_key_alice),
                 "error_rate": round(result.error_rate, 4),
-                "final_key_length": len(result.final_key),
+                # final_key is None when the protocol aborted
+                "key_established": result.final_key is not None,
+                "final_key_length": len(result.final_key) if result.final_key is not None else 0,
                 "eavesdropper_detected": result.eavesdropper_detected,
                 "secure": result.bell_violation > 2.0,
                 "sifted_key_alice": [int(b) for b in result.sifted_key_alice[:100]],
-                "final_key": [int(b) for b in result.final_key[:100]],
+                "final_key": [int(b) for b in (result.final_key or [])[:100]],
             }}
         else:
             return {"status": "error", "error": f"Unknown protocol: {protocol}"}
@@ -931,13 +936,19 @@ def handle_run_ttn(params: dict) -> dict:
     circ = Circuit(n_qubits)
     for g in gates:
         if isinstance(g, dict):
-            name = g.get("name", "")
+            # Gate names are case-sensitive in the gate tables ('H', 'CNOT',
+            # 'RX', ...); normalise like the encrypt handler so GUI-cased
+            # names ('Rx', 'h', ...) resolve, and skip invalid entries.
+            name = str(g.get("name", "")).strip().upper()
+            if not name:
+                continue
             qubits = g.get("qubits", [])
             p = g.get("params", [])
-            if len(qubits) == 1:
-                circ.add_gate(name, qubits, p)
-            elif len(qubits) == 2:
-                circ.add_gate(name, qubits, p)
+            if len(qubits) in (1, 2):
+                try:
+                    circ.add_gate(name, qubits, p if p else None)
+                except (ValueError, TypeError, KeyError):
+                    continue
 
     sim = TTNSimulator()
     counts = sim.run_circuit(circ, shots=shots)
