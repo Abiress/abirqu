@@ -77,6 +77,50 @@ jobs:
       working-directory: gui
       run: npm run build
 
+    - name: Setup Python (host toolchain)
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Build abirqu wheel
+      run: |
+        python -m pip install --quiet build
+        python -m build --wheel
+
+    # Embed a self-contained Python runtime (CPython from
+    # python-build-standalone + numpy/scipy/cryptography + the abirqu wheel)
+    # as a Tauri resource so the desktop installers need no system Python.
+    - name: Install bundled Python runtime
+      shell: bash
+      env:
+        PBS_TAG: '20261026'
+        PBS_VERSION: '3.12.16'
+      run: |
+        set -e
+        case "${{ matrix.target }}" in
+          x86_64-unknown-linux-gnu)  PLAT=manylinux2014_x86_64 ;;
+          aarch64-unknown-linux-gnu) PLAT=manylinux2014_aarch64 ;;
+          aarch64-apple-darwin)      PLAT=macosx_12_0_arm64 ;;
+          x86_64-apple-darwin)       PLAT=macosx_10_9_x86_64 ;;
+          x86_64-pc-windows-msvc)    PLAT=win_amd64 ;;
+        esac
+        curl -sL -o /tmp/python.tar.gz \
+          "https://github.com/astral-sh/python-build-standalone/releases/download/${PBS_TAG}/cpython-${PBS_VERSION}+${PBS_TAG}-${{ matrix.target }}-install_only_stripped.tar.gz"
+        mkdir -p gui/src-tauri/resources
+        tar -xzf /tmp/python.tar.gz -C gui/src-tauri/resources
+        # Trim interpreter payload the app never loads
+        PYSP=gui/src-tauri/resources/python/lib/python3.12
+        WINSP=gui/src-tauri/resources/python/Lib
+        rm -rf "$PYSP/test" "$PYSP/idlelib" "$PYSP/tkinter" "$PYSP/turtledemo" \
+               "$WINSP/test" "$WINSP/idlelib" "$WINSP/tkinter" "$WINSP/turtledemo" 2>/dev/null || true
+        SP="$PYSP/site-packages"; [ -d "$SP" ] || SP="$WINSP/site-packages"
+        python -m pip install --quiet --no-cache-dir --target "$SP" \
+          --platform "$PLAT" --python-version 312 --implementation cp \
+          --only-binary=:all: \
+          "numpy>=1.22" "scipy>=1.7.0" "cryptography>=3.4" dist/*.whl
+        echo "bundled runtime site-packages: $SP"
+        du -sh gui/src-tauri/resources/python || true
+
     - name: Build Tauri app
       uses: tauri-apps/tauri-action@v0
       env:

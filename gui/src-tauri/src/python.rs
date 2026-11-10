@@ -1,5 +1,6 @@
 use serde_json::Value;
 use std::io::{BufRead, BufReader, Write};
+use std::path::PathBuf;
 use std::process::{Child, ChildStdout, Command, Stdio};
 use std::sync::Mutex;
 
@@ -7,6 +8,9 @@ use std::sync::Mutex;
 pub struct PythonBridge {
     child: Mutex<Option<Child>>,
     stdout: Mutex<Option<BufReader<ChildStdout>>>,
+    /// Absolute path of the bundled interpreter, set at app startup when the
+    /// self-contained Python runtime shipped as a Tauri resource exists.
+    python_path: Mutex<Option<PathBuf>>,
 }
 
 impl PythonBridge {
@@ -14,6 +18,29 @@ impl PythonBridge {
         Self {
             child: Mutex::new(None),
             stdout: Mutex::new(None),
+            python_path: Mutex::new(None),
+        }
+    }
+
+    /// Remember the bundled interpreter discovered at startup.
+    pub fn set_python_path(&self, path: PathBuf) {
+        if let Ok(mut p) = self.python_path.lock() {
+            *p = Some(path);
+        }
+    }
+
+    /// Interpreter to launch: the bundled runtime if present, else the
+    /// system Python (PATH lookup).
+    fn resolve_python(&self) -> String {
+        if let Ok(p) = self.python_path.lock() {
+            if let Some(path) = p.as_ref() {
+                return path.to_string_lossy().into_owned();
+            }
+        }
+        if cfg!(target_os = "windows") {
+            "python".to_string()
+        } else {
+            "python3".to_string()
         }
     }
 
@@ -24,14 +51,13 @@ impl PythonBridge {
             return Ok(());
         }
 
-        let python = if cfg!(target_os = "windows") {
-            "python"
-        } else {
-            "python3"
-        };
-
-        let mut child = Command::new(python)
+        let mut child = Command::new(self.resolve_python())
             .args(["-m", "abirqu.gui.server_headless", "--stdio"])
+            // Keep the subprocess isolated from any user/ambient site-packages
+            // so the bundled runtime stays fully self-contained.
+            .env_remove("PYTHONPATH")
+            .env_remove("PYTHONHOME")
+            .env("PYTHONNOUSERSITE", "1")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())

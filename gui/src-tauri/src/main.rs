@@ -3,12 +3,31 @@
 mod commands;
 mod python;
 
+use tauri::Manager;
+
 use python::PythonBridge;
 
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .manage(PythonBridge::new())
+        .setup(|app| {
+            // Prefer the self-contained Python runtime bundled as a Tauri
+            // resource (<resource_dir>/python/...). Fall back to the system
+            // Python when the bundle has no embedded runtime (dev builds).
+            let resource_dir = tauri::Manager::path(app).resource_dir().ok();
+            if let Some(res) = resource_dir {
+                let bundled = if cfg!(target_os = "windows") {
+                    res.join("python").join("python.exe")
+                } else {
+                    res.join("python").join("bin").join("python3")
+                };
+                if bundled.exists() {
+                    app.state::<PythonBridge>().set_python_path(bundled);
+                }
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             commands::compile_circuit,
             commands::execute_circuit,
