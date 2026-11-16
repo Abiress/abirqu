@@ -147,14 +147,22 @@ pub async fn execute_circuit(
     bridge: State<'_, PythonBridge>,
     circuit: CircuitData,
     backend: Option<String>,
+    simulator: Option<String>,
     shots: Option<u32>,
+    seed: Option<u64>,
     noise: Option<Value>,
 ) -> Result<JobInfo, String> {
     let mut params = json!({
         "circuit": circuit,
         "backend": backend.unwrap_or_else(|| "abirqu_simulator".to_string()),
+        "simulator": simulator.unwrap_or_else(|| "statevector".to_string()),
         "shots": shots.unwrap_or(1024),
     });
+    if let Some(s) = seed {
+        if let Some(obj) = params.as_object_mut() {
+            obj.insert("seed".to_string(), json!(s));
+        }
+    }
     if let Some(noise_cfg) = noise {
         if let Some(obj) = params.as_object_mut() {
             obj.insert("noise".to_string(), noise_cfg);

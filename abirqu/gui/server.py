@@ -33,6 +33,8 @@ class QuantumJob:
     circuit: Any
     backend: str
     shots: int
+    simulator: str = "statevector"
+    seed: Optional[int] = None
     status: JobStatus = JobStatus.PENDING
     result: Optional[Dict] = None
     created_at: float = field(default_factory=time.time)
@@ -45,6 +47,8 @@ class QuantumJob:
         return {
             'job_id': self.job_id,
             'backend': self.backend,
+            'simulator': self.simulator,
+            'seed': self.seed,
             'shots': self.shots,
             'status': self.status.value,
             'result': self.result,
@@ -171,16 +175,35 @@ class QuantumServer:
         self._emit('circuit_update', compiled)
         return compiled
 
+    SIMULATOR_LIMITS = {
+        'statevector': 28,
+        'gpu': 32,
+        'clifford': 1000,
+        'mps': 100,
+        'ttn': 200,
+        'monte_carlo': 24,
+    }
+
     def _handle_execute(self, request: Dict) -> Dict:
         circuit_data = request.get('circuit', {})
         backend = request.get('backend', 'abirqu_simulator')
+        simulator = request.get('simulator', 'statevector')
         shots = request.get('shots', 1024)
+        seed = request.get('seed')
+
+        num_qubits = circuit_data.get('num_qubits', 1) if isinstance(circuit_data, dict) else getattr(circuit_data, 'num_qubits', 1)
+        sim_key = str(simulator).lower()
+        limit = self.SIMULATOR_LIMITS.get(sim_key, 28)
+        if num_qubits > limit:
+            raise ValueError(f"Circuit has {num_qubits} qubits, exceeding {simulator} limit of {limit} qubits.")
 
         job_id = str(uuid.uuid4())[:8]
         job = QuantumJob(
             job_id=job_id,
             circuit=circuit_data,
             backend=backend,
+            simulator=simulator,
+            seed=seed,
             shots=shots,
         )
         with self._lock:
@@ -189,20 +212,31 @@ class QuantumServer:
         thread = threading.Thread(target=self._execute_job, args=(job,), daemon=True)
         thread.start()
 
-        self._log_event('job_created', {'job_id': job_id, 'backend': backend, 'shots': shots})
+        self._log_event('job_created', {'job_id': job_id, 'backend': backend, 'simulator': simulator, 'shots': shots})
         return job.to_dict()
 
     def _execute_job(self, job: QuantumJob):
         try:
+            if job.status == JobStatus.CANCELLED:
+                return
             job.status = JobStatus.RUNNING
             job.started_at = time.time()
             self._emit('job_update', job.to_dict())
 
-            time.sleep(0.1)
-            job.progress = 0.5
+            job.progress = 0.25
+            self._emit('job_update', job.to_dict())
+            time.sleep(0.04)
+
+            if job.status == JobStatus.CANCELLED:
+                return
+
+            job.progress = 0.65
             self._emit('job_update', job.to_dict())
 
-            result = self._simulate_circuit(job.circuit, job.shots)
+            result = self._simulate_circuit(job.circuit, job.shots, job.simulator, job.seed)
+            if job.status == JobStatus.CANCELLED:
+                return
+
             job.result = result
             job.status = JobStatus.COMPLETED
             job.completed_at = time.time()
@@ -219,14 +253,15 @@ class QuantumServer:
             job.completed_at = time.time()
             self._emit('job_update', job.to_dict())
 
-    def _simulate_circuit(self, circuit_data: Any, shots: int) -> Dict:
+    def _simulate_circuit(self, circuit_data: Any, shots: int, simulator: str = 'statevector', seed: Optional[int] = None) -> Dict:
         """
         Executes a circuit using the real AbirQu SDK simulator
-        (abirqu.Circuit.run), instead of a hand-rolled statevector engine.
-        This is the single source of truth for gate semantics — any gate
-        AbirQu's own Circuit class supports is automatically supported here.
+        (abirqu.Circuit.run / NumPySimulator / Clifford / MPS),
+        with qubit limits per engine, seed, and full statevector extraction.
         """
         import abirqu
+        if seed is not None and np is not None:
+            np.random.seed(seed)
 
         if isinstance(circuit_data, dict):
             num_qubits = circuit_data.get('num_qubits', 1)
@@ -248,20 +283,74 @@ class QuantumServer:
             if not gate_name or not qubits:
                 continue
             circuit.add_gate(gate_name, qubits, params)
-        circuit.measure_all()
 
-        result = circuit.run(shots=shots)
+        sim_name = simulator.lower()
+        if sim_name == 'clifford':
+            clf = abirqu.CliffordSimulator(num_qubits)
+            counts = clf.sample(circuit, shots=shots) if hasattr(clf, 'sample') else {}
+            probs = {k: v / shots for k, v in counts.items()} if shots > 0 else {}
+            return {
+                'counts': counts,
+                'num_qubits': num_qubits,
+                'shots': shots,
+                'probabilities': probs,
+                'backend': 'CliffordSimulator',
+                'simulator': 'clifford',
+                'success': True,
+            }
+        elif sim_name == 'mps':
+            mps = abirqu.MPSSimulator(num_qubits)
+            res = mps.run(circuit, shots=shots) if hasattr(mps, 'run') else {}
+            counts = res.get('counts', {}) if isinstance(res, dict) else {}
+            probs = res.get('probabilities', {}) if isinstance(res, dict) else {}
+            return {
+                'counts': counts,
+                'num_qubits': num_qubits,
+                'shots': shots,
+                'probabilities': probs,
+                'backend': 'MPSSimulator',
+                'simulator': 'mps',
+                'success': True,
+            }
+        else:
+            # Statevector via NumPySimulator
+            sim = abirqu.NumPySimulator(num_qubits)
+            exact_probs = sim.run_circuit(circuit)
+            sv = sim.get_state_vector()
 
-        counts = result.get('counts', {})
-        probabilities = result.get('probabilities', {})
-        return {
-            'counts': counts,
-            'num_qubits': num_qubits,
-            'shots': shots,
-            'probabilities': probabilities,
-            'backend': result.get('backend', 'abirqu_simulator'),
-            'success': result.get('success', True),
-        }
+            formatted_sv = []
+            for i, amp in enumerate(sv):
+                p = float(abs(amp) ** 2)
+                formatted_sv.append({
+                    'basis': format(i, f'0{num_qubits}b'),
+                    'real': float(amp.real),
+                    'imag': float(amp.imag),
+                    'magnitude': float(abs(amp)),
+                    'phase': float(np.angle(amp)) if np is not None else 0.0,
+                    'probability': p,
+                })
+
+            states = list(exact_probs.keys())
+            probs_list = list(exact_probs.values())
+            counts = {}
+            if shots > 0 and states:
+                import random
+                if seed is not None:
+                    random.seed(seed)
+                choices = random.choices(states, weights=probs_list, k=shots)
+                for s in choices:
+                    counts[s] = counts.get(s, 0) + 1
+
+            return {
+                'counts': counts,
+                'num_qubits': num_qubits,
+                'shots': shots,
+                'probabilities': exact_probs,
+                'statevector': formatted_sv,
+                'backend': 'NumPySimulator',
+                'simulator': simulator,
+                'success': True,
+            }
 
     def _simulate_circuit_fallback(self, circuit_data: Any, shots: int) -> Dict:
         if np is None:

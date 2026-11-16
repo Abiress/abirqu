@@ -23,6 +23,7 @@ import PluginsPanel from './components/PluginsPanel/PluginsPanel';
 import AskQuantumPanel from './components/AskQuantumPanel/AskQuantumPanel';
 import SettingsPanel from './components/SettingsPanel/SettingsPanel';
 import CommandPalette from './components/CommandPalette/CommandPalette';
+import RunPanel from './components/RunPanel/RunPanel';
 import { useJobStore } from './stores/jobStore';
 import { useHardwareStore } from './stores/hardwareStore';
 import { useThemeStore } from './stores/themeStore';
@@ -30,7 +31,7 @@ import { api } from './api/commands';
 
 export type LeftTab = 'circuit' | 'code' | 'qasm' | 'library' | 'framework' | 'explorer' | 'qec' | 'qcomm' | 'domain' | 'security' | 'plugins' | 'askq' | 'settings';
 type RightPanel = 'measurement' | 'state' | 'bloch';
-type SideTab = 'hardware' | 'jobs' | 'noise';
+type SideTab = 'run' | 'hardware' | 'jobs' | 'noise';
 type BottomTab = 'console' | 'results';
 
 export default function App() {
@@ -92,11 +93,13 @@ export default function App() {
           {/* Left Sidebar */}
           <div className="flex flex-col border-r border-[var(--border)] bg-[var(--bg-panel)]" style={{ width: sidebarWidth }}>
             <div className="flex border-b border-[var(--border)]">
+              <SideTabBtn active={sideTab === 'run'} onClick={() => setSideTab('run')} icon="🚀" label="Run" />
               <SideTabBtn active={sideTab === 'hardware'} onClick={() => setSideTab('hardware')} icon="⚡" label="HW" />
               <SideTabBtn active={sideTab === 'jobs'} onClick={() => setSideTab('jobs')} icon="📋" label="Jobs" />
               <SideTabBtn active={sideTab === 'noise'} onClick={() => setSideTab('noise')} icon="〰" label="Noise" />
             </div>
             <div className="flex-1 overflow-hidden">
+              {sideTab === 'run' && <RunPanel />}
               {sideTab === 'hardware' && <HardwareSidebar serverReady={serverReady} />}
               {sideTab === 'jobs' && <JobDashboard />}
               {sideTab === 'noise' && (

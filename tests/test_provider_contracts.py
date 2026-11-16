@@ -41,6 +41,7 @@ def test_provider_hardware_evidence_registry_compliance():
     evidence_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "hardware_evidence")
     assert os.path.isdir(evidence_dir), "docs/hardware_evidence must exist"
 
+    evidence_files = [f for f in os.listdir(evidence_dir) if f.endswith(".json")]
     # If any evidence files exist, they must be valid and conform to schema
     for ef in evidence_files:
         with open(os.path.join(evidence_dir, ef)) as fh:
