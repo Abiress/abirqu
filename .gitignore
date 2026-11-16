@@ -102,3 +102,9 @@ benchmark_results.json
 
 # Agent wiring docs
 new updates/
+
+# Test and runtime artifacts
+nmr.html
+.hypothesis/
+.ruff_cache/
+
