@@ -38,14 +38,47 @@ class SandboxedNamespace:
             for node in ast.walk(tree):
                 if isinstance(node, (ast.Import, ast.ImportFrom)) and "filesystem" not in self.permissions:
                     return {"success": False, "error": "imports blocked in sandbox"}
+                if isinstance(node, ast.Attribute) and node.attr.startswith("_"):
+                    return {"success": False, "error": f"access to private/dunder attribute '{node.attr}' blocked in sandbox"}
+                if isinstance(node, ast.Name) and node.id.startswith("_"):
+                    return {"success": False, "error": f"access to private/dunder name '{node.id}' blocked in sandbox"}
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and node.name.startswith("_"):
+                    return {"success": False, "error": f"definition of private/dunder name '{node.name}' blocked in sandbox"}
+                if isinstance(node, ast.keyword) and node.arg and node.arg.startswith("_"):
+                    return {"success": False, "error": f"private/dunder keyword argument '{node.arg}' blocked in sandbox"}
+
+            # Note: AST-based validation and wrapper functions mitigate in-process privilege
+            # escalation and dunder traversal, but robust security isolation requires a separate
+            # process / container sandbox boundary.
+            def _safe_print(*args, **kwargs):
+                print(*args, **kwargs)
+
+            def _safe_len(obj):
+                return len(obj)
+
+            def _safe_range(*args):
+                return range(*args)
+
+            def _safe_min(*args, **kwargs):
+                return min(*args, **kwargs)
+
+            def _safe_max(*args, **kwargs):
+                return max(*args, **kwargs)
+
+            def _safe_sum(*args, **kwargs):
+                return sum(*args, **kwargs)
+
+            def _safe_abs(x):
+                return abs(x)
+
             safe_builtins = {
-                "len": len,
-                "range": range,
-                "min": min,
-                "max": max,
-                "sum": sum,
-                "abs": abs,
-                "print": print,
+                "len": _safe_len,
+                "range": _safe_range,
+                "min": _safe_min,
+                "max": _safe_max,
+                "sum": _safe_sum,
+                "abs": _safe_abs,
+                "print": _safe_print,
             }
             if "filesystem" in self.permissions:
                 _ALLOWED_IMPORTS = {"json", "math", "datetime", "collections", "itertools", "functools", "re", "hashlib", "uuid"}
