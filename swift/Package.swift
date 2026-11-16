@@ -1,5 +1,8 @@
 // swift-tools-version:5.9
 import PackageDescription
+import Foundation
+
+let libPath = ProcessInfo.processInfo.environment["ABIRQU_LIB_DIR"] ?? "../target/release"
 
 let package = Package(
     name: "AbirQu",
@@ -12,7 +15,7 @@ let package = Package(
             path: "Sources/AbirQu",
             linkerSettings: [
                 .linkedLibrary("abirqu_core"),
-                .unsafeFlags(["-L/home/abir/ai_dev/abirqu/target/release"]),
+                .unsafeFlags(["-L\(libPath)"]),
             ]
         ),
         .testTarget(
@@ -21,7 +24,7 @@ let package = Package(
             path: "Tests/AbirQuTests",
             linkerSettings: [
                 .linkedLibrary("abirqu_core"),
-                .unsafeFlags(["-L/home/abir/ai_dev/abirqu/target/release"]),
+                .unsafeFlags(["-L\(libPath)"]),
             ]
         ),
     ]
