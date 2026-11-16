@@ -288,3 +288,40 @@ class TestPluginDiscovery:
         assert hasattr(PluginBase, 'activate')
         assert hasattr(PluginBase, 'deactivate')
         assert hasattr(PluginBase, 'get_manifest')
+
+    def test_sandbox_blocks_dunder_and_private_attributes(self):
+        from abirqu.plugin_market import SandboxedNamespace
+        ns = SandboxedNamespace("test_plugin", permissions=[])
+
+        # Attempt to access dunder attribute (__self__)
+        res = ns.execute("x = print.__self__")
+        assert res["success"] is False
+        assert "blocked" in res["error"]
+
+        # Attempt class hierarchy traversal
+        res2 = ns.execute("subclasses = ().__class__.__base__.__subclasses__()")
+        assert res2["success"] is False
+        assert "blocked" in res2["error"]
+
+        # Attempt to access __builtins__
+        res3 = ns.execute("b = __builtins__")
+        assert res3["success"] is False
+        assert "blocked" in res3["error"]
+
+        # Verify safe builtins do not expose __self__ module leak
+        safe_code = """
+total = sum([1, 2, 3])
+length = len([1, 2, 3])
+m = min(1, 2)
+mx = max(1, 2)
+a = abs(-5)
+print('safe execution')
+"""
+        res_safe = ns.execute(safe_code)
+        assert res_safe["success"] is True
+        assert ns.get("total") == 6
+        assert ns.get("length") == 3
+        assert ns.get("m") == 1
+        assert ns.get("mx") == 2
+        assert ns.get("a") == 5
+
