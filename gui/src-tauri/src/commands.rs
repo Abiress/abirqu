@@ -190,6 +190,20 @@ pub async fn step_circuit(
 }
 
 #[tauri::command]
+pub async fn simulate_noise_lab(
+    bridge: State<'_, PythonBridge>,
+    circuit: CircuitData,
+    noise: Value,
+) -> Result<Value, String> {
+    let params = json!({
+        "circuit": circuit,
+        "noise": noise,
+    });
+    let resp = send_request(&bridge, "simulate_noise_lab", params)?;
+    extract_data(resp)
+}
+
+#[tauri::command]
 pub async fn get_job_status(
     bridge: State<'_, PythonBridge>,
     job_id: String,

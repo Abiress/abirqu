@@ -34,6 +34,90 @@ vi.mock('@tauri-apps/api/core', () => ({
         return [
           { name: 'README.md', is_dir: false, path: 'README.md' }
         ];
+      case 'step_circuit': {
+        const step = args?.step ?? 2;
+        const s = 1.0 / Math.sqrt(2);
+        return {
+          step,
+          total_steps: 2,
+          current_gate: step > 0 ? { name: step === 1 ? 'H' : 'CNOT', qubits: step === 1 ? [0] : [0, 1] } : undefined,
+          hit_breakpoint: false,
+          amplitudes: [
+            { basis: '00', real: s, imag: 0, magnitude: s, phase: 0, probability: 0.5 },
+            { basis: '01', real: 0, imag: 0, magnitude: 0, phase: 0, probability: 0 },
+            { basis: '10', real: 0, imag: 0, magnitude: 0, phase: 0, probability: 0 },
+            { basis: '11', real: s, imag: 0, magnitude: s, phase: 0, probability: 0.5 },
+          ],
+          bloch_vectors: [
+            { qubit: 0, x: 0, y: 0, z: 0, purity: 0.5, entanglement: 1.0 },
+            { qubit: 1, x: 0, y: 0, z: 0, purity: 0.5, entanglement: 1.0 },
+          ],
+          probabilities: { '00': 0.5, '11': 0.5 },
+          success: true,
+        };
+      }
+      case 'simulate_noise_lab': {
+        const depol = args?.noise?.depolarizing ?? 0.05;
+        const readout = args?.noise?.readoutError ?? 0.02;
+        const tvd = depol > 0 || readout > 0 ? 0.0950 : 0.0;
+        return {
+          tvd,
+          ideal_distribution: { '00': 0.5, '01': 0.0, '10': 0.0, '11': 0.5 },
+          noisy_distribution: { '00': 0.4525, '01': 0.0475, '10': 0.0475, '11': 0.4525 },
+          calibration: {
+            gate_fidelity: Math.max(0, 1 - 0.75 * depol),
+            readout_fidelity: Math.max(0, 1 - readout),
+            purity_retention: Math.max(0, 1 - tvd),
+            depolarizing: depol,
+            amplitude_damping: 0,
+            phase_damping: 0,
+            readout_error: readout,
+          },
+          success: true,
+        };
+      }
+      case 'execute_circuit': {
+        const shots = args?.shots ?? 1024;
+        return {
+          job_id: 'job-real-sim',
+          backend: args?.backend ?? 'abirqu_simulator',
+          status: 'completed',
+          shots,
+          progress: 1.0,
+          result: {
+            counts: { '00': Math.floor(shots / 2), '11': Math.ceil(shots / 2) },
+            probabilities: { '00': 0.5, '11': 0.5 },
+            num_qubits: 2,
+            shots,
+            backend: 'NumPySimulator',
+            simulator: args?.simulator ?? 'statevector',
+            success: true,
+          },
+        };
+      }
+      case 'get_job_status':
+        return {
+          job_id: args?.jobId ?? 'job-real-sim',
+          status: 'completed',
+          backend: 'NumPySimulator',
+          shots: 1024,
+          progress: 1.0,
+          result: {
+            counts: { '00': 512, '11': 512 },
+            probabilities: { '00': 0.5, '11': 0.5 },
+          },
+        };
+      case 'get_results':
+        return {
+          counts: { '00': 512, '11': 512 },
+          probabilities: { '00': 0.5, '11': 0.5 },
+          statevector: [
+            { basis: '00', real: 1 / Math.sqrt(2), imag: 0, magnitude: 1 / Math.sqrt(2), phase: 0, probability: 0.5 },
+            { basis: '01', real: 0, imag: 0, magnitude: 0, phase: 0, probability: 0 },
+            { basis: '10', real: 0, imag: 0, magnitude: 0, phase: 0, probability: 0 },
+            { basis: '11', real: 1 / Math.sqrt(2), imag: 0, magnitude: 1 / Math.sqrt(2), phase: 0, probability: 0.5 },
+          ],
+        };
       default:
         return { status: 'ok', data: {} };
     }

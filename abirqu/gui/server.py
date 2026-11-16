@@ -91,6 +91,7 @@ class QuantumServer:
         self._handlers['hardware'] = self._handlers.get('hardware', self._handle_hardware)
         self._handlers['list_jobs'] = self._handle_list_jobs
         self._handlers['step_circuit'] = self._handle_step_circuit
+        self._handlers['simulate_noise_lab'] = self._handle_simulate_noise_lab
 
     def _register_default_hardware(self):
         self.hardware_registry = {
@@ -596,6 +597,111 @@ class QuantumServer:
             'amplitudes': amplitudes,
             'bloch_vectors': bloch_vectors,
             'probabilities': exact_probs,
+            'success': True,
+        }
+
+    def _handle_simulate_noise_lab(self, request: Dict) -> Dict:
+        """
+        Simulate circuit under ideal and noisy conditions, computing
+        Total Variation Distance (TVD) and calibration metrics.
+        """
+        import abirqu
+        from abirqu.noise import NoiseModel
+
+        circuit_data = request.get('circuit', {})
+        noise_cfg = request.get('noise', {})
+
+        if isinstance(circuit_data, dict):
+            num_qubits = circuit_data.get('num_qubits', 1)
+            gates = circuit_data.get('gates', [])
+        elif isinstance(circuit_data, abirqu.Circuit):
+            num_qubits = circuit_data.num_qubits
+            gates = [{'name': g.name, 'qubits': list(g.qubits), 'params': list(g.params)} for g in circuit_data.gates]
+        else:
+            num_qubits = 2
+            gates = []
+
+        circuit = abirqu.Circuit(num_qubits)
+        for gate in gates:
+            if isinstance(gate, dict) and gate.get('name') and gate.get('qubits'):
+                circuit.add_gate(gate['name'], gate['qubits'], gate.get('params'))
+
+        # 1. Ideal simulation
+        sim_ideal = abirqu.NumPySimulator(num_qubits)
+        ideal_probs = sim_ideal.run_circuit(circuit)
+
+        all_states = [format(i, f'0{num_qubits}b') for i in range(2**num_qubits)]
+        full_ideal = {s: float(ideal_probs.get(s, 0.0)) for s in all_states}
+
+        # 2. Noisy simulation
+        depol = float(noise_cfg.get('depolarizing', 0.0))
+        amp_damp = float(noise_cfg.get('amplitudeDamping', 0.0))
+        phase_damp = float(noise_cfg.get('phaseDamping', 0.0))
+        readout = float(noise_cfg.get('readoutError', 0.0))
+
+        # Start from ideal probabilities
+        noisy = dict(full_ideal)
+
+        # Depolarizing channel: mix with completely mixed state
+        if depol > 0:
+            eps = min(1.0, depol * num_qubits)
+            uniform = 1.0 / len(all_states)
+            noisy = {s: (1.0 - eps) * p + eps * uniform for s, p in noisy.items()}
+
+        # Amplitude damping channel: decay |1> to |0>
+        if amp_damp > 0:
+            for q in range(num_qubits):
+                decayed = dict(noisy)
+                for s, p in noisy.items():
+                    if s[q] == '1':
+                        s_decayed = s[:q] + '0' + s[q+1:]
+                        decay_amt = p * amp_damp
+                        decayed[s] -= decay_amt
+                        decayed[s_decayed] = decayed.get(s_decayed, 0.0) + decay_amt
+                noisy = decayed
+
+        # Readout error: analytic transition matrix P(measured m | true s)
+        if readout > 0:
+            readout_dist = {m: 0.0 for m in all_states}
+            for s, p_s in noisy.items():
+                if p_s <= 0:
+                    continue
+                for m in all_states:
+                    trans = 1.0
+                    for q in range(num_qubits):
+                        trans *= (1.0 - readout) if s[q] == m[q] else readout
+                    readout_dist[m] += p_s * trans
+            noisy = readout_dist
+
+        # Normalize
+        total_p = sum(noisy.values())
+        if total_p > 0:
+            full_noisy = {s: float(p / total_p) for s, p in noisy.items()}
+        else:
+            full_noisy = {s: float(p) for s, p in noisy.items()}
+
+        # 3. Compute Total Variation Distance (TVD)
+        # TVD(P, Q) = 0.5 * sum(|P(s) - Q(s)|)
+        tvd = 0.5 * sum(abs(full_ideal[s] - full_noisy[s]) for s in all_states)
+
+        # 4. Calibration summary
+        gate_fidelity = max(0.0, 1.0 - 0.75 * depol)
+        readout_fidelity = max(0.0, 1.0 - readout)
+        purity_retention = max(0.0, 1.0 - tvd)
+
+        return {
+            'tvd': float(tvd),
+            'ideal_distribution': full_ideal,
+            'noisy_distribution': full_noisy,
+            'calibration': {
+                'gate_fidelity': float(gate_fidelity),
+                'readout_fidelity': float(readout_fidelity),
+                'purity_retention': float(purity_retention),
+                'depolarizing': depol,
+                'amplitude_damping': amp_damp,
+                'phase_damping': phase_damp,
+                'readout_error': readout,
+            },
             'success': True,
         }
 

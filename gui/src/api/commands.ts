@@ -95,6 +95,26 @@ export const api = {
       success: boolean;
     }>('step_circuit', { circuit, step, breakpoints }),
 
+  simulateNoiseLab: (
+    circuit: CircuitData,
+    noise: { depolarizing: number; amplitudeDamping: number; phaseDamping: number; readoutError: number; enabled?: boolean }
+  ) =>
+    invoke<{
+      tvd: number;
+      ideal_distribution: Record<string, number>;
+      noisy_distribution: Record<string, number>;
+      calibration: {
+        gate_fidelity: number;
+        readout_fidelity: number;
+        purity_retention: number;
+        depolarizing: number;
+        amplitude_damping: number;
+        phase_damping: number;
+        readout_error: number;
+      };
+      success: boolean;
+    }>('simulate_noise_lab', { circuit, noise }),
+
   listJobs: () => invoke<JobInfo[]>('list_jobs'),
 
   listHardware: () => invoke<HardwareInfo[]>('list_hardware'),

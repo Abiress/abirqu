@@ -23,7 +23,7 @@ export const useCircuitStore = create<CircuitState>((set, get) => ({
   selectedGate: null,
   hoveredCell: null,
 
-  setNumQubits: (n) => set({ numQubits: Math.max(1, Math.min(20, n)) }),
+  setNumQubits: (n) => set({ numQubits: Math.max(1, Math.min(1000, n)) }),
 
   addGate: (name, qubit, targetQubit, params) => {
     const { gates, numQubits } = get();

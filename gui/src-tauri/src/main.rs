@@ -85,6 +85,7 @@ fn main() {
             commands::run_resource_estimate,
             commands::run_benchpress,
             commands::step_circuit,
+            commands::simulate_noise_lab,
             commands::list_directory,
             commands::read_workspace_file,
             commands::write_workspace_file,
