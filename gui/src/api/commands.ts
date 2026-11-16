@@ -68,6 +68,33 @@ export const api = {
   cancelJob: (jobId: string) =>
     invoke<string>('cancel_job', { jobId }),
 
+  stepCircuit: (circuit: CircuitData, step: number, breakpoints?: number[]) =>
+    invoke<{
+      step: number;
+      total_steps: number;
+      current_gate?: GateData;
+      next_gate?: GateData;
+      hit_breakpoint: boolean;
+      amplitudes: Array<{
+        basis: string;
+        real: number;
+        imag: number;
+        magnitude: number;
+        phase: number;
+        probability: number;
+      }>;
+      bloch_vectors: Array<{
+        qubit: number;
+        x: number;
+        y: number;
+        z: number;
+        purity: number;
+        entanglement: number;
+      }>;
+      probabilities: Record<string, number>;
+      success: boolean;
+    }>('step_circuit', { circuit, step, breakpoints }),
+
   listJobs: () => invoke<JobInfo[]>('list_jobs'),
 
   listHardware: () => invoke<HardwareInfo[]>('list_hardware'),

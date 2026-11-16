@@ -84,6 +84,7 @@ fn main() {
             commands::run_copilot,
             commands::run_resource_estimate,
             commands::run_benchpress,
+            commands::step_circuit,
             commands::list_directory,
             commands::read_workspace_file,
             commands::write_workspace_file,

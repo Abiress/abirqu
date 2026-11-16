@@ -174,6 +174,22 @@ pub async fn execute_circuit(
 }
 
 #[tauri::command]
+pub async fn step_circuit(
+    bridge: State<'_, PythonBridge>,
+    circuit: CircuitData,
+    step: u32,
+    breakpoints: Option<Vec<u32>>,
+) -> Result<Value, String> {
+    let params = json!({
+        "circuit": circuit,
+        "step": step,
+        "breakpoints": breakpoints.unwrap_or_default(),
+    });
+    let resp = send_request(&bridge, "step_circuit", params)?;
+    extract_data(resp)
+}
+
+#[tauri::command]
 pub async fn get_job_status(
     bridge: State<'_, PythonBridge>,
     job_id: String,

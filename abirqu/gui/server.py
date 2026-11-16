@@ -90,6 +90,7 @@ class QuantumServer:
         self._handlers['result'] = self._handle_result
         self._handlers['hardware'] = self._handlers.get('hardware', self._handle_hardware)
         self._handlers['list_jobs'] = self._handle_list_jobs
+        self._handlers['step_circuit'] = self._handle_step_circuit
 
     def _register_default_hardware(self):
         self.hardware_registry = {
@@ -518,6 +519,85 @@ class QuantumServer:
                     return job.result or {}
                 return {'status': job.status.value}
         return {'error': 'Job not found'}
+
+    def _handle_step_circuit(self, request: Dict) -> Dict:
+        """
+        Step-through quantum circuit debugger handler.
+        Executes circuit up to `step` gates and returns full statevector amplitudes,
+        phase-coloured metrics, per-qubit Bloch sphere vectors, and purity/entanglement.
+        """
+        import abirqu
+        from abirqu.visualization.bloch import _bloch_vector
+
+        circuit_data = request.get('circuit', {})
+        step = int(request.get('step', 0))
+        breakpoints = set(request.get('breakpoints', []))
+
+        if isinstance(circuit_data, dict):
+            num_qubits = circuit_data.get('num_qubits', 1)
+            all_gates = circuit_data.get('gates', [])
+        elif isinstance(circuit_data, abirqu.Circuit):
+            num_qubits = circuit_data.num_qubits
+            all_gates = [{'name': g.name, 'qubits': list(g.qubits), 'params': list(g.params)} for g in circuit_data.gates]
+        else:
+            num_qubits = 2
+            all_gates = []
+
+        total_steps = len(all_gates)
+        target_step = max(0, min(step, total_steps))
+
+        sim = abirqu.NumPySimulator(num_qubits)
+        sub_circuit = abirqu.Circuit(num_qubits)
+        for i in range(target_step):
+            g = all_gates[i]
+            if isinstance(g, dict) and g.get('name') and g.get('qubits'):
+                sub_circuit.add_gate(g['name'], g['qubits'], g.get('params'))
+
+        exact_probs = sim.run_circuit(sub_circuit)
+        sv = sim.get_state_vector()
+
+        amplitudes = []
+        for i, amp in enumerate(sv):
+            p = float(abs(amp) ** 2)
+            amplitudes.append({
+                'basis': format(i, f'0{num_qubits}b'),
+                'real': float(amp.real),
+                'imag': float(amp.imag),
+                'magnitude': float(abs(amp)),
+                'phase': float(np.angle(amp)) if np is not None else 0.0,
+                'probability': p,
+            })
+
+        bloch_vectors = []
+        for q in range(num_qubits):
+            bx, by, bz = _bloch_vector(sv, q, num_qubits)
+            r_sq = bx * bx + by * by + bz * bz
+            purity = float((1.0 + r_sq) / 2.0)
+            entanglement = float(max(0.0, min(1.0, 1.0 - r_sq)))
+            bloch_vectors.append({
+                'qubit': q,
+                'x': float(bx),
+                'y': float(by),
+                'z': float(bz),
+                'purity': purity,
+                'entanglement': entanglement,
+            })
+
+        current_gate = all_gates[target_step - 1] if target_step > 0 else None
+        next_gate = all_gates[target_step] if target_step < total_steps else None
+        hit_breakpoint = target_step in breakpoints
+
+        return {
+            'step': target_step,
+            'total_steps': total_steps,
+            'current_gate': current_gate,
+            'next_gate': next_gate,
+            'hit_breakpoint': hit_breakpoint,
+            'amplitudes': amplitudes,
+            'bloch_vectors': bloch_vectors,
+            'probabilities': exact_probs,
+            'success': True,
+        }
 
     def _handle_hardware(self, request: Dict) -> Dict:
         return {'hardware': list(self.hardware_registry.values())}

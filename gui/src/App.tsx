@@ -6,6 +6,7 @@ import CodePanel from './components/CodePanel/CodeEditor';
 import OpenQASMPanel from './components/OpenQASMPanel/OpenQASMPanel';
 import BlochSphere from './components/BlochSphere/BlochSphere';
 import StateVector from './components/StateVector/StateVector';
+import StepDebugger from './components/Debugger/StepDebugger';
 import MeasurementResults from './components/MeasurementResults/MeasurementResults';
 import HardwareSidebar from './components/HardwareSidebar/HardwarePanel';
 import JobDashboard from './components/JobDashboard/JobPanel';
@@ -30,7 +31,7 @@ import { useThemeStore } from './stores/themeStore';
 import { api } from './api/commands';
 
 export type LeftTab = 'circuit' | 'code' | 'qasm' | 'library' | 'framework' | 'explorer' | 'qec' | 'qcomm' | 'domain' | 'security' | 'plugins' | 'askq' | 'settings';
-type RightPanel = 'measurement' | 'state' | 'bloch';
+type RightPanel = 'measurement' | 'state' | 'bloch' | 'debugger';
 type SideTab = 'run' | 'hardware' | 'jobs' | 'noise';
 type BottomTab = 'console' | 'results';
 
@@ -177,6 +178,7 @@ export default function App() {
                 <RightTab active={rightPanel === 'measurement'} onClick={() => setRightPanel('measurement')} label="Results" />
                 <RightTab active={rightPanel === 'state'} onClick={() => setRightPanel('state')} label="States" />
                 <RightTab active={rightPanel === 'bloch'} onClick={() => setRightPanel('bloch')} label="Bloch" />
+                <RightTab active={rightPanel === 'debugger'} onClick={() => setRightPanel('debugger')} label="Debugger" />
                 <button
                   onClick={() => setRightCollapsed(true)}
                   className="ml-auto px-2 py-1 text-[10px] text-[var(--text-muted)] hover:text-[var(--accent-error)]"
@@ -188,6 +190,7 @@ export default function App() {
                 {rightPanel === 'measurement' && <MeasurementResults />}
                 {rightPanel === 'state' && <StateVector />}
                 {rightPanel === 'bloch' && <BlochSphere />}
+                {rightPanel === 'debugger' && <StepDebugger />}
               </div>
             </div>
           ) : (
