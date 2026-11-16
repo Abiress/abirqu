@@ -85,6 +85,8 @@ fn main() {
             commands::run_resource_estimate,
             commands::run_benchpress,
             commands::list_directory,
+            commands::read_workspace_file,
+            commands::write_workspace_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running AbirQu");

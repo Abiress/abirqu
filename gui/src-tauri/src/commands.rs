@@ -677,11 +677,47 @@ pub async fn run_benchpress(
     extract_data(resp)
 }
 
+fn get_canonical_workspace_root() -> Result<PathBuf, String> {
+    let cwd = std::env::current_dir().map_err(|e| format!("Failed to get current dir: {}", e))?;
+    cwd.canonicalize().map_err(|e| format!("Failed to canonicalize current dir: {}", e))
+}
+
+fn resolve_in_workspace(path: Option<String>) -> Result<PathBuf, String> {
+    let root = get_canonical_workspace_root()?;
+    let target = match path {
+        Some(ref p) if !p.trim().is_empty() => {
+            let p_buf = PathBuf::from(p);
+            let combined = if p_buf.is_absolute() {
+                p_buf
+            } else {
+                root.join(p_buf)
+            };
+            // Note: If target does not exist yet (e.g. for new files), check its parent
+            if combined.exists() {
+                combined.canonicalize().map_err(|e| format!("Invalid path '{}': {}", p, e))?
+            } else {
+                let parent = combined.parent().unwrap_or(&root);
+                let can_parent = if parent.exists() {
+                    parent.canonicalize().map_err(|e| format!("Invalid parent directory: {}", e))?
+                } else {
+                    root.clone()
+                };
+                can_parent.join(combined.file_name().unwrap_or_default())
+            }
+        }
+        _ => root.clone(),
+    };
+
+    if !target.starts_with(&root) {
+        return Err(format!("Access denied: path escapes workspace root '{}'", root.display()));
+    }
+
+    Ok(target)
+}
+
 #[tauri::command]
 pub async fn list_directory(path: Option<String>) -> Result<Value, String> {
-    let dir = path.map(PathBuf::from).unwrap_or_else(|| {
-        std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
-    });
+    let dir = resolve_in_workspace(path)?;
 
     let mut entries = Vec::new();
     match fs::read_dir(&dir) {
@@ -721,6 +757,22 @@ pub async fn list_directory(path: Option<String>) -> Result<Value, String> {
         "path": dir.to_string_lossy(),
         "entries": entries,
     }))
+}
+
+#[tauri::command]
+pub async fn read_workspace_file(path: String) -> Result<String, String> {
+    let file_path = resolve_in_workspace(Some(path))?;
+    fs::read_to_string(&file_path).map_err(|e| format!("Failed to read file: {}", e))
+}
+
+#[tauri::command]
+pub async fn write_workspace_file(path: String, content: String) -> Result<bool, String> {
+    let file_path = resolve_in_workspace(Some(path))?;
+    if let Some(parent) = file_path.parent() {
+        fs::create_dir_all(parent).map_err(|e| format!("Failed to create parent directory: {}", e))?;
+    }
+    fs::write(&file_path, content).map_err(|e| format!("Failed to write file: {}", e))?;
+    Ok(true)
 }
 
 fn extract_data(resp: Value) -> Result<Value, String> {
