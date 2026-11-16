@@ -123,6 +123,27 @@ export default function OpenQASMPanel() {
       },
     });
     monaco.editor.setTheme('qasm-dark');
+
+    monaco.languages.registerCompletionItemProvider('openqasm', {
+      provideCompletionItems: (model: any, position: any) => {
+        const word = model.getWordUntilPosition(position);
+        const range = {
+          startLineNumber: position.lineNumber,
+          endLineNumber: position.lineNumber,
+          startColumn: word.startColumn,
+          endColumn: word.endColumn,
+        };
+        const suggestions = [
+          { label: 'h', kind: monaco.languages.CompletionItemKind.Function, insertText: 'h q[${1:0}];', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, documentation: 'Hadamard gate', range },
+          { label: 'cx', kind: monaco.languages.CompletionItemKind.Function, insertText: 'cx q[${1:0}], q[${2:1}];', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, documentation: 'CNOT gate', range },
+          { label: 'measure', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'measure q[${1:0}] -> c[${1:0}];', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, documentation: 'Measurement statement', range },
+          { label: 'barrier', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'barrier q;', documentation: 'Quantum barrier', range },
+          { label: 'qreg', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'qreg q[${1:2}];', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, documentation: 'Quantum register declaration', range },
+          { label: 'creg', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'creg c[${1:2}];', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, documentation: 'Classical register declaration', range },
+        ];
+        return { suggestions };
+      },
+    });
   }, []);
 
   return (

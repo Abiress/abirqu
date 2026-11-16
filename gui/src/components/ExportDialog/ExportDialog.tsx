@@ -8,12 +8,14 @@ interface Props {
   onClose: () => void;
 }
 
-type ExportFormat = 'html' | 'qasm' | 'json' | 'pdf_html';
+type ExportFormat = 'html' | 'qasm' | 'json' | 'pdf_html' | 'quantikz' | 'svg';
 
 const FORMATS: { key: ExportFormat; label: string; icon: string; desc: string }[] = [
   { key: 'html', label: 'HTML Report', icon: '📄', desc: 'Full research report with circuit, results, and stats' },
   { key: 'pdf_html', label: 'PDF (via HTML)', icon: '📑', desc: 'Print-ready — opens HTML for browser Print to PDF' },
   { key: 'qasm', label: 'OpenQASM 2.0', icon: '{ }', desc: 'Industry-standard quantum assembly language' },
+  { key: 'quantikz', label: 'LaTeX (quantikz)', icon: '📐', desc: 'Publication-ready LaTeX circuit diagram using quantikz' },
+  { key: 'svg', label: 'Vector Graphic (SVG)', icon: '🎨', desc: 'Scalable vector graphic for presentations and figures' },
   { key: 'json', label: 'JSON', icon: '{ }', desc: 'Circuit + results in structured JSON format' },
 ];
 
@@ -44,7 +46,8 @@ export default function ExportDialog({ open, onClose }: Props) {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `abirqu-export.${selectedFormat === 'json' ? 'json' : selectedFormat}`;
+          const ext = selectedFormat === 'json' ? 'json' : selectedFormat === 'quantikz' ? 'tex' : selectedFormat === 'svg' ? 'svg' : selectedFormat;
+          a.download = `abirqu-circuit.${ext}`;
           a.click();
           URL.revokeObjectURL(url);
         }

@@ -3,5 +3,6 @@ from .circuit_viz import CircuitVisualizer
 from .export import Exporter
 from .performance import PerformanceAnalyzer
 from .results_viz import ResultsVisualizer
+from .quantikz import to_quantikz
 
-__all__ = ['CircuitVisualizer', 'ResultsVisualizer', 'PerformanceAnalyzer', 'Exporter']
+__all__ = ['CircuitVisualizer', 'ResultsVisualizer', 'PerformanceAnalyzer', 'Exporter', 'to_quantikz']

@@ -265,7 +265,15 @@ def _handle_export(circuit_data: dict, fmt: str, results: dict):
     """Export circuit + results to PDF/DOC/HTML/QASM/JSON."""
     try:
         c = _build_abirqu_circuit(circuit_data)
-        if fmt == "qasm":
+        if fmt in ("quantikz", "latex"):
+            from abirqu.viz.quantikz import to_quantikz
+            code = to_quantikz(c)
+            return {"status": "ok", "data": {"format": "quantikz", "content": code}}
+        elif fmt == "svg":
+            from abirqu.visualization.circuit_drawer import draw_svg
+            svg_code = draw_svg(c, title="AbirQu Circuit Export")
+            return {"status": "ok", "data": {"format": "svg", "content": svg_code}}
+        elif fmt == "qasm":
             try:
                 code = c.to_qasm() if hasattr(c, 'to_qasm') else ""
                 return {"status": "ok", "data": {"format": "qasm", "content": code}}

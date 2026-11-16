@@ -3,7 +3,7 @@ import json
 from typing import Any, Dict, List
 
 from ..circuit import Circuit
-from ..qec.codes import LDPCCode, SurfaceCode
+from ..qec import LDPCCode, SurfaceCode
 
 
 class Exporter:

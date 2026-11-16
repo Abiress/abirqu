@@ -22,6 +22,7 @@ import SecurityPanel from './components/SecurityPanel/SecurityPanel';
 import PluginsPanel from './components/PluginsPanel/PluginsPanel';
 import AskQuantumPanel from './components/AskQuantumPanel/AskQuantumPanel';
 import SettingsPanel from './components/SettingsPanel/SettingsPanel';
+import CommandPalette from './components/CommandPalette/CommandPalette';
 import { useJobStore } from './stores/jobStore';
 import { useHardwareStore } from './stores/hardwareStore';
 import { useThemeStore } from './stores/themeStore';
@@ -214,6 +215,7 @@ export default function App() {
 
       <StatusBar />
       <ExportDialog open={exportOpen} onClose={() => setExportOpen(false)} />
+      <CommandPalette onSelectTab={(tab) => setLeftTab(tab as any)} />
     </div>
   );
 }

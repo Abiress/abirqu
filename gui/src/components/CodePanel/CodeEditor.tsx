@@ -71,6 +71,54 @@ export default function CodePanel() {
       },
     });
 
+    monaco.languages.registerCompletionItemProvider('quantum-python', {
+      provideCompletionItems: (model: any, position: any) => {
+        const word = model.getWordUntilPosition(position);
+        const range = {
+          startLineNumber: position.lineNumber,
+          endLineNumber: position.lineNumber,
+          startColumn: word.startColumn,
+          endColumn: word.endColumn,
+        };
+        const suggestions = [
+          { label: 'Circuit', kind: monaco.languages.CompletionItemKind.Class, insertText: 'Circuit(${1:2})', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, documentation: 'abirqu.Circuit: Main quantum circuit container', range },
+          { label: 'h', kind: monaco.languages.CompletionItemKind.Method, insertText: 'h(${1:0})', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, documentation: 'Hadamard gate: creates superposition', range },
+          { label: 'cx', kind: monaco.languages.CompletionItemKind.Method, insertText: 'cx(${1:0}, ${2:1})', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, documentation: 'Controlled-NOT (CNOT) gate', range },
+          { label: 'cz', kind: monaco.languages.CompletionItemKind.Method, insertText: 'cz(${1:0}, ${2:1})', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, documentation: 'Controlled-Z gate', range },
+          { label: 'swap', kind: monaco.languages.CompletionItemKind.Method, insertText: 'swap(${1:0}, ${2:1})', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, documentation: 'SWAP gate between two qubits', range },
+          { label: 'rx', kind: monaco.languages.CompletionItemKind.Method, insertText: 'rx(${1:0}, ${2:3.14159})', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, documentation: 'Rotation around X axis by theta radians', range },
+          { label: 'ry', kind: monaco.languages.CompletionItemKind.Method, insertText: 'ry(${1:0}, ${2:3.14159})', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, documentation: 'Rotation around Y axis by theta radians', range },
+          { label: 'rz', kind: monaco.languages.CompletionItemKind.Method, insertText: 'rz(${1:0}, ${2:3.14159})', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, documentation: 'Rotation around Z axis by phi radians', range },
+          { label: 'measure_all', kind: monaco.languages.CompletionItemKind.Method, insertText: 'measure_all()', documentation: 'Measure all qubits into classical bits', range },
+          { label: 'run', kind: monaco.languages.CompletionItemKind.Method, insertText: 'run(shots=${1:1024})', insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, documentation: 'Simulate or execute circuit', range },
+        ];
+        return { suggestions };
+      },
+    });
+
+    monaco.languages.registerHoverProvider('quantum-python', {
+      provideHover: (model: any, position: any) => {
+        const word = model.getWordAtPosition(position);
+        if (!word) return null;
+        const docs: Record<string, string> = {
+          Circuit: '**abirqu.Circuit(num_qubits)**\n\nQuantum circuit container for gate synthesis, simulation, and hardware compilation.',
+          h: '**c.h(qubit)**\n\nApplies a Hadamard gate: $|0\\rangle \\mapsto |+\\rangle, |1\\rangle \\mapsto |-\\rangle$.',
+          cx: '**c.cx(control, target)**\n\nApplies a Controlled-NOT (CNOT) entangling gate.',
+          rx: '**c.rx(qubit, theta)**\n\nApplies rotation about the X axis by `theta` radians: $\\exp(-i\\theta X/2)$.',
+          ry: '**c.ry(qubit, theta)**\n\nApplies rotation about the Y axis by `theta` radians: $\\exp(-i\\theta Y/2)$.',
+          rz: '**c.rz(qubit, phi)**\n\nApplies rotation about the Z axis by `phi` radians: $\\exp(-i\\theta Z/2)$.',
+          measure_all: '**c.measure_all()**\n\nAppends measurement operations for all qubits into classical register.',
+          run: '**c.run(shots=1024, backend="statevector")**\n\nExecutes simulation or hardware submission with the specified backend.',
+        };
+        if (docs[word.word]) {
+          return {
+            contents: [{ value: docs[word.word] }],
+          };
+        }
+        return null;
+      },
+    });
+
     monaco.editor.defineTheme('quantum-dark', THEME);
     monaco.editor.setTheme('quantum-dark');
   }, []);
