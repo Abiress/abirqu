@@ -124,12 +124,105 @@ class EventBus:
         return list(self._log)
 
 
+class OutOfProcessPluginHost:
+    """Out-of-process plugin host running plugins in an isolated subprocess.
+    Enforces manifest-declared permissions for filesystem and network.
+    """
+    def __init__(self, manifest: PluginManifest, source: str):
+        self.manifest = manifest
+        self.source = source
+        self.permissions = set(manifest.permissions or [])
+
+    def execute_hook(self, hook: str, data: Any = None) -> Dict[str, Any]:
+        import os
+        import subprocess
+        import sys
+        import json
+
+        perms = list(self.permissions)
+        wrapper_code = f"""
+import sys, json
+
+manifest_permissions = {perms}
+
+# Restrict network socket connection if not granted
+if "network" not in manifest_permissions:
+    try:
+        import socket
+        def _blocked_connect(*args, **kwargs):
+            raise PermissionError("Network access not granted in plugin manifest")
+        socket.socket.connect = _blocked_connect
+    except Exception:
+        pass
+
+# Restrict filesystem access if not granted
+if "filesystem" not in manifest_permissions:
+    import builtins
+    def _restricted_open(file, *args, **kwargs):
+        raise PermissionError("Filesystem access not granted in plugin manifest")
+    builtins.open = _restricted_open
+
+# Execute plugin source code
+plugin_globals = {{}}
+exec({repr(self.source)}, plugin_globals)
+
+hook_name = "on_" + {repr(hook)}
+fn = plugin_globals.get(hook_name)
+if fn and callable(fn):
+    res = fn({repr(data)})
+    print(json.dumps({{"ok": True, "result": res}}))
+else:
+    print(json.dumps({{"ok": True, "result": None}}))
+"""
+        try:
+            clean_env = {
+                "PATH": os.environ.get("PATH", ""),
+                "PYTHONNOUSERSITE": "1",
+            }
+            res = subprocess.run(
+                [sys.executable, "-c", wrapper_code],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                env=clean_env,
+            )
+            if res.returncode != 0:
+                err = res.stderr.strip().splitlines()[-1] if res.stderr else "Execution failure"
+                return {"ok": False, "error": err}
+            return json.loads(res.stdout.strip())
+        except subprocess.TimeoutExpired:
+            return {"ok": False, "error": "Plugin execution timed out (limit: 5s)"}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+
 class PluginRegistry:
-    def __init__(self):
+    def __init__(self, out_of_process: bool = True):
         self.plugins: Dict[str, Dict[str, Any]] = {}
         self.event_bus = EventBus()
+        self.out_of_process = out_of_process
 
     def register(self, manifest: PluginManifest, source: str) -> Dict[str, Any]:
+        if self.out_of_process:
+            host = OutOfProcessPluginHost(manifest, source)
+            # Test run activate/initial hook check
+            test_res = host.execute_hook("init", None)
+            if not test_res.get("ok"):
+                return {"loaded": False, "error": test_res.get("error")}
+            self.plugins[manifest.name] = {
+                "manifest": manifest,
+                "status": "enabled",
+                "host": host,
+                "source": source,
+            }
+            for hook in manifest.hooks or []:
+                self.event_bus.subscribe(
+                    hook,
+                    manifest.name,
+                    lambda data, h=hook, p_host=host: p_host.execute_hook(h, data).get("result"),
+                )
+            return {"loaded": True, "name": manifest.name, "version": manifest.version}
+
         ns = SandboxedNamespace(manifest.name, permissions=manifest.permissions or [])
         res = ns.execute(source)
         if not res["success"]:

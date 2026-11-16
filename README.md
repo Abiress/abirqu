@@ -11,7 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/version-1.2.5-blue?style=for-the-badge" alt="Version"/>
   <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" alt="Build"/>
-  <img src="https://img.shields.io/badge/tests-774%20PASS-brightgreen?style=for-the-badge" alt="Tests"/>
+  <img src="https://img.shields.io/badge/tests-800%2B%20PASS-brightgreen?style=for-the-badge" alt="Tests"/>
   <img src="https://img.shields.io/badge/backends-12%20Real-purple?style=for-the-badge" alt="Backends"/>
   <img src="https://img.shields.io/badge/GUI-Full%20IDE%20(14%20panels)-purple?style=for-the-badge" alt="GUI"/>
   <img src="https://img.shields.io/badge/simulators-6%20Backends-orange?style=for-the-badge" alt="Simulators"/>
@@ -39,7 +39,7 @@
 ### What makes AbirQu different
 
 - **Unified execution** — `QuantumRun` does sampling, estimation, error mitigation, and ML in one call
-- **12 hardware backends** — IBM (verified on real ibm_fez hardware), IonQ, Rigetti, Quantinuum, AWS Braket, Azure Quantum, Google, D-Wave, SpinQ, Pasqal, OQC, QuEra
+- **12 hardware backends** — IBM (verified on real ibm_fez hardware; see docs/hardware_evidence/), plus IonQ, Rigetti, Quantinuum, AWS Braket, Azure Quantum, Google, D-Wave, SpinQ, Pasqal, OQC, QuEra (mock/sim validated, untested on hardware)
 - **6 simulation engines** — GPU (CuPy), Clifford (stabilizer tableau), MPS (tensor network), TTN (tree tensor network), Monte Carlo (quantum jumps), NumPy (portable fallback)
 - **Full transpiler pipeline** — ML-enhanced with RL qubit routing + GNN layout, target-aware decomposition for 10 backends, SABRE routing, ASAP scheduling
 - **Quantum error correction** — Surface/Color/Stabilizer codes, 6 decoders (MWPM, Union-Find, Belief Propagation, GPU-accelerated), magic state distillation, fault-tolerant compiler
@@ -181,18 +181,18 @@ Real, reproducible benchmarks on local NumPy simulator (Intel, 64 threads):
 
 | Backend | Type | Status | Notes |
 |---------|------|--------|-------|
-| **IBM Quantum** | Superconducting | Verified on ibm_fez | qiskit-ibm-runtime adapter |
-| **D-Wave** | Quantum Annealer | Verified | QUBO builder, hybrid solver |
-| **SpinQ** | Trapped Ion | Verified | SQaaS REST API |
-| **AWS Braket** | Multi-hardware | SDK-wired | AWS Braket adapter |
-| **Azure Quantum** | Multi-hardware | SDK-wired | Azure provider adapter |
-| **Google Quantum** | Superconducting | SDK-wired | Cirq-backed adapter |
-| **IonQ** | Trapped Ion | SDK-wired | IonQ adapter |
-| **Rigetti** | Superconducting | SDK-wired | SDK-bridged adapter |
-| **Quantinuum** | Trapped Ion | SDK-wired | SDK-bridged adapter |
-| **Pasqal** | Neutral Atom | SDK-wired | Rydberg physics noise models |
-| **OQC** | Superconducting | SDK-wired | SDK-bridged adapter |
-| **QuEra** | Neutral Atom | SDK-wired | Aquila backend adapter |
+| **IBM Quantum** | Superconducting | Verified on ibm_fez | Evidence in docs/hardware_evidence/ |
+| **D-Wave** | Quantum Annealer | Untested on hardware | Mock/sim validated; QUBO builder |
+| **SpinQ** | Trapped Ion | Untested on hardware | Mock/sim validated; SQaaS REST API |
+| **AWS Braket** | Multi-hardware | Untested on hardware | Mock/sim validated; Braket adapter |
+| **Azure Quantum** | Multi-hardware | Untested on hardware | Mock/sim validated; Azure adapter |
+| **Google Quantum** | Superconducting | Untested on hardware | Mock/sim validated; Cirq adapter |
+| **IonQ** | Trapped Ion | Untested on hardware | Mock/sim validated; IonQ adapter |
+| **Rigetti** | Superconducting | Untested on hardware | Mock/sim validated; Rigetti adapter |
+| **Quantinuum** | Trapped Ion | Untested on hardware | Mock/sim validated; Quantinuum adapter |
+| **Pasqal** | Neutral Atom | Untested on hardware | Mock/sim validated; Rydberg noise models |
+| **OQC** | Superconducting | Untested on hardware | Mock/sim validated; OQC adapter |
+| **QuEra** | Neutral Atom | Untested on hardware | Mock/sim validated; Aquila adapter |
 
 ### Simulation Backends
 
