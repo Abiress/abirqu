@@ -8,7 +8,8 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>AbirQu</PackageId>
     <PackageVersion>1.0.0</PackageVersion>
-    <Authors>Abir Datta</Authors>
+    <Authors>Abir Maheshwari</Authors>
+    <Company>Artificial Quantum Dyson Intelligence Pvt Ltd</Company>
     <Description>AbirQu Quantum SDK - .NET Bindings</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>

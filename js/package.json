@@ -20,7 +20,7 @@
     "qubit",
     "gate-simulation"
   ],
-  "author": "Abir Datta <abir.datta.pro@gmail.com>",
+  "author": "Abir Maheshwari <abhirsxn@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "complex.js": "^2.1.1",

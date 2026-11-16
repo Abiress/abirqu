@@ -2,7 +2,7 @@
 name = "abirqu-core"
 version = "1.2.5"
 edition = "2021"
-authors = ["Abir Datta <abir.datta.pro@gmail.com>"]
+authors = ["Abir Maheshwari <abhirsxn@gmail.com>"]
 description = "High-performance Rust core for AbirQu Quantum SDK - Beat Qiskit & Cirq"
 license = "MIT"
 repository = "https://github.com/abirmaheshwari/abirqu"

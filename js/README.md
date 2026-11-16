@@ -121,4 +121,4 @@ MIT
 
 ## Author
 
-Abir Datta <abir.datta.pro@gmail.com>
+Abir Maheshwari <abhirsxn@gmail.com>
