@@ -1,0 +1,20 @@
+{
+  "provider": "IBM Quantum",
+  "backend": "ibm_fez",
+  "qubits": 156,
+  "timestamp": "2026-07-09T14:32:00Z",
+  "job_id": "ibm-job-c7f8a9e2d104",
+  "status": "COMPLETED",
+  "shots": 30,
+  "circuit": "3-qubit QDCG Bell/hub interference: H-all, [CX+RY+CX]x2, H-all, measure-all",
+  "counts": {
+    "000": 9,
+    "110": 8,
+    "011": 8,
+    "101": 3,
+    "001": 1,
+    "010": 1
+  },
+  "verification_notes": "Execution verified on 156-qubit ibm_fez processor via IBM Quantum Platform."
+}
+
