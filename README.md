@@ -39,7 +39,7 @@
 ### What makes AbirQu different
 
 - **Unified execution** — `QuantumRun` does sampling, estimation, error mitigation, and ML in one call
-- **12 hardware backends** — IBM (verified on real ibm_fez hardware; see docs/hardware_evidence/), plus IonQ, Rigetti, Quantinuum, AWS Braket, Azure Quantum, Google, D-Wave, SpinQ, Pasqal, OQC, QuEra (mock/sim validated, untested on hardware)
+- **12 hardware backends** — IBM Quantum, IonQ, Rigetti, Quantinuum, AWS Braket, Azure Quantum, Google, D-Wave, SpinQ, Pasqal, OQC, QuEra (SDK adapters implemented, mock/sim validated; untested on physical hardware)
 - **6 simulation engines** — GPU (CuPy), Clifford (stabilizer tableau), MPS (tensor network), TTN (tree tensor network), Monte Carlo (quantum jumps), NumPy (portable fallback)
 - **Full transpiler pipeline** — ML-enhanced with RL qubit routing + GNN layout, target-aware decomposition for 10 backends, SABRE routing, ASAP scheduling
 - **Quantum error correction** — Surface/Color/Stabilizer codes, 6 decoders (MWPM, Union-Find, Belief Propagation, GPU-accelerated), magic state distillation, fault-tolerant compiler
@@ -122,14 +122,14 @@ All modules use **pure NumPy with OpenBLAS DYNAMIC_ARCH** — runs on Intel, AMD
 |-----------|--------|--------|------|--------|
 | **Desktop IDE** | 14-panel Tauri app | Jupyter only | Jupyter only | Console |
 | **Framework Integration** | Runs on Qiskit/Cirq/D-Wave/OQTOPUS | Qiskit only | Cirq only | Braket only |
-| **Hardware backends** | 12 (IBM verified on real hardware) | 5 (all verified) | 3 (all verified) | 6 (all verified) |
+| **Hardware backends** | 12 (mock/sim validated) | 5 (all verified) | 3 (all verified) | 6 (all verified) |
 | **Quantum communication** | 7 protocols | N/A | N/A | N/A |
 | **Fault-tolerant QEC** | Surface/Color/Stabilizer, 6 decoders | Basic | N/A | N/A |
 | **Hardware calibration** | Full (T1/T2, RB, tomography, SPAM) | Basic | N/A | N/A |
 | **Domain modules** | 6 (Chemistry, OSINT, Crypto, Space, QPINN, Agentic) | Via plugins | Via plugins | N/A |
 | **Simulation engines** | 6 (GPU, Clifford, MPS, TTN, MonteCarlo, NumPy) | 3 | 2 | N/A |
 | **Pure NumPy** | Yes — no vendor SDK required | No | No | No |
-| **Real hardware validation** | IBM ibm_fez verified | Yes | Yes | Yes |
+| **Real hardware validation** | Untested on hardware (mock verified) | Yes | Yes | Yes |
 
 **Tradeoff:** AbirQu has broader scope (IDE, communication, QEC, domain modules). Qiskit/Cirq/Braket focus on production hardware execution — they do fewer things but do them at production scale.
 
@@ -181,7 +181,7 @@ Real, reproducible benchmarks on local NumPy simulator (Intel, 64 threads):
 
 | Backend | Type | Status | Notes |
 |---------|------|--------|-------|
-| **IBM Quantum** | Superconducting | Verified on ibm_fez | Evidence in docs/hardware_evidence/ |
+| **IBM Quantum** | Superconducting | Untested on hardware | Mock/sim validated; qiskit-ibm-runtime adapter |
 | **D-Wave** | Quantum Annealer | Untested on hardware | Mock/sim validated; QUBO builder |
 | **SpinQ** | Trapped Ion | Untested on hardware | Mock/sim validated; SQaaS REST API |
 | **AWS Braket** | Multi-hardware | Untested on hardware | Mock/sim validated; Braket adapter |
@@ -651,7 +651,7 @@ rbac.assign_role("user@example.com", "operator")
 **AbirQu is a production-grade, full-stack quantum SDK** that covers:
 
 - **Unified execution** — `QuantumRun` does sampling, estimation, error mitigation, and ML in one call
-- **12 hardware backends** — IBM (verified on real hardware), D-Wave, SpinQ, IonQ, Rigetti, Quantinuum, AWS, Azure, Google, Pasqal, OQC, QuEra
+- **12 hardware backends** — IBM Quantum, D-Wave, SpinQ, IonQ, Rigetti, Quantinuum, AWS, Azure, Google, Pasqal, OQC, QuEra (mock/sim validated, untested on hardware)
 - **6 simulation engines** — GPU, Clifford, MPS, TTN, Monte Carlo, NumPy
 - **Full transpiler pipeline** — ML-enhanced (RL routing + GNN layout), target-aware decomposition, SWAP routing, fidelity estimation
 - **Noise mitigation** — ZNE, readout mitigation, M3, PEC, adaptive error mitigation, dynamical decoupling
@@ -691,7 +691,7 @@ rbac.assign_role("user@example.com", "operator")
 | **HHL Solver** | Simplified | Classical reconstruction correct, but quantum circuit uses approximate state prep and limited eigenvalues |
 | **Hybrid MPS-Clifford** | Approximate | Tableau↔MPS conversions are lossy. Useful for exploration, not production |
 | **Windows/macOS installers** | CI/CD only | Built automatically via GitHub Actions. Not pre-built in repo |
-| **IBM Quantum** | Token required | Real API token needed. Verified on ibm_fez (156 qubits) |
+| **IBM Quantum** | Token required | Real API token needed for hardware; adapter verified against mock server |
 | **D-Wave** | `neal` unavailable | Falls back to random sampling on Python 3.14 |
 
 ---

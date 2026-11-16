@@ -6,9 +6,11 @@ Any provider without physical execution evidence is classified as **"untested on
 
 ## Current Audit Registry
 
+No verified physical hardware runs have been committed to this registry yet. All 12 supported cloud hardware adapters have been verified against local simulator/mock test suites and are classified as **Untested on hardware**.
+
 | Provider | Backend | Evidence File | Verified Status |
 |----------|---------|---------------|-----------------|
-| **IBM Quantum** | `ibm_fez` (156 qubits) | `ibm_fez_20260709.json` | **Verified on Hardware** |
+| **IBM Quantum** | `ibm_fez` / `ibm_brisbane` | *None* | Untested on Hardware (Mock Verified) |
 | **D-Wave** | `dwave_advantage` | *None* | Untested on Hardware (Simulator Verified) |
 | **IonQ** | `ionq_harmony` / `aria` | *None* | Untested on Hardware (API Mock Verified) |
 | **Rigetti** | `aspen_m_3` | *None* | Untested on Hardware (Quil Mock Verified) |
@@ -20,4 +22,3 @@ Any provider without physical execution evidence is classified as **"untested on
 | **Pasqal** | `fresnel` | *None* | Untested on Hardware (Pulser Mock Verified) |
 | **QuEra** | `aquila` | *None* | Untested on Hardware (Neutral Atom Mock Verified) |
 | **SpinQ** | `triangulum` | *None* | Untested on Hardware (NMR Simulator Verified) |
-

@@ -692,18 +692,46 @@ fn resolve_in_workspace(path: Option<String>) -> Result<PathBuf, String> {
             } else {
                 root.join(p_buf)
             };
-            // Note: If target does not exist yet (e.g. for new files), check its parent
-            if combined.exists() {
-                combined.canonicalize().map_err(|e| format!("Invalid path '{}': {}", p, e))?
-            } else {
-                let parent = combined.parent().unwrap_or(&root);
-                let can_parent = if parent.exists() {
-                    parent.canonicalize().map_err(|e| format!("Invalid parent directory: {}", e))?
+
+            // Walk up ancestors until we find an existing directory/file on disk
+            let mut existing_ancestor = combined.clone();
+            let mut trailing_parts = Vec::new();
+
+            while !existing_ancestor.exists() {
+                if let Some(file_name) = existing_ancestor.file_name() {
+                    trailing_parts.push(file_name.to_os_string());
+                    if let Some(parent) = existing_ancestor.parent() {
+                        existing_ancestor = parent.to_path_buf();
+                    } else {
+                        break;
+                    }
                 } else {
-                    root.clone()
-                };
-                can_parent.join(combined.file_name().unwrap_or_default())
+                    break;
+                }
             }
+
+            // Canonicalize the existing ancestor to resolve all symlinks and '..'
+            let can_ancestor = if existing_ancestor.exists() {
+                existing_ancestor.canonicalize().map_err(|e| format!("Invalid path '{}': {}", p, e))?
+            } else {
+                root.clone()
+            };
+
+            if !can_ancestor.starts_with(&root) {
+                return Err(format!("Access denied: path escapes workspace root '{}'", root.display()));
+            }
+
+            // Reassemble trailing path parts (preventing any '..' or '.')
+            trailing_parts.reverse();
+            let mut resolved = can_ancestor;
+            for part in trailing_parts {
+                let s = part.to_string_lossy();
+                if s == ".." || s == "." {
+                    return Err(format!("Access denied: invalid path component in '{}'", p));
+                }
+                resolved.push(part);
+            }
+            resolved
         }
         _ => root.clone(),
     };
